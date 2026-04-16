@@ -1,0 +1,197 @@
+import Foundation
+
+public struct BrowserOption: Codable, Hashable {
+    public var id: String
+    public var name: String
+    public var bundleIdentifier: String
+    public var appName: String?
+    public var profileDirectory: String?
+    public var extraArguments: [String]?
+
+    public init(
+        id: String,
+        name: String,
+        bundleIdentifier: String,
+        appName: String?,
+        profileDirectory: String?,
+        extraArguments: [String]?
+    ) {
+        self.id = id
+        self.name = name
+        self.bundleIdentifier = bundleIdentifier
+        self.appName = appName
+        self.profileDirectory = profileDirectory
+        self.extraArguments = extraArguments
+    }
+}
+
+public struct RoutingRule: Codable, Hashable {
+    public var id: String
+    public var name: String
+    public var browserOptionID: String
+    public var hostContains: String?
+    public var hostSuffix: String?
+    public var pathPrefix: String?
+    public var urlContains: String?
+
+    public init(
+        id: String,
+        name: String,
+        browserOptionID: String,
+        hostContains: String?,
+        hostSuffix: String?,
+        pathPrefix: String?,
+        urlContains: String?
+    ) {
+        self.id = id
+        self.name = name
+        self.browserOptionID = browserOptionID
+        self.hostContains = hostContains
+        self.hostSuffix = hostSuffix
+        self.pathPrefix = pathPrefix
+        self.urlContains = urlContains
+    }
+}
+
+public struct RouterConfiguration: Codable {
+    public var defaultOptionID: String
+    public var chooserModifier: String
+    public var browserOptions: [BrowserOption]
+    public var routingRules: [RoutingRule]
+
+    enum CodingKeys: String, CodingKey {
+        case defaultOptionID
+        case chooserModifier
+        case browserOptions
+        case routingRules
+    }
+
+    public init(
+        defaultOptionID: String,
+        chooserModifier: String,
+        browserOptions: [BrowserOption],
+        routingRules: [RoutingRule] = []
+    ) {
+        self.defaultOptionID = defaultOptionID
+        self.chooserModifier = chooserModifier
+        self.browserOptions = browserOptions
+        self.routingRules = routingRules
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        defaultOptionID = try container.decode(String.self, forKey: .defaultOptionID)
+        chooserModifier = try container.decodeIfPresent(String.self, forKey: .chooserModifier) ?? "command+shift"
+        browserOptions = try container.decode([BrowserOption].self, forKey: .browserOptions)
+        routingRules = try container.decodeIfPresent([RoutingRule].self, forKey: .routingRules) ?? []
+    }
+
+    public static let supportDirectory: URL = {
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        return base.appendingPathComponent("BrowserRouter", isDirectory: true)
+    }()
+
+    public static let configURL = supportDirectory.appendingPathComponent("config.json")
+
+    public static func load() -> RouterConfiguration {
+        do {
+            try FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
+            if FileManager.default.fileExists(atPath: configURL.path) {
+                let data = try Data(contentsOf: configURL)
+                return try JSONDecoder().decode(RouterConfiguration.self, from: data)
+            }
+
+            let config = RouterConfiguration.sample()
+            try config.save()
+            return config
+        } catch {
+            NSLog("BrowserRouter config load failed: \(error)")
+            return .sample()
+        }
+    }
+
+    public func save() throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+        let data = try encoder.encode(self)
+        try data.write(to: Self.configURL, options: .atomic)
+    }
+
+    public static func sample() -> RouterConfiguration {
+        RouterConfiguration(
+            defaultOptionID: "arc-default",
+            chooserModifier: "command+shift",
+            browserOptions: [
+                BrowserOption(
+                    id: "arc-default",
+                    name: "Arc",
+                    bundleIdentifier: "company.thebrowser.Browser",
+                    appName: "Arc",
+                    profileDirectory: nil,
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "chrome-default",
+                    name: "Chrome - Default",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: "Default",
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "chrome-profile-1",
+                    name: "Chrome - Profile 1",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: "Profile 1",
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "edge-default",
+                    name: "Edge - Default",
+                    bundleIdentifier: "com.microsoft.edgemac",
+                    appName: "Microsoft Edge",
+                    profileDirectory: "Default",
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "safari",
+                    name: "Safari",
+                    bundleIdentifier: "com.apple.Safari",
+                    appName: "Safari",
+                    profileDirectory: nil,
+                    extraArguments: nil
+                )
+            ],
+            routingRules: [
+                RoutingRule(
+                    id: "gmail",
+                    name: "Gmail",
+                    browserOptionID: "chrome-default",
+                    hostContains: nil,
+                    hostSuffix: "mail.google.com",
+                    pathPrefix: nil,
+                    urlContains: nil
+                ),
+                RoutingRule(
+                    id: "outlook",
+                    name: "Outlook",
+                    browserOptionID: "edge-default",
+                    hostContains: nil,
+                    hostSuffix: "outlook.office.com",
+                    pathPrefix: nil,
+                    urlContains: nil
+                ),
+                RoutingRule(
+                    id: "chatgpt",
+                    name: "ChatGPT",
+                    browserOptionID: "chrome-profile-1",
+                    hostContains: nil,
+                    hostSuffix: "chatgpt.com",
+                    pathPrefix: nil,
+                    urlContains: nil
+                )
+            ]
+        )
+    }
+}

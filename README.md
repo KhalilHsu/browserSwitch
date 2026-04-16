@@ -87,6 +87,8 @@ window includes:
 - A default browser/profile dropdown.
 - A chooser modifier dropdown.
 - A simplified routing rules table.
+- A routing rule match type dropdown for host suffix, host contains, path
+  prefix, and URL contains rules.
 - A `Detect Chromium Profiles` button that merges profiles discovered from
   Chrome, Chrome Canary, Edge, Brave, and Vivaldi.
 
