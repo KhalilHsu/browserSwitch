@@ -1,0 +1,10 @@
+.DS_Store
+.build/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+DerivedData/
+*.swp
+*.tmp
+*.log
