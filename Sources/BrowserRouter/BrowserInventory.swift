@@ -111,6 +111,8 @@ enum BrowserInventory {
             configuration: RouterConfiguration(
                 defaultOptionID: resolvedDefaultID,
                 chooserModifier: configuration.chooserModifier,
+                showsDockIcon: configuration.showsDockIcon,
+                showsStatusItem: configuration.showsStatusItem,
                 browserOptions: mergedOptions,
                 routingRules: configuration.routingRules
             ),

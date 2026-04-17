@@ -87,6 +87,8 @@ enum ChromiumProfileScanner {
         return RouterConfiguration(
             defaultOptionID: configuration.defaultOptionID,
             chooserModifier: configuration.chooserModifier,
+            showsDockIcon: configuration.showsDockIcon,
+            showsStatusItem: configuration.showsStatusItem,
             browserOptions: mergedOptions,
             routingRules: configuration.routingRules
         )

@@ -84,6 +84,8 @@ Chromium profile directories.
 You can also use `Router` -> `Settings...` from the menu bar app. The settings
 window includes:
 
+- A Dock icon visibility toggle.
+- A menu bar icon visibility toggle.
 - A default browser/profile dropdown.
 - A chooser modifier dropdown.
 - A simplified routing rules table.
@@ -96,6 +98,12 @@ The menu bar also includes:
 
 - `Set as HTTP/HTTPS Default`
 - `Show Default Handler Status`
+
+If you hide both the Dock icon and the menu bar icon, BrowserRouter keeps
+running as a headless helper. Opening the app bundle again will bring up
+Settings so you can turn one or both back on, and the browser chooser also has
+a Settings shortcut. You can still edit `config.json` manually or reopen the
+app bundle from Finder.
 
 Settings changes are saved automatically when you:
 

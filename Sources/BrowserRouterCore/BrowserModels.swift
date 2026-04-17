@@ -56,12 +56,16 @@ public struct RoutingRule: Codable, Hashable {
 public struct RouterConfiguration: Codable {
     public var defaultOptionID: String
     public var chooserModifier: String
+    public var showsDockIcon: Bool
+    public var showsStatusItem: Bool
     public var browserOptions: [BrowserOption]
     public var routingRules: [RoutingRule]
 
     enum CodingKeys: String, CodingKey {
         case defaultOptionID
         case chooserModifier
+        case showsDockIcon
+        case showsStatusItem
         case browserOptions
         case routingRules
     }
@@ -69,11 +73,15 @@ public struct RouterConfiguration: Codable {
     public init(
         defaultOptionID: String,
         chooserModifier: String,
+        showsDockIcon: Bool = false,
+        showsStatusItem: Bool = true,
         browserOptions: [BrowserOption],
         routingRules: [RoutingRule] = []
     ) {
         self.defaultOptionID = defaultOptionID
         self.chooserModifier = chooserModifier
+        self.showsDockIcon = showsDockIcon
+        self.showsStatusItem = showsStatusItem
         self.browserOptions = browserOptions
         self.routingRules = routingRules
     }
@@ -82,6 +90,8 @@ public struct RouterConfiguration: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         defaultOptionID = try container.decode(String.self, forKey: .defaultOptionID)
         chooserModifier = try container.decodeIfPresent(String.self, forKey: .chooserModifier) ?? "command+shift"
+        showsDockIcon = try container.decodeIfPresent(Bool.self, forKey: .showsDockIcon) ?? false
+        showsStatusItem = try container.decodeIfPresent(Bool.self, forKey: .showsStatusItem) ?? true
         browserOptions = try container.decode([BrowserOption].self, forKey: .browserOptions)
         routingRules = try container.decodeIfPresent([RoutingRule].self, forKey: .routingRules) ?? []
     }
@@ -121,6 +131,8 @@ public struct RouterConfiguration: Codable {
         RouterConfiguration(
             defaultOptionID: "arc-default",
             chooserModifier: "command+shift",
+            showsDockIcon: false,
+            showsStatusItem: true,
             browserOptions: [
                 BrowserOption(
                     id: "arc-default",

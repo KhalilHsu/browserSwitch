@@ -7,6 +7,7 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
     private let url: URL
     private let options: [BrowserOption]
     private let defaultOptionID: String
+    private let onOpenSettings: () -> Void
     private let onSelect: (BrowserOption) -> Void
     private let onClose: () -> Void
 
@@ -14,12 +15,14 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
         url: URL,
         options: [BrowserOption],
         defaultOptionID: String,
+        onOpenSettings: @escaping () -> Void,
         onSelect: @escaping (BrowserOption) -> Void,
         onClose: @escaping () -> Void
     ) {
         self.url = url
         self.options = options
         self.defaultOptionID = defaultOptionID
+        self.onOpenSettings = onOpenSettings
         self.onSelect = onSelect
         self.onClose = onClose
 
@@ -52,6 +55,21 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
         let title = NSTextField(labelWithString: "Open this link with")
         title.font = .boldSystemFont(ofSize: 18)
         title.translatesAutoresizingMaskIntoConstraints = false
+
+        let settingsButton = NSButton()
+        settingsButton.bezelStyle = .texturedRounded
+        settingsButton.target = self
+        settingsButton.action = #selector(openSettings)
+        settingsButton.toolTip = "Open Settings"
+        if let image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "Open Settings") {
+            image.isTemplate = true
+            settingsButton.image = image
+            settingsButton.imagePosition = .imageOnly
+            settingsButton.contentTintColor = .labelColor
+        } else {
+            settingsButton.title = "Settings"
+        }
+        settingsButton.translatesAutoresizingMaskIntoConstraints = false
 
         let detail = NSTextField(labelWithString: displayURL)
         detail.font = .systemFont(ofSize: 12)
@@ -88,6 +106,7 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
         cancelButton.translatesAutoresizingMaskIntoConstraints = false
 
         contentView.addSubview(title)
+        contentView.addSubview(settingsButton)
         contentView.addSubview(detail)
         contentView.addSubview(stack)
         contentView.addSubview(hint)
@@ -96,15 +115,20 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
         NSLayoutConstraint.activate([
             title.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
             title.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 20),
-            title.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
+            title.trailingAnchor.constraint(lessThanOrEqualTo: settingsButton.leadingAnchor, constant: -12),
+
+            settingsButton.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            settingsButton.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            settingsButton.widthAnchor.constraint(equalToConstant: 32),
+            settingsButton.heightAnchor.constraint(equalToConstant: 32),
 
             detail.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 6),
             detail.leadingAnchor.constraint(equalTo: title.leadingAnchor),
-            detail.trailingAnchor.constraint(equalTo: title.trailingAnchor),
+            detail.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -20),
 
             stack.topAnchor.constraint(equalTo: detail.bottomAnchor, constant: 18),
             stack.leadingAnchor.constraint(equalTo: title.leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: title.trailingAnchor),
+            stack.trailingAnchor.constraint(equalTo: detail.trailingAnchor),
 
             hint.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 14),
             hint.leadingAnchor.constraint(equalTo: title.leadingAnchor),
@@ -154,6 +178,10 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
 
     @objc private func cancel() {
         close()
+    }
+
+    @objc private func openSettings() {
+        onOpenSettings()
     }
 
     func windowWillClose(_ notification: Notification) {

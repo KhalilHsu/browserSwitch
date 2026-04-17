@@ -14,11 +14,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastConfigModificationDate: Date?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
-        installStatusItem()
+        applyPresentationSettings()
+        showSettingsIfPresentationHidden()
+    }
+
+    func applicationShouldHandleReopen(_ application: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        guard !flag else {
+            return true
+        }
+
+        showSettingsIfPresentationHidden()
+        return true
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
@@ -28,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func installStatusItem() {
+        guard statusItem == nil else {
+            return
+        }
+
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.title = "Router"
 
@@ -41,6 +54,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
         item.menu = menu
         statusItem = item
+    }
+
+    private func removeStatusItem() {
+        guard let statusItem else {
+            return
+        }
+
+        NSStatusBar.system.removeStatusItem(statusItem)
+        self.statusItem = nil
+    }
+
+    private func applyPresentationSettings() {
+        let desiredPolicy: NSApplication.ActivationPolicy = configuration.showsDockIcon ? .regular : .accessory
+        if NSApp.activationPolicy() != desiredPolicy {
+            NSApp.setActivationPolicy(desiredPolicy)
+        }
+
+        if configuration.showsStatusItem {
+            installStatusItem()
+        } else {
+            removeStatusItem()
+        }
+    }
+
+    private func showSettingsIfPresentationHidden() {
+        guard !configuration.showsDockIcon, !configuration.showsStatusItem else {
+            return
+        }
+
+        openSettings()
     }
 
     private func handle(_ url: URL) {
@@ -107,6 +150,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             url: url,
             options: options,
             defaultOptionID: configuration.defaultOptionID,
+            onOpenSettings: { [weak self] in
+                self?.openSettings()
+            },
             onSelect: { [weak self] option in
                 NSLog("BrowserRouter chooser selected option \(option.id) for \(url.absoluteString)")
                 self?.launcher.open(url, with: option)
@@ -169,11 +215,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
+        applyPresentationSettings()
 
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(configuration: configuration) { [weak self] newConfiguration in
                 self?.configuration = newConfiguration
                 self?.rememberConfigModificationDate()
+                self?.applyPresentationSettings()
             }
         } else {
             settingsWindowController?.reload(with: configuration)
@@ -227,6 +275,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
             configuration = RouterConfiguration.load()
             rememberConfigModificationDate()
+            applyPresentationSettings()
             NSLog("BrowserRouter recreated config after it was removed")
             return
         }
@@ -237,6 +286,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         configuration = RouterConfiguration.load()
         rememberConfigModificationDate()
+        applyPresentationSettings()
         NSLog("BrowserRouter reloaded config after external modification")
     }
 
