@@ -1,0 +1,15 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Build app bundle
+        run: scripts/build-app.sh
