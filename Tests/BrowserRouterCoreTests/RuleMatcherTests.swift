@@ -17,10 +17,11 @@ import Testing
     #expect(RuleMatcher.matches(rule, url: try makeURL("https://docs.example.com")))
 }
 
-@Test func hostContainsAndPathPrefixAreCaseInsensitive() throws {
+@Test func hostContainsIsCaseInsensitiveAndPathPrefixPreservesCase() throws {
     let rule = makeRule(hostContains: "GitHub", pathPrefix: "/OpenAI")
 
     #expect(RuleMatcher.matches(rule, url: try makeURL("https://github.com/OpenAI/codex")))
+    #expect(!RuleMatcher.matches(rule, url: try makeURL("https://github.com/openai/codex")))
     #expect(!RuleMatcher.matches(rule, url: try makeURL("https://github.com/Other/codex")))
 }
 
@@ -29,6 +30,12 @@ import Testing
 
     #expect(RuleMatcher.matches(rule, url: try makeURL("https://example.com/path?utm_source=work")))
     #expect(!RuleMatcher.matches(rule, url: try makeURL("https://example.com/path?utm_source=personal")))
+}
+
+@Test func urlContainsMatchesAfterPercentDecoding() throws {
+    let rule = makeRule(urlContains: "login?ref=1")
+
+    #expect(RuleMatcher.matches(rule, url: try makeURL("https://example.com/login%3Fref%3D1")))
 }
 
 @Test func multipleRuleConditionsMustAllMatch() throws {

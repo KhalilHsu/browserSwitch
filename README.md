@@ -139,7 +139,7 @@ Supported match fields:
 
 - `hostSuffix`: matches an exact host or subdomain, such as `chatgpt.com`.
 - `hostContains`: matches any host containing the string.
-- `pathPrefix`: matches URL paths that start with the string.
+- `pathPrefix`: matches URL paths that start with the string, using case-sensitive path matching.
 - `urlContains`: matches anywhere in the full URL.
 
 ## Privacy

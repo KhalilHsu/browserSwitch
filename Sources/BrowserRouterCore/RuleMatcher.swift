@@ -2,11 +2,12 @@ import Foundation
 
 public enum RuleMatcher {
     public static func matches(_ rule: RoutingRule, url: URL) -> Bool {
-        let absolute = url.absoluteString.lowercased()
+        let absolute = url.absoluteString.removingPercentEncoding ?? url.absoluteString
+        let lowercasedAbsolute = absolute.lowercased()
         let host = (url.host ?? "").lowercased()
-        let path = url.path.lowercased()
+        let path = url.path
 
-        if let urlContains = rule.urlContains?.lowercased(), !absolute.contains(urlContains) {
+        if let urlContains = rule.urlContains?.lowercased(), !lowercasedAbsolute.contains(urlContains) {
             return false
         }
 
@@ -21,7 +22,7 @@ public enum RuleMatcher {
             }
         }
 
-        if let pathPrefix = rule.pathPrefix?.lowercased(), !path.hasPrefix(pathPrefix) {
+        if let pathPrefix = rule.pathPrefix, !path.hasPrefix(pathPrefix) {
             return false
         }
 

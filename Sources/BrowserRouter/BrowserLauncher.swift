@@ -28,13 +28,16 @@ final class BrowserLauncher {
     }
 
     private func isChromium(_ option: BrowserOption) -> Bool {
-        let bundle = option.bundleIdentifier.lowercased()
-        return bundle.contains("chrome")
-            || bundle.contains("edge")
-            || bundle.contains("brave")
-            || bundle.contains("vivaldi")
-            || bundle.contains("browser")
+        Self.chromiumBundleIdentifiers.contains(option.bundleIdentifier.lowercased())
     }
+
+    private static let chromiumBundleIdentifiers: Set<String> = [
+        "com.google.chrome",
+        "com.google.chrome.canary",
+        "com.microsoft.edgemac",
+        "com.brave.browser",
+        "com.vivaldi.vivaldi"
+    ]
 
     private func openChromium(_ url: URL, option: BrowserOption, profileDirectory: String) {
         guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: option.bundleIdentifier) != nil else {

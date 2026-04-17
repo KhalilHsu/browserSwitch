@@ -11,11 +11,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindowController: SettingsWindowController?
     private var chooserWindowController: BrowserChooserWindowController?
     private var defaultBrowserManager: DefaultBrowserManager?
+    private var lastConfigModificationDate: Date?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
+        rememberConfigModificationDate()
         installStatusItem()
     }
 
@@ -42,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func handle(_ url: URL) {
-        configuration = RouterConfiguration.load()
+        refreshConfigurationIfNeeded()
 
         if shouldShowChooser() {
             showChooser(for: url)
@@ -160,15 +162,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openConfig() {
         _ = RouterConfiguration.load()
+        rememberConfigModificationDate()
         NSWorkspace.shared.open(RouterConfiguration.configURL)
     }
 
     @objc private func openSettings() {
         configuration = cleanupGhostBrowsersIfNeeded()
+        rememberConfigModificationDate()
 
         if settingsWindowController == nil {
             settingsWindowController = SettingsWindowController(configuration: configuration) { [weak self] newConfiguration in
                 self?.configuration = newConfiguration
+                self?.rememberConfigModificationDate()
             }
         } else {
             settingsWindowController?.reload(with: configuration)
@@ -212,5 +217,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         return result.configuration
+    }
+
+    private func refreshConfigurationIfNeeded() {
+        guard let modificationDate = configModificationDate() else {
+            guard lastConfigModificationDate != nil else {
+                return
+            }
+
+            configuration = RouterConfiguration.load()
+            rememberConfigModificationDate()
+            NSLog("BrowserRouter recreated config after it was removed")
+            return
+        }
+
+        guard modificationDate != lastConfigModificationDate else {
+            return
+        }
+
+        configuration = RouterConfiguration.load()
+        rememberConfigModificationDate()
+        NSLog("BrowserRouter reloaded config after external modification")
+    }
+
+    private func rememberConfigModificationDate() {
+        lastConfigModificationDate = configModificationDate()
+    }
+
+    private func configModificationDate() -> Date? {
+        let attributes = try? FileManager.default.attributesOfItem(atPath: RouterConfiguration.configURL.path)
+        return attributes?[.modificationDate] as? Date
     }
 }
