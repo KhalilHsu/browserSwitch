@@ -88,6 +88,9 @@ private enum RuleMatchField: String, CaseIterable {
 
 @MainActor
 final class SettingsWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSWindowDelegate {
+    private let appearanceTitle = NSTextField(labelWithString: "Appearance")
+    private let showDockIconCheckBox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
+    private let showStatusItemCheckBox = NSButton(checkboxWithTitle: "Show menu bar icon", target: nil, action: nil)
     private let defaultBrowserPopup = NSPopUpButton()
     private let modifierPopup = NSPopUpButton()
     private let rulesTableView = NSTableView()
@@ -143,6 +146,15 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         subtitle.lineBreakMode = .byWordWrapping
         subtitle.maximumNumberOfLines = 2
         subtitle.translatesAutoresizingMaskIntoConstraints = false
+
+        appearanceTitle.font = .boldSystemFont(ofSize: 15)
+        appearanceTitle.translatesAutoresizingMaskIntoConstraints = false
+        showDockIconCheckBox.target = self
+        showDockIconCheckBox.action = #selector(presentationChanged)
+        showDockIconCheckBox.translatesAutoresizingMaskIntoConstraints = false
+        showStatusItemCheckBox.target = self
+        showStatusItemCheckBox.action = #selector(presentationChanged)
+        showStatusItemCheckBox.translatesAutoresizingMaskIntoConstraints = false
 
         let defaultLabel = NSTextField(labelWithString: "Default browser/profile")
         defaultLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -233,6 +245,9 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
         contentView.addSubview(title)
         contentView.addSubview(subtitle)
+        contentView.addSubview(appearanceTitle)
+        contentView.addSubview(showDockIconCheckBox)
+        contentView.addSubview(showStatusItemCheckBox)
         contentView.addSubview(defaultLabel)
         contentView.addSubview(defaultBrowserPopup)
         contentView.addSubview(modifierLabel)
@@ -258,7 +273,17 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             subtitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
             subtitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
 
-            defaultLabel.topAnchor.constraint(equalTo: subtitle.bottomAnchor, constant: 18),
+            appearanceTitle.topAnchor.constraint(equalTo: subtitle.bottomAnchor, constant: 18),
+            appearanceTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            appearanceTitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            showDockIconCheckBox.topAnchor.constraint(equalTo: appearanceTitle.bottomAnchor, constant: 10),
+            showDockIconCheckBox.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+
+            showStatusItemCheckBox.centerYAnchor.constraint(equalTo: showDockIconCheckBox.centerYAnchor),
+            showStatusItemCheckBox.leadingAnchor.constraint(equalTo: showDockIconCheckBox.trailingAnchor, constant: 24),
+
+            defaultLabel.topAnchor.constraint(equalTo: showDockIconCheckBox.bottomAnchor, constant: 18),
             defaultLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
             defaultLabel.widthAnchor.constraint(equalToConstant: 160),
             defaultBrowserPopup.centerYAnchor.constraint(equalTo: defaultLabel.centerYAnchor),
@@ -331,6 +356,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     private func reloadControls() {
         visibleBrowserOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
+        showDockIconCheckBox.state = configuration.showsDockIcon ? .on : .off
+        showStatusItemCheckBox.state = configuration.showsStatusItem ? .on : .off
         defaultBrowserPopup.removeAllItems()
         ruleBrowserPopup.removeAllItems()
 
@@ -381,6 +408,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     private func persistConfiguration(statusMessage: String = "Saved automatically") -> Bool {
         do {
+            configuration.showsDockIcon = showDockIconCheckBox.state == .on
+            configuration.showsStatusItem = showStatusItemCheckBox.state == .on
             configuration.defaultOptionID = selectedRepresentedObject(defaultBrowserPopup)
                 ?? configuration.defaultOptionID
             configuration.chooserModifier = selectedRepresentedObject(modifierPopup)
@@ -429,6 +458,10 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     @objc private func modifierChanged() {
         _ = persistConfiguration(statusMessage: "Chooser modifier saved")
+    }
+
+    @objc private func presentationChanged() {
+        _ = persistConfiguration(statusMessage: "Appearance saved")
     }
 
     @objc private func ruleBrowserChanged() {
