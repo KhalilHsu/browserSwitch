@@ -86,119 +86,11 @@ private enum RuleMatchField: String, CaseIterable {
     }
 }
 
-private final class SettingsTabViewController: NSTabViewController {
-    private let backgroundVisualEffectView = NSVisualEffectView()
-
-    override func loadView() {
-        super.loadView()
-    }
-
-    override func viewDidAppear() {
-        super.viewDidAppear()
-        view.removeConstraints(view.constraints)
-        tabView.topAnchor.constraint(equalTo: view.topAnchor, constant: 0).isActive = true
-        tabView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 0).isActive = true
-
-        backgroundVisualEffectView.blendingMode = .behindWindow
-        backgroundVisualEffectView.material = .toolTip
-        backgroundVisualEffectView.state = .followsWindowActiveState
-        backgroundVisualEffectView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(backgroundVisualEffectView, positioned: .below, relativeTo: tabView)
-        backgroundVisualEffectView.frame.size = NSSize(width: 1000, height: 1000)
-        backgroundVisualEffectView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-        backgroundVisualEffectView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
-    }
-
-    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
-        updateWindowSize()
-    }
-
-    func updateWindowSize() {
-        guard let currentWindow = view.window,
-              selectedTabViewItemIndex >= 0,
-              selectedTabViewItemIndex < tabViewItems.count else {
-            return
-        }
-
-        let currentTabViewItem = tabViewItems[selectedTabViewItemIndex]
-        currentWindow.contentView?.layoutSubtreeIfNeeded()
-        currentTabViewItem.viewController?.view.layoutSubtreeIfNeeded()
-        let measuredSize = currentTabViewItem.viewController?.view.fittingSize ?? .zero
-        let preferredSize = currentTabViewItem.viewController?.preferredContentSize ?? .zero
-        let contentSize = NSSize(
-            width: max(settingsTabContentWidth, measuredSize.width, preferredSize.width),
-            height: max(measuredSize.height, preferredSize.height)
-        )
-        let tabViewSize = tabView.fittingSize
-        let toolbarHeight = max(tabViewSize.height - contentSize.height, settingsToolbarHeight)
-        let windowSize = currentWindow.frame.size
-        let heightDiff = contentSize.height + toolbarHeight - windowSize.height
-        let targetOrigin = NSPoint(x: currentWindow.frame.origin.x, y: currentWindow.frame.origin.y - heightDiff)
-        let targetSize = NSSize(width: contentSize.width, height: contentSize.height + toolbarHeight)
-        let targetRect = NSRect(origin: targetOrigin, size: targetSize)
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.28
-            context.allowsImplicitAnimation = true
-            currentWindow.setFrame(targetRect, display: true)
-        }
-    }
-}
-
-private let settingsToolbarHeight = CGFloat(112.0)
-private let settingsTabContentWidth = CGFloat(450.0)
-private let settingsPageTopInset = CGFloat(64.0)
-private let settingsRulesTopInset = CGFloat(132.0)
-
 @MainActor
 final class SettingsWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSWindowDelegate {
-    private enum SettingsTab: String, CaseIterable {
-        case basic
-        case appearance
-        case rules
-        case advanced
-        case about
-
-        var title: String {
-            switch self {
-            case .basic:
-                return "Basic"
-            case .appearance:
-                return "Appearance"
-            case .rules:
-                return "Rules"
-            case .advanced:
-                return "Advanced"
-            case .about:
-                return "About"
-            }
-        }
-
-        var symbolName: String {
-            switch self {
-            case .basic:
-                return "gearshape"
-            case .appearance:
-                return "paintbrush"
-            case .rules:
-                return "list.bullet.rectangle"
-            case .advanced:
-                return "slider.horizontal.3"
-            case .about:
-                return "info.circle"
-            }
-        }
-    }
-
-    private let onRequestSetAsDefaultBrowser: () -> Void
+    private let appearanceTitle = NSTextField(labelWithString: "Appearance")
     private let showDockIconCheckBox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
     private let showStatusItemCheckBox = NSButton(checkboxWithTitle: "Show menu bar icon", target: nil, action: nil)
-    private let defaultBrowserNoticeView = NSView()
-    private let defaultBrowserNoticeIcon = NSImageView()
-    private let defaultBrowserNoticeLabel = NSTextField(labelWithString: "Set Router as your default browser.")
-    private let defaultBrowserNoticeButton = NSButton(title: "Set Default", target: nil, action: nil)
-    private let defaultBrowserLabel = NSTextField(labelWithString: "Default browser/profile")
-    private let chooserModifierLabel = NSTextField(labelWithString: "Show chooser when")
     private let defaultBrowserPopup = NSPopUpButton()
     private let modifierPopup = NSPopUpButton()
     private let rulesTableView = NSTableView()
@@ -209,60 +101,25 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     private let autosaveStatusLabel = NSTextField(labelWithString: "Changes save automatically")
     private let browserSummaryLabel = NSTextField(labelWithString: "")
     private let ruleSummaryLabel = NSTextField(labelWithString: "")
-    private let headerTitleLabel = NSTextField(labelWithString: "BrowserRouter")
-    private let headerSubtitleLabel = NSTextField(labelWithString: "Route external links to the browser or profile that fits the moment.")
-    private let tabStripView = NSStackView()
-    private let rootStackView = NSStackView()
-    private let backgroundEffectView = NSVisualEffectView()
-    private let pageContainerView = NSView()
-    private let footerSeparatorView = NSBox()
-    private let footerStackView = NSStackView()
-    private let basicPageView = NSView()
-    private let appearancePageView = NSView()
-    private let rulesPageView = NSView()
-    private let advancedPageView = NSView()
-    private let aboutPageView = NSView()
-    private let aboutLogoLabel = NSTextField(labelWithString: "BrowserRouter")
-    private let aboutDescriptionLabel = NSTextField(labelWithString: "Route links to the right browser and profile with a single click.")
-    private let aboutVersionLabel = NSTextField(labelWithString: "")
-    private let aboutGitHubButton = NSButton(title: "GitHub", target: nil, action: nil)
-    private let aboutWebsiteButton = NSButton(title: "Project", target: nil, action: nil)
-    private let settingsTabViewController = SettingsTabViewController()
     private var configuration: RouterConfiguration
     private var visibleBrowserOptions: [BrowserOption] = []
     private var isPopulatingRuleForm = false
-    private var selectedTab: SettingsTab = .basic
-    private var tabButtons: [SettingsTab: NSButton] = [:]
-    private var pageContainerHeightConstraint: NSLayoutConstraint?
-    private var rulesScrollViewHeightConstraint: NSLayoutConstraint?
-    private var basicPageContentStack: NSStackView?
-    private var appearancePageContentStack: NSStackView?
-    private var rulesPageContentStack: NSStackView?
-    private var advancedPageContentStack: NSStackView?
-    private var aboutPageContentStack: NSStackView?
     private let onSave: (RouterConfiguration) -> Void
 
-    init(
-        configuration: RouterConfiguration,
-        onSave: @escaping (RouterConfiguration) -> Void,
-        onRequestSetAsDefaultBrowser: @escaping () -> Void = {}
-    ) {
+    init(configuration: RouterConfiguration, onSave: @escaping (RouterConfiguration) -> Void) {
         self.configuration = configuration
         self.onSave = onSave
-        self.onRequestSetAsDefaultBrowser = onRequestSetAsDefaultBrowser
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 680),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
         )
-        window.isOpaque = false
-        window.backgroundColor = .clear
         window.title = "BrowserRouter"
         window.isReleasedWhenClosed = false
         window.center()
-        window.minSize = NSSize(width: 720, height: 420)
+        window.minSize = NSSize(width: 720, height: 600)
 
         super.init(window: window)
         window.delegate = self
@@ -279,49 +136,19 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             return
         }
 
-        configureMosStylePreferences(in: contentView)
-        if false {
+        let title = NSTextField(labelWithString: "BrowserRouter")
+        title.font = .boldSystemFont(ofSize: 22)
+        title.translatesAutoresizingMaskIntoConstraints = false
 
-        contentView.wantsLayer = true
-        contentView.layer?.backgroundColor = .clear
+        let subtitle = NSTextField(labelWithString: "Route external links to the browser or profile that fits the moment.")
+        subtitle.font = .systemFont(ofSize: 13)
+        subtitle.textColor = .secondaryLabelColor
+        subtitle.lineBreakMode = .byWordWrapping
+        subtitle.maximumNumberOfLines = 2
+        subtitle.translatesAutoresizingMaskIntoConstraints = false
 
-        defaultBrowserNoticeView.wantsLayer = true
-        defaultBrowserNoticeView.layer?.cornerRadius = 12
-        defaultBrowserNoticeView.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.12).cgColor
-        defaultBrowserNoticeView.layer?.borderWidth = 1
-        defaultBrowserNoticeView.layer?.borderColor = NSColor.systemBlue.withAlphaComponent(0.18).cgColor
-        defaultBrowserNoticeView.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeIcon.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
-        defaultBrowserNoticeIcon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        defaultBrowserNoticeIcon.contentTintColor = .systemBlue
-        defaultBrowserNoticeIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        defaultBrowserNoticeLabel.textColor = .labelColor
-        defaultBrowserNoticeLabel.lineBreakMode = .byTruncatingTail
-        defaultBrowserNoticeLabel.maximumNumberOfLines = 1
-        defaultBrowserNoticeLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeButton.target = self
-        defaultBrowserNoticeButton.action = #selector(requestSetAsDefaultBrowser)
-        defaultBrowserNoticeButton.bezelStyle = .rounded
-        defaultBrowserNoticeButton.translatesAutoresizingMaskIntoConstraints = false
-
-        let noticeTextStack = NSStackView(views: [defaultBrowserNoticeLabel])
-        noticeTextStack.orientation = .vertical
-        noticeTextStack.alignment = .leading
-        noticeTextStack.spacing = 2
-        noticeTextStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let noticeStack = NSStackView(views: [defaultBrowserNoticeIcon, noticeTextStack, defaultBrowserNoticeButton])
-        noticeStack.orientation = .horizontal
-        noticeStack.alignment = .centerY
-        noticeStack.spacing = 12
-        noticeStack.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeView.addSubview(noticeStack)
-
+        appearanceTitle.font = .boldSystemFont(ofSize: 15)
+        appearanceTitle.translatesAutoresizingMaskIntoConstraints = false
         showDockIconCheckBox.target = self
         showDockIconCheckBox.action = #selector(presentationChanged)
         showDockIconCheckBox.translatesAutoresizingMaskIntoConstraints = false
@@ -329,19 +156,24 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         showStatusItemCheckBox.action = #selector(presentationChanged)
         showStatusItemCheckBox.translatesAutoresizingMaskIntoConstraints = false
 
-        defaultBrowserLabel.translatesAutoresizingMaskIntoConstraints = false
+        let defaultLabel = NSTextField(labelWithString: "Default browser/profile")
+        defaultLabel.translatesAutoresizingMaskIntoConstraints = false
         defaultBrowserPopup.translatesAutoresizingMaskIntoConstraints = false
         defaultBrowserPopup.target = self
         defaultBrowserPopup.action = #selector(defaultBrowserChanged)
 
-        chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
+        let modifierLabel = NSTextField(labelWithString: "Show chooser when")
+        modifierLabel.translatesAutoresizingMaskIntoConstraints = false
         modifierPopup.translatesAutoresizingMaskIntoConstraints = false
         modifierPopup.target = self
         modifierPopup.action = #selector(modifierChanged)
 
         let detectButton = makeButton("Detect Profiles", action: #selector(detectProfiles))
         let refreshButton = makeButton("Refresh Browsers", action: #selector(refreshBrowsers))
-        let revealButton = makeButton("Open Config", action: #selector(revealConfigFile))
+        let revealButton = makeButton("Reveal Config", action: #selector(revealConfigFile))
+        let closeButton = makeButton("Done", action: #selector(closeWindow))
+        closeButton.keyEquivalent = "\r"
+
         autosaveStatusLabel.textColor = .secondaryLabelColor
         autosaveStatusLabel.font = .systemFont(ofSize: 12)
         autosaveStatusLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -352,710 +184,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         ruleSummaryLabel.font = .systemFont(ofSize: 12)
         ruleSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
-        rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
-        rulesTableView.tableColumns[0].title = "Rule"
-        rulesTableView.tableColumns[0].width = 240
-        rulesTableView.tableColumns[1].title = "Browser/Profile"
-        rulesTableView.tableColumns[1].width = 184
-        rulesTableView.delegate = self
-        rulesTableView.dataSource = self
-        rulesTableView.usesAlternatingRowBackgroundColors = true
-        rulesTableView.allowsMultipleSelection = false
-        rulesTableView.rowHeight = 36
-        rulesTableView.intercellSpacing = NSSize(width: 8, height: 4)
-        rulesTableView.action = #selector(selectRule)
-        rulesTableView.target = self
-
-        let rulesScrollView = NSScrollView()
-        rulesScrollView.hasVerticalScroller = true
-        rulesScrollView.documentView = rulesTableView
-        rulesScrollView.translatesAutoresizingMaskIntoConstraints = false
-
-        ruleNameField.placeholderString = "Rule name"
-        ruleNameField.translatesAutoresizingMaskIntoConstraints = false
-        ruleNameField.delegate = self
-        ruleMatchTypePopup.translatesAutoresizingMaskIntoConstraints = false
-        ruleMatchTypePopup.target = self
-        ruleMatchTypePopup.action = #selector(ruleMatchTypeChanged)
-        for field in RuleMatchField.allCases {
-            ruleMatchTypePopup.addItem(withTitle: field.title)
-            ruleMatchTypePopup.lastItem?.representedObject = field.rawValue
-        }
-        ruleMatchValueField.placeholderString = RuleMatchField.hostSuffix.placeholder
-        ruleMatchValueField.translatesAutoresizingMaskIntoConstraints = false
-        ruleMatchValueField.delegate = self
-        ruleBrowserPopup.translatesAutoresizingMaskIntoConstraints = false
-        ruleBrowserPopup.target = self
-        ruleBrowserPopup.action = #selector(ruleBrowserChanged)
-
-        let addRuleButton = makeButton("Add Rule", action: #selector(addRule))
-        let updateRuleButton = makeButton("Update Selected", action: #selector(updateSelectedRule))
-        let removeRuleButton = makeButton("Remove Selected", action: #selector(removeSelectedRule))
-        addRuleButton.keyEquivalent = "\r"
-        let ruleButtonStack = NSStackView(views: [addRuleButton, updateRuleButton, removeRuleButton])
-        ruleButtonStack.orientation = .horizontal
-        ruleButtonStack.spacing = 8
-        ruleButtonStack.translatesAutoresizingMaskIntoConstraints = false
-
-        tabStripView.orientation = .horizontal
-        tabStripView.alignment = .top
-        tabStripView.distribution = .equalSpacing
-        tabStripView.spacing = 18
-        tabStripView.translatesAutoresizingMaskIntoConstraints = false
-
-        backgroundEffectView.material = .toolTip
-        backgroundEffectView.blendingMode = .behindWindow
-        backgroundEffectView.state = .followsWindowActiveState
-        backgroundEffectView.wantsLayer = true
-        backgroundEffectView.layer?.cornerRadius = 0
-        backgroundEffectView.layer?.masksToBounds = true
-        backgroundEffectView.translatesAutoresizingMaskIntoConstraints = false
-
-        pageContainerView.wantsLayer = true
-        pageContainerView.layer?.backgroundColor = NSColor.clear.cgColor
-        pageContainerView.layer?.borderWidth = 0
-        pageContainerView.layer?.shadowOpacity = 0
-        pageContainerView.translatesAutoresizingMaskIntoConstraints = false
-
-        footerSeparatorView.boxType = .separator
-        footerSeparatorView.translatesAutoresizingMaskIntoConstraints = false
-
-        footerStackView.orientation = .horizontal
-        footerStackView.alignment = .centerY
-        footerStackView.spacing = 12
-        footerStackView.distribution = .fill
-        footerStackView.translatesAutoresizingMaskIntoConstraints = false
-
-        let advancedHintLabel = NSTextField(labelWithString: "Use this page for browser inventory and the config file.")
-        advancedHintLabel.font = .systemFont(ofSize: 12)
-        advancedHintLabel.textColor = .secondaryLabelColor
-        advancedHintLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let aboutVersionStaticLabel = NSTextField(labelWithString: "Version")
-        aboutVersionStaticLabel.font = .systemFont(ofSize: 12, weight: .medium)
-        aboutVersionStaticLabel.textColor = .secondaryLabelColor
-        aboutVersionStaticLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutLogoLabel.font = .systemFont(ofSize: 34, weight: .light)
-        aboutLogoLabel.alignment = .center
-        aboutLogoLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutDescriptionLabel.font = .systemFont(ofSize: 14)
-        aboutDescriptionLabel.textColor = .secondaryLabelColor
-        aboutDescriptionLabel.alignment = .center
-        aboutDescriptionLabel.lineBreakMode = .byWordWrapping
-        aboutDescriptionLabel.maximumNumberOfLines = 2
-        aboutDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutVersionLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        aboutVersionLabel.alignment = .center
-        aboutVersionLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutGitHubButton.target = self
-        aboutGitHubButton.action = #selector(openGitHub)
-        aboutGitHubButton.bezelStyle = .rounded
-        aboutGitHubButton.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutWebsiteButton.title = "Releases"
-        aboutWebsiteButton.target = self
-        aboutWebsiteButton.action = #selector(openReleases)
-        aboutWebsiteButton.bezelStyle = .rounded
-        aboutWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
-
-        [basicPageView, appearancePageView, rulesPageView, advancedPageView, aboutPageView].forEach {
-            $0.translatesAutoresizingMaskIntoConstraints = false
-        }
-
-        contentView.addSubview(backgroundEffectView)
-        rootStackView.orientation = .vertical
-        rootStackView.alignment = .centerX
-        rootStackView.spacing = 14
-        rootStackView.translatesAutoresizingMaskIntoConstraints = false
-        rootStackView.addArrangedSubview(tabStripView)
-        rootStackView.addArrangedSubview(pageContainerView)
-        rootStackView.addArrangedSubview(footerSeparatorView)
-        rootStackView.addArrangedSubview(footerStackView)
-        contentView.addSubview(rootStackView)
-        pageContainerView.addSubview(basicPageView)
-        pageContainerView.addSubview(appearancePageView)
-        pageContainerView.addSubview(rulesPageView)
-        pageContainerView.addSubview(advancedPageView)
-        pageContainerView.addSubview(aboutPageView)
-
-        let footerSpacer = NSView()
-        footerSpacer.translatesAutoresizingMaskIntoConstraints = false
-        footerSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        footerSpacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        autosaveStatusLabel.textColor = .secondaryLabelColor
-        autosaveStatusLabel.font = .systemFont(ofSize: 12)
-        autosaveStatusLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let doneButton = makeButton("Done", action: #selector(closeWindow))
-        doneButton.keyEquivalent = "\r"
-
-        footerStackView.addArrangedSubview(autosaveStatusLabel)
-        footerStackView.addArrangedSubview(footerSpacer)
-        footerStackView.addArrangedSubview(doneButton)
-
-        buildTabStrip()
-        buildBasicPage()
-        buildAppearancePage()
-        buildRulesPage(rulesScrollView: rulesScrollView, ruleButtonStack: ruleButtonStack)
-        buildAdvancedPage(advancedHintLabel: advancedHintLabel, refreshButton: refreshButton, detectButton: detectButton, revealButton: revealButton)
-        buildAboutPage(versionStaticLabel: aboutVersionStaticLabel)
-
-        NSLayoutConstraint.activate([
-            backgroundEffectView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            backgroundEffectView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            backgroundEffectView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            backgroundEffectView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-
-            rootStackView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
-            rootStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            rootStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            rootStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16),
-
-            tabStripView.widthAnchor.constraint(lessThanOrEqualToConstant: 720),
-            pageContainerView.widthAnchor.constraint(equalTo: rootStackView.widthAnchor),
-
-            footerSeparatorView.widthAnchor.constraint(equalTo: rootStackView.widthAnchor),
-            footerStackView.widthAnchor.constraint(equalTo: rootStackView.widthAnchor),
-
-            basicPageView.topAnchor.constraint(equalTo: pageContainerView.topAnchor),
-            basicPageView.leadingAnchor.constraint(equalTo: pageContainerView.leadingAnchor),
-            basicPageView.trailingAnchor.constraint(equalTo: pageContainerView.trailingAnchor),
-            basicPageView.bottomAnchor.constraint(lessThanOrEqualTo: pageContainerView.bottomAnchor),
-
-            appearancePageView.topAnchor.constraint(equalTo: pageContainerView.topAnchor),
-            appearancePageView.leadingAnchor.constraint(equalTo: pageContainerView.leadingAnchor),
-            appearancePageView.trailingAnchor.constraint(equalTo: pageContainerView.trailingAnchor),
-            appearancePageView.bottomAnchor.constraint(lessThanOrEqualTo: pageContainerView.bottomAnchor),
-
-            rulesPageView.topAnchor.constraint(equalTo: pageContainerView.topAnchor),
-            rulesPageView.leadingAnchor.constraint(equalTo: pageContainerView.leadingAnchor),
-            rulesPageView.trailingAnchor.constraint(equalTo: pageContainerView.trailingAnchor),
-            rulesPageView.bottomAnchor.constraint(lessThanOrEqualTo: pageContainerView.bottomAnchor),
-
-            advancedPageView.topAnchor.constraint(equalTo: pageContainerView.topAnchor),
-            advancedPageView.leadingAnchor.constraint(equalTo: pageContainerView.leadingAnchor),
-            advancedPageView.trailingAnchor.constraint(equalTo: pageContainerView.trailingAnchor),
-            advancedPageView.bottomAnchor.constraint(lessThanOrEqualTo: pageContainerView.bottomAnchor),
-
-            aboutPageView.topAnchor.constraint(equalTo: pageContainerView.topAnchor),
-            aboutPageView.leadingAnchor.constraint(equalTo: pageContainerView.leadingAnchor),
-            aboutPageView.trailingAnchor.constraint(equalTo: pageContainerView.trailingAnchor),
-            aboutPageView.bottomAnchor.constraint(lessThanOrEqualTo: pageContainerView.bottomAnchor)
-        ])
-
-        pageContainerHeightConstraint = pageContainerView.heightAnchor.constraint(equalToConstant: 1)
-        pageContainerHeightConstraint?.priority = .required
-        pageContainerHeightConstraint?.isActive = true
-
-        updateTabSelection()
-        updateVisiblePage(animated: false, forceResize: true)
-        updateDefaultBrowserNotice()
-        updateAboutVersion()
-        }
-    }
-
-    private func buildTabStrip() {
-        tabStripView.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        tabButtons.removeAll()
-
-        for tab in SettingsTab.allCases {
-            let button = NSButton(title: tab.title, target: self, action: #selector(selectTab(_:)))
-            button.tag = SettingsTab.allCases.firstIndex(of: tab) ?? 0
-            button.identifier = NSUserInterfaceItemIdentifier(tab.rawValue)
-            button.image = NSImage(systemSymbolName: tab.symbolName, accessibilityDescription: nil)
-            button.imageScaling = .scaleProportionallyDown
-            button.imagePosition = .imageAbove
-            button.isBordered = false
-            button.bezelStyle = .regularSquare
-            button.translatesAutoresizingMaskIntoConstraints = false
-            button.wantsLayer = true
-            button.layer?.cornerRadius = 18
-            button.layer?.masksToBounds = true
-            button.setContentHuggingPriority(.required, for: .horizontal)
-            button.setContentCompressionResistancePriority(.required, for: .horizontal)
-            button.widthAnchor.constraint(equalToConstant: 112).isActive = true
-            button.heightAnchor.constraint(equalToConstant: 112).isActive = true
-            tabButtons[tab] = button
-            tabStripView.addArrangedSubview(button)
-        }
-
-        updateTabSelection()
-    }
-
-    private func buildBasicPage() {
-        let stack = NSStackView()
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 14
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        basicPageContentStack = stack
-
-        let pageTopSpacer = NSView()
-        pageTopSpacer.translatesAutoresizingMaskIntoConstraints = false
-        pageTopSpacer.heightAnchor.constraint(equalToConstant: settingsPageTopInset).isActive = true
-
-        stack.addArrangedSubview(pageTopSpacer)
-        stack.addArrangedSubview(defaultBrowserNoticeView)
-        stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
-        stack.addArrangedSubview(formRow(label: chooserModifierLabel, control: modifierPopup))
-        stack.addArrangedSubview(browserSummaryLabel)
-
-        basicPageView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: basicPageView.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(equalTo: basicPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: basicPageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -24),
-
-            defaultBrowserNoticeIcon.widthAnchor.constraint(equalToConstant: 16),
-            defaultBrowserNoticeIcon.heightAnchor.constraint(equalToConstant: 16),
-            defaultBrowserNoticeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 104)
-        ])
-    }
-
-    private func buildAppearancePage() {
-        let introLabel = NSTextField(labelWithString: "Keep BrowserRouter light or show it in more places.")
-        introLabel.font = .systemFont(ofSize: 13)
-        introLabel.textColor = .secondaryLabelColor
-        introLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let togglesStack = NSStackView(views: [showDockIconCheckBox, showStatusItemCheckBox])
-        togglesStack.orientation = .horizontal
-        togglesStack.alignment = .centerY
-        togglesStack.spacing = 24
-        togglesStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let noteLabel = NSTextField(labelWithString: "Skin options can grow here later without touching routing or rules.")
-        noteLabel.font = .systemFont(ofSize: 12)
-        noteLabel.textColor = .secondaryLabelColor
-        noteLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView(views: [introLabel, togglesStack, noteLabel])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 14
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        appearancePageContentStack = stack
-
-        let pageTopSpacer = NSView()
-        pageTopSpacer.translatesAutoresizingMaskIntoConstraints = false
-        pageTopSpacer.heightAnchor.constraint(equalToConstant: settingsPageTopInset).isActive = true
-        stack.insertArrangedSubview(pageTopSpacer, at: 0)
-
-        appearancePageView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: appearancePageView.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(equalTo: appearancePageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: appearancePageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: appearancePageView.bottomAnchor, constant: -24)
-        ])
-    }
-
-    private func buildRulesPage(rulesScrollView: NSScrollView, ruleButtonStack: NSStackView) {
-        let headerLabel = NSTextField(labelWithString: "Rules decide where a link goes before it opens.")
-        headerLabel.font = .systemFont(ofSize: 13)
-        headerLabel.textColor = .secondaryLabelColor
-        headerLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let rulesHeaderStack = NSStackView(views: [headerLabel, ruleSummaryLabel])
-        rulesHeaderStack.orientation = .horizontal
-        rulesHeaderStack.alignment = .centerY
-        rulesHeaderStack.spacing = 12
-        rulesHeaderStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let ruleNameLabel = NSTextField(labelWithString: "Rule name")
-        ruleNameLabel.font = .systemFont(ofSize: 12)
-        ruleNameLabel.textColor = .secondaryLabelColor
-        ruleNameLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let matchLabel = NSTextField(labelWithString: "Match")
-        matchLabel.font = .systemFont(ofSize: 12)
-        matchLabel.textColor = .secondaryLabelColor
-        matchLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let browserLabel = NSTextField(labelWithString: "Browser/Profile")
-        browserLabel.font = .systemFont(ofSize: 12)
-        browserLabel.textColor = .secondaryLabelColor
-        browserLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactRuleNameRow = NSStackView(views: [ruleNameLabel, ruleNameField])
-        compactRuleNameRow.orientation = .horizontal
-        compactRuleNameRow.alignment = .centerY
-        compactRuleNameRow.spacing = 12
-        compactRuleNameRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactMatchRow = NSStackView(views: [matchLabel, ruleMatchTypePopup, ruleMatchValueField])
-        compactMatchRow.orientation = .horizontal
-        compactMatchRow.alignment = .centerY
-        compactMatchRow.spacing = 12
-        compactMatchRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactBrowserRow = NSStackView(views: [browserLabel, ruleBrowserPopup])
-        compactBrowserRow.orientation = .horizontal
-        compactBrowserRow.alignment = .centerY
-        compactBrowserRow.spacing = 12
-        compactBrowserRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let editorStack = NSStackView(views: [compactRuleNameRow, compactMatchRow, compactBrowserRow, ruleButtonStack])
-        editorStack.orientation = .vertical
-        editorStack.alignment = .leading
-        editorStack.spacing = 10
-        editorStack.translatesAutoresizingMaskIntoConstraints = false
-
-        ruleNameLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        matchLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        browserLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        ruleMatchTypePopup.widthAnchor.constraint(equalToConstant: 128).isActive = true
-        ruleMatchValueField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        ruleMatchValueField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        ruleBrowserPopup.setContentHuggingPriority(.required, for: .horizontal)
-        ruleBrowserPopup.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        let pageTopSpacer = NSView()
-        pageTopSpacer.translatesAutoresizingMaskIntoConstraints = false
-        pageTopSpacer.heightAnchor.constraint(equalToConstant: settingsRulesTopInset).isActive = true
-
-        let pageStack = NSStackView(views: [pageTopSpacer, rulesHeaderStack, rulesScrollView, editorStack])
-        pageStack.orientation = .vertical
-        pageStack.alignment = .leading
-        pageStack.spacing = 0
-        pageStack.translatesAutoresizingMaskIntoConstraints = false
-        rulesPageContentStack = pageStack
-
-        rulesPageView.addSubview(pageStack)
-
-        NSLayoutConstraint.activate([
-            pageStack.topAnchor.constraint(equalTo: rulesPageView.topAnchor),
-            pageStack.leadingAnchor.constraint(equalTo: rulesPageView.leadingAnchor, constant: 24),
-            pageStack.trailingAnchor.constraint(equalTo: rulesPageView.trailingAnchor, constant: -24),
-            pageStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -24),
-
-            rulesScrollView.topAnchor.constraint(equalTo: rulesHeaderStack.bottomAnchor, constant: 16),
-            editorStack.topAnchor.constraint(equalTo: rulesScrollView.bottomAnchor, constant: 18),
-            editorStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -24),
-
-            ruleNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            ruleMatchValueField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160),
-            ruleBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180)
-        ])
-
-        rulesScrollViewHeightConstraint = rulesScrollView.heightAnchor.constraint(equalToConstant: preferredRulesListHeight())
-        rulesScrollViewHeightConstraint?.priority = .defaultHigh
-        rulesScrollViewHeightConstraint?.isActive = true
-    }
-
-    private func buildAdvancedPage(advancedHintLabel: NSTextField, refreshButton: NSButton, detectButton: NSButton, revealButton: NSButton) {
-        let inventoryTitle = NSTextField(labelWithString: "Browser inventory")
-        inventoryTitle.font = .systemFont(ofSize: 15, weight: .semibold)
-        inventoryTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let configTitle = NSTextField(labelWithString: "Config file")
-        configTitle.font = .systemFont(ofSize: 15, weight: .semibold)
-        configTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let inventoryButtons = NSStackView(views: [refreshButton, detectButton])
-        inventoryButtons.orientation = .horizontal
-        inventoryButtons.alignment = .centerY
-        inventoryButtons.spacing = 8
-        inventoryButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        let configButtons = NSStackView(views: [revealButton])
-        configButtons.orientation = .horizontal
-        configButtons.alignment = .centerY
-        configButtons.spacing = 8
-        configButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView(views: [advancedHintLabel, inventoryTitle, inventoryButtons, configTitle, configButtons])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 14
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        advancedPageContentStack = stack
-
-        let pageTopSpacer = NSView()
-        pageTopSpacer.translatesAutoresizingMaskIntoConstraints = false
-        pageTopSpacer.heightAnchor.constraint(equalToConstant: settingsPageTopInset).isActive = true
-        stack.insertArrangedSubview(pageTopSpacer, at: 0)
-
-        advancedPageView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: advancedPageView.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: advancedPageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -24)
-        ])
-    }
-
-    private func buildAboutPage(versionStaticLabel: NSTextField) {
-        let titleStack = NSStackView(views: [aboutLogoLabel, aboutDescriptionLabel])
-        titleStack.orientation = .vertical
-        titleStack.alignment = .centerX
-        titleStack.spacing = 8
-        titleStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let versionRow = NSStackView(views: [versionStaticLabel, aboutVersionLabel])
-        versionRow.orientation = .horizontal
-        versionRow.alignment = .centerY
-        versionRow.spacing = 10
-        versionRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let linkRow = NSStackView(views: [aboutGitHubButton, aboutWebsiteButton])
-        linkRow.orientation = .horizontal
-        linkRow.alignment = .centerY
-        linkRow.spacing = 10
-        linkRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView(views: [titleStack, versionRow, linkRow])
-        stack.orientation = .vertical
-        stack.alignment = .centerX
-        stack.spacing = 18
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        aboutPageContentStack = stack
-
-        let pageTopSpacer = NSView()
-        pageTopSpacer.translatesAutoresizingMaskIntoConstraints = false
-        pageTopSpacer.heightAnchor.constraint(equalToConstant: settingsPageTopInset).isActive = true
-        stack.insertArrangedSubview(pageTopSpacer, at: 0)
-
-        aboutPageView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: aboutPageView.centerXAnchor),
-            stack.topAnchor.constraint(equalTo: aboutPageView.topAnchor, constant: 24),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: aboutPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: aboutPageView.trailingAnchor, constant: -24)
-        ])
-    }
-
-    private func updateVisiblePage(animated: Bool = true, forceResize: Bool = false) {
-        let pages: [(SettingsTab, NSView)] = [
-            (.basic, basicPageView),
-            (.appearance, appearancePageView),
-            (.rules, rulesPageView),
-            (.advanced, advancedPageView),
-            (.about, aboutPageView)
-        ]
-
-        for (tab, page) in pages {
-            page.isHidden = tab != selectedTab
-        }
-
-        guard let pageContainerHeightConstraint else {
-            return
-        }
-
-        let targetHeight = preferredPageHeight(for: selectedTab)
-        let delta = targetHeight - pageContainerHeightConstraint.constant
-        guard abs(delta) > 0.5 || forceResize else {
-            return
-        }
-
-        pageContainerHeightConstraint.constant = targetHeight
-
-        guard let window else {
-            return
-        }
-
-        window.contentView?.layoutSubtreeIfNeeded()
-
-        let topMargin: CGFloat = 16
-        let bottomMargin: CGFloat = 16
-        let verticalSpacing: CGFloat = 14
-        let tabHeight = tabStripView.fittingSize.height
-        let footerHeight = footerStackView.fittingSize.height
-        let separatorHeight: CGFloat = 1
-        let contentHeight = topMargin
-            + tabHeight
-            + verticalSpacing
-            + targetHeight
-            + verticalSpacing
-            + separatorHeight
-            + verticalSpacing
-            + footerHeight
-            + bottomMargin
-
-        let currentFrame = window.frame
-        let newContentSize = NSSize(width: currentFrame.width, height: contentHeight)
-        window.setContentSize(newContentSize)
-    }
-
-    private func preferredPageHeight(for tab: SettingsTab) -> CGFloat {
-        switch tab {
-        case .basic:
-            return 168
-        case .appearance:
-            return 146
-        case .rules:
-            return 310
-        case .advanced:
-            return 164
-        case .about:
-            return 210
-        }
-    }
-
-    private func preferredRulesListHeight() -> CGFloat {
-        let rows = max(configuration.routingRules.count, 1)
-        let rowHeight = CGFloat(rulesTableView.rowHeight + rulesTableView.intercellSpacing.height)
-        return min(max(CGFloat(rows) * rowHeight + 34, 112), 228)
-    }
-
-    private func updateTabSelection() {
-        for tab in SettingsTab.allCases {
-            guard let button = tabButtons[tab] else {
-                continue
-            }
-
-            let isSelected = tab == selectedTab
-            let icon = NSImage(systemSymbolName: tab.symbolName, accessibilityDescription: nil)?
-                .withSymbolConfiguration(.init(pointSize: isSelected ? 22 : 20, weight: isSelected ? .semibold : .regular))
-            button.image = icon
-            button.title = tab.title
-            button.attributedTitle = NSAttributedString(
-                string: tab.title,
-                attributes: [
-                    .font: NSFont.systemFont(ofSize: 12, weight: isSelected ? .semibold : .regular),
-                    .foregroundColor: isSelected ? NSColor.systemBlue : NSColor.secondaryLabelColor
-                ]
-            )
-            button.contentTintColor = isSelected ? .systemBlue : .secondaryLabelColor
-            button.layer?.backgroundColor = isSelected ? NSColor.windowBackgroundColor.cgColor : NSColor.clear.cgColor
-            button.layer?.borderWidth = isSelected ? 1 : 0
-            button.layer?.borderColor = NSColor(calibratedWhite: 0.32, alpha: 1).withAlphaComponent(isSelected ? 0.78 : 0).cgColor
-            button.layer?.shadowOpacity = 0
-        }
-    }
-
-    private func updateAboutVersion() {
-        let bundle = Bundle.main
-        let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
-        let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-        if let build, !build.isEmpty {
-            aboutVersionLabel.stringValue = "v\(version) (\(build))"
-        } else {
-            aboutVersionLabel.stringValue = "v\(version)"
-        }
-    }
-
-    @objc private func selectTab(_ sender: NSButton) {
-        guard sender.tag >= 0, sender.tag < SettingsTab.allCases.count else {
-            return
-        }
-
-        let tab = SettingsTab.allCases[sender.tag]
-        selectedTab = tab
-        updateTabSelection()
-        updateVisiblePage()
-    }
-
-    @objc private func openGitHub() {
-        if let url = URL(string: "https://github.com/KhalilHsu/broswerSwitch") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    @objc private func openReleases() {
-        if let url = URL(string: "https://github.com/KhalilHsu/broswerSwitch/releases") {
-            NSWorkspace.shared.open(url)
-        }
-    }
-
-    private func formRow(label: NSTextField, control: NSView) -> NSView {
-        let row = NSStackView(views: [label, control])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 12
-        row.translatesAutoresizingMaskIntoConstraints = false
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.widthAnchor.constraint(equalToConstant: 160).isActive = true
-        control.translatesAutoresizingMaskIntoConstraints = false
-        control.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        control.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        return row
-    }
-
-    private func makeButton(_ title: String, action: Selector) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
-        button.bezelStyle = .rounded
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }
-
-    func reload(with configuration: RouterConfiguration) {
-        self.configuration = configuration
-        reloadControls()
-        updateDefaultBrowserNotice()
-    }
-
-    private func configureMosStylePreferences(in contentView: NSView) {
-        guard let window else {
-            return
-        }
-
-        window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .visible
-        window.isMovableByWindowBackground = true
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        if #available(macOS 11.0, *) {
-            window.toolbarStyle = .preference
-            window.titlebarSeparatorStyle = .none
-        }
-        window.minSize = NSSize(width: 450, height: 240)
-        window.center()
-
-        defaultBrowserNoticeView.wantsLayer = true
-        defaultBrowserNoticeView.layer?.cornerRadius = 12
-        defaultBrowserNoticeView.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.12).cgColor
-        defaultBrowserNoticeView.layer?.borderWidth = 1
-        defaultBrowserNoticeView.layer?.borderColor = NSColor.systemBlue.withAlphaComponent(0.18).cgColor
-        defaultBrowserNoticeView.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeIcon.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
-        defaultBrowserNoticeIcon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        defaultBrowserNoticeIcon.contentTintColor = .systemBlue
-        defaultBrowserNoticeIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        defaultBrowserNoticeLabel.textColor = .labelColor
-        defaultBrowserNoticeLabel.lineBreakMode = .byTruncatingTail
-        defaultBrowserNoticeLabel.maximumNumberOfLines = 1
-        defaultBrowserNoticeLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeButton.target = self
-        defaultBrowserNoticeButton.action = #selector(requestSetAsDefaultBrowser)
-        defaultBrowserNoticeButton.bezelStyle = .rounded
-        defaultBrowserNoticeButton.translatesAutoresizingMaskIntoConstraints = false
-
-        showDockIconCheckBox.target = self
-        showDockIconCheckBox.action = #selector(presentationChanged)
-        showDockIconCheckBox.translatesAutoresizingMaskIntoConstraints = false
-        showStatusItemCheckBox.target = self
-        showStatusItemCheckBox.action = #selector(presentationChanged)
-        showStatusItemCheckBox.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserLabel.translatesAutoresizingMaskIntoConstraints = false
-        defaultBrowserPopup.translatesAutoresizingMaskIntoConstraints = false
-        defaultBrowserPopup.target = self
-        defaultBrowserPopup.action = #selector(defaultBrowserChanged)
-
-        chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
-        modifierPopup.translatesAutoresizingMaskIntoConstraints = false
-        modifierPopup.target = self
-        modifierPopup.action = #selector(modifierChanged)
-
-        browserSummaryLabel.textColor = .secondaryLabelColor
-        browserSummaryLabel.font = .systemFont(ofSize: 12)
-        browserSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        ruleSummaryLabel.textColor = .secondaryLabelColor
-        ruleSummaryLabel.font = .systemFont(ofSize: 12)
-        ruleSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
+        let buttonStack = NSStackView(views: [refreshButton, detectButton, revealButton, closeButton])
+        buttonStack.orientation = .horizontal
+        buttonStack.spacing = 8
+        buttonStack.alignment = .centerY
+        buttonStack.translatesAutoresizingMaskIntoConstraints = false
 
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
@@ -1075,13 +208,21 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         rulesTableView.action = #selector(selectRule)
         rulesTableView.target = self
 
+        let rulesScrollView = NSScrollView()
+        rulesScrollView.hasVerticalScroller = true
+        rulesScrollView.documentView = rulesTableView
+        rulesScrollView.translatesAutoresizingMaskIntoConstraints = false
+
+        let rulesTitle = NSTextField(labelWithString: "Routing Rules")
+        rulesTitle.font = .boldSystemFont(ofSize: 15)
+        rulesTitle.translatesAutoresizingMaskIntoConstraints = false
+
         ruleNameField.placeholderString = "Rule name"
         ruleNameField.translatesAutoresizingMaskIntoConstraints = false
         ruleNameField.delegate = self
         ruleMatchTypePopup.translatesAutoresizingMaskIntoConstraints = false
         ruleMatchTypePopup.target = self
         ruleMatchTypePopup.action = #selector(ruleMatchTypeChanged)
-        ruleMatchTypePopup.removeAllItems()
         for field in RuleMatchField.allCases {
             ruleMatchTypePopup.addItem(withTitle: field.title)
             ruleMatchTypePopup.lastItem?.representedObject = field.rawValue
@@ -1093,114 +234,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         ruleBrowserPopup.target = self
         ruleBrowserPopup.action = #selector(ruleBrowserChanged)
 
-        aboutLogoLabel.font = .systemFont(ofSize: 34, weight: .light)
-        aboutLogoLabel.alignment = .center
-        aboutLogoLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutDescriptionLabel.font = .systemFont(ofSize: 14)
-        aboutDescriptionLabel.textColor = .secondaryLabelColor
-        aboutDescriptionLabel.alignment = .center
-        aboutDescriptionLabel.lineBreakMode = .byWordWrapping
-        aboutDescriptionLabel.maximumNumberOfLines = 2
-        aboutDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutVersionLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        aboutVersionLabel.alignment = .center
-        aboutVersionLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutGitHubButton.target = self
-        aboutGitHubButton.action = #selector(openGitHub)
-        aboutGitHubButton.bezelStyle = .rounded
-        aboutGitHubButton.translatesAutoresizingMaskIntoConstraints = false
-
-        aboutWebsiteButton.title = "Releases"
-        aboutWebsiteButton.target = self
-        aboutWebsiteButton.action = #selector(openReleases)
-        aboutWebsiteButton.bezelStyle = .rounded
-        aboutWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
-
-        buildBasicPage()
-        buildAppearancePage()
-        buildRulesPage(
-            rulesScrollView: makeRulesScrollView(),
-            ruleButtonStack: makeRuleButtonStack()
-        )
-        buildAdvancedPage(
-            advancedHintLabel: makeAdvancedHintLabel(),
-            refreshButton: makeRefreshButton(),
-            detectButton: makeDetectButton(),
-            revealButton: makeRevealButton()
-        )
-        buildAboutPage(versionStaticLabel: makeAboutVersionLabel())
-
-        settingsTabViewController.tabStyle = .toolbar
-        settingsTabViewController.transitionOptions = []
-        settingsTabViewController.tabViewItems.forEach { settingsTabViewController.removeTabViewItem($0) }
-
-        addTab(
-            title: "Basic",
-            symbolName: "gearshape",
-            view: basicPageView,
-            size: NSSize(width: settingsTabContentWidth, height: 1)
-        )
-        addTab(
-            title: "Appearance",
-            symbolName: "paintbrush",
-            view: appearancePageView,
-            size: NSSize(width: settingsTabContentWidth, height: 1)
-        )
-        addTab(
-            title: "Rules",
-            symbolName: "list.bullet.rectangle",
-            view: rulesPageView,
-            size: NSSize(width: settingsTabContentWidth, height: 1)
-        )
-        addTab(
-            title: "Advanced",
-            symbolName: "slider.horizontal.3",
-            view: advancedPageView,
-            size: NSSize(width: settingsTabContentWidth, height: 1)
-        )
-        addTab(
-            title: "About",
-            symbolName: "info.circle",
-            view: aboutPageView,
-            size: NSSize(width: settingsTabContentWidth, height: 1)
-        )
-
-        contentView.wantsLayer = true
-        contentView.layer?.backgroundColor = .clear
-        window.contentViewController = settingsTabViewController
-        settingsTabViewController.selectedTabViewItemIndex = 0
-        updateAboutVersion()
-        updateDefaultBrowserNotice()
-
-        DispatchQueue.main.async { [weak self] in
-            self?.settingsTabViewController.updateWindowSize()
-        }
-    }
-
-    private func addTab(title: String, symbolName: String, view: NSView, size: NSSize) {
-        let controller = NSViewController()
-        controller.view = view
-        controller.preferredContentSize = size
-        view.translatesAutoresizingMaskIntoConstraints = false
-
-        let item = NSTabViewItem(viewController: controller)
-        item.label = title
-        item.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
-        settingsTabViewController.addTabViewItem(item)
-    }
-
-    private func makeRulesScrollView() -> NSScrollView {
-        let rulesScrollView = NSScrollView()
-        rulesScrollView.hasVerticalScroller = true
-        rulesScrollView.documentView = rulesTableView
-        rulesScrollView.translatesAutoresizingMaskIntoConstraints = false
-        return rulesScrollView
-    }
-
-    private func makeRuleButtonStack() -> NSStackView {
         let addRuleButton = makeButton("Add Rule", action: #selector(addRule))
         let updateRuleButton = makeButton("Update Selected", action: #selector(updateSelectedRule))
         let removeRuleButton = makeButton("Remove Selected", action: #selector(removeSelectedRule))
@@ -1209,35 +242,116 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         ruleButtonStack.orientation = .horizontal
         ruleButtonStack.spacing = 8
         ruleButtonStack.translatesAutoresizingMaskIntoConstraints = false
-        return ruleButtonStack
+
+        contentView.addSubview(title)
+        contentView.addSubview(subtitle)
+        contentView.addSubview(appearanceTitle)
+        contentView.addSubview(showDockIconCheckBox)
+        contentView.addSubview(showStatusItemCheckBox)
+        contentView.addSubview(defaultLabel)
+        contentView.addSubview(defaultBrowserPopup)
+        contentView.addSubview(modifierLabel)
+        contentView.addSubview(modifierPopup)
+        contentView.addSubview(browserSummaryLabel)
+        contentView.addSubview(rulesTitle)
+        contentView.addSubview(ruleSummaryLabel)
+        contentView.addSubview(rulesScrollView)
+        contentView.addSubview(ruleNameField)
+        contentView.addSubview(ruleMatchTypePopup)
+        contentView.addSubview(ruleMatchValueField)
+        contentView.addSubview(ruleBrowserPopup)
+        contentView.addSubview(ruleButtonStack)
+        contentView.addSubview(autosaveStatusLabel)
+        contentView.addSubview(buttonStack)
+
+        NSLayoutConstraint.activate([
+            title.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18),
+            title.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            title.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            subtitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 6),
+            subtitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            subtitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            appearanceTitle.topAnchor.constraint(equalTo: subtitle.bottomAnchor, constant: 18),
+            appearanceTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            appearanceTitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            showDockIconCheckBox.topAnchor.constraint(equalTo: appearanceTitle.bottomAnchor, constant: 10),
+            showDockIconCheckBox.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+
+            showStatusItemCheckBox.centerYAnchor.constraint(equalTo: showDockIconCheckBox.centerYAnchor),
+            showStatusItemCheckBox.leadingAnchor.constraint(equalTo: showDockIconCheckBox.trailingAnchor, constant: 24),
+
+            defaultLabel.topAnchor.constraint(equalTo: showDockIconCheckBox.bottomAnchor, constant: 18),
+            defaultLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            defaultLabel.widthAnchor.constraint(equalToConstant: 160),
+            defaultBrowserPopup.centerYAnchor.constraint(equalTo: defaultLabel.centerYAnchor),
+            defaultBrowserPopup.leadingAnchor.constraint(equalTo: defaultLabel.trailingAnchor, constant: 12),
+            defaultBrowserPopup.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            modifierLabel.topAnchor.constraint(equalTo: defaultLabel.bottomAnchor, constant: 14),
+            modifierLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            modifierLabel.widthAnchor.constraint(equalTo: defaultLabel.widthAnchor),
+            modifierPopup.centerYAnchor.constraint(equalTo: modifierLabel.centerYAnchor),
+            modifierPopup.leadingAnchor.constraint(equalTo: modifierLabel.trailingAnchor, constant: 12),
+            modifierPopup.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            browserSummaryLabel.topAnchor.constraint(equalTo: modifierPopup.bottomAnchor, constant: 8),
+            browserSummaryLabel.leadingAnchor.constraint(equalTo: defaultBrowserPopup.leadingAnchor),
+            browserSummaryLabel.trailingAnchor.constraint(equalTo: defaultBrowserPopup.trailingAnchor),
+
+            rulesTitle.topAnchor.constraint(equalTo: browserSummaryLabel.bottomAnchor, constant: 20),
+            rulesTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+
+            ruleSummaryLabel.centerYAnchor.constraint(equalTo: rulesTitle.centerYAnchor),
+            ruleSummaryLabel.leadingAnchor.constraint(equalTo: rulesTitle.trailingAnchor, constant: 10),
+            ruleSummaryLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -18),
+
+            rulesScrollView.topAnchor.constraint(equalTo: rulesTitle.bottomAnchor, constant: 10),
+            rulesScrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            rulesScrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+            rulesScrollView.heightAnchor.constraint(greaterThanOrEqualToConstant: 240),
+
+            ruleNameField.topAnchor.constraint(equalTo: rulesScrollView.bottomAnchor, constant: 12),
+            ruleNameField.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            ruleNameField.widthAnchor.constraint(equalToConstant: 170),
+
+            ruleMatchTypePopup.centerYAnchor.constraint(equalTo: ruleNameField.centerYAnchor),
+            ruleMatchTypePopup.leadingAnchor.constraint(equalTo: ruleNameField.trailingAnchor, constant: 8),
+            ruleMatchTypePopup.widthAnchor.constraint(equalToConstant: 140),
+
+            ruleMatchValueField.centerYAnchor.constraint(equalTo: ruleNameField.centerYAnchor),
+            ruleMatchValueField.leadingAnchor.constraint(equalTo: ruleMatchTypePopup.trailingAnchor, constant: 8),
+            ruleMatchValueField.widthAnchor.constraint(equalToConstant: 220),
+
+            ruleBrowserPopup.centerYAnchor.constraint(equalTo: ruleNameField.centerYAnchor),
+            ruleBrowserPopup.leadingAnchor.constraint(equalTo: ruleMatchValueField.trailingAnchor, constant: 8),
+            ruleBrowserPopup.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+
+            ruleButtonStack.topAnchor.constraint(equalTo: ruleNameField.bottomAnchor, constant: 10),
+            ruleButtonStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            ruleButtonStack.bottomAnchor.constraint(lessThanOrEqualTo: buttonStack.topAnchor, constant: -18),
+
+            autosaveStatusLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 18),
+            autosaveStatusLabel.trailingAnchor.constraint(lessThanOrEqualTo: buttonStack.leadingAnchor, constant: -12),
+            autosaveStatusLabel.centerYAnchor.constraint(equalTo: buttonStack.centerYAnchor),
+
+            buttonStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -18),
+            buttonStack.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -18)
+        ])
     }
 
-    private func makeAdvancedHintLabel() -> NSTextField {
-        let label = NSTextField(labelWithString: "Use this page for browser inventory and the config file.")
-        label.font = .systemFont(ofSize: 12)
-        label.textColor = .secondaryLabelColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    private func makeButton(_ title: String, action: Selector) -> NSButton {
+        let button = NSButton(title: title, target: self, action: action)
+        button.bezelStyle = .rounded
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
     }
 
-    private func makeRefreshButton() -> NSButton {
-        makeButton("Refresh Browsers", action: #selector(refreshBrowsers))
-    }
-
-    private func makeDetectButton() -> NSButton {
-        makeButton("Detect Profiles", action: #selector(detectProfiles))
-    }
-
-    private func makeRevealButton() -> NSButton {
-        makeButton("Open Config", action: #selector(revealConfigFile))
-    }
-
-    private func makeAboutVersionLabel() -> NSTextField {
-        let label = NSTextField(labelWithString: "Version")
-        label.font = .systemFont(ofSize: 12, weight: .medium)
-        label.textColor = .secondaryLabelColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
+    func reload(with configuration: RouterConfiguration) {
+        self.configuration = configuration
+        reloadControls()
     }
 
     private func reloadControls() {
@@ -1277,11 +391,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         } else {
             clearRuleForm()
         }
-    }
-
-    private func updateDefaultBrowserNotice() {
-        let isDefaultBrowser = (try? DefaultBrowserManager())?.isRoutingToSelf() ?? false
-        defaultBrowserNoticeView.isHidden = isDefaultBrowser
     }
 
     @objc private func detectProfiles() {
@@ -1332,16 +441,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             ? "\(configuration.routingRules.count) rule(s)"
             : "\(configuration.routingRules.count) rule(s), \(unresolvedRuleCount) need attention"
         ruleSummaryLabel.textColor = unresolvedRuleCount == 0 ? .secondaryLabelColor : .systemOrange
-        rulesScrollViewHeightConstraint?.constant = preferredRulesListHeight()
     }
 
     @objc private func revealConfigFile() {
         _ = RouterConfiguration.load()
         NSWorkspace.shared.activateFileViewerSelecting([RouterConfiguration.configURL])
-    }
-
-    @objc private func requestSetAsDefaultBrowser() {
-        onRequestSetAsDefaultBrowser()
     }
 
     @objc private func closeWindow() {
@@ -1397,8 +501,9 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
         switch identifier {
         case "name":
-            let match = RuleMatchField.matchDescription(for: rule)
-            text = match.isEmpty ? rule.name : "\(rule.name)\n\(match)"
+            text = rule.name
+        case "match":
+            text = RuleMatchField.matchDescription(for: rule)
         case "browser":
             if let option = configuration.browserOptions.first(where: { $0.id == rule.browserOptionID }) {
                 text = BrowserAvailability.isInstalled(option) ? option.name : "\(option.name) (Unavailable)"
@@ -1410,8 +515,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
 
         let cell = NSTextField(labelWithString: text)
-        cell.lineBreakMode = .byWordWrapping
-        cell.maximumNumberOfLines = 2
+        cell.lineBreakMode = .byTruncatingTail
         return cell
     }
 

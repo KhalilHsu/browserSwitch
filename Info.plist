@@ -12,8 +12,6 @@
 	<string>6.0</string>
 	<key>CFBundleDisplayName</key>
 	<string>BrowserRouter</string>
-	<key>CFBundleIconFile</key>
-	<string>BrowserRouter</string>
 	<key>CFBundleName</key>
 	<string>BrowserRouter</string>
 	<key>CFBundlePackageType</key>

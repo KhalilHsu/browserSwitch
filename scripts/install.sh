@@ -7,19 +7,6 @@ TARGET_APP="/Applications/${APP_NAME}.app"
 BUNDLE_ID="local.browser-router"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 
-for app in .build/BrowserRouter*.app; do
-  case "${app}" in
-    ".build/BrowserRouter.app")
-      continue
-      ;;
-  esac
-
-  if [ -d "${app}" ]; then
-    "${LSREGISTER}" -u "${app}" >/dev/null 2>&1 || true
-    rm -rf "${app}"
-  fi
-done
-
 scripts/build-app.sh >/dev/null
 
 osascript -e "tell application id \"${BUNDLE_ID}\" to quit" >/dev/null 2>&1 || true
