@@ -63,7 +63,7 @@ BrowserRouter.
 1. Open `.build/BrowserRouter.app`.
 2. Move it to `/Applications` if you want to keep testing it across rebuilds.
 3. Use the menu bar item named `Router`.
-4. Choose `Set as HTTP/HTTPS Default`.
+4. Choose `Set as Default Browser`.
 5. Click a link from another app.
 6. Hold `Command + Shift` while opening a link to show the browser chooser.
 
@@ -94,10 +94,7 @@ window includes:
 - A `Detect Chromium Profiles` button that merges profiles discovered from
   Chrome, Chrome Canary, Edge, Brave, and Vivaldi.
 
-The menu bar also includes:
-
-- `Set as HTTP/HTTPS Default`
-- `Show Default Handler Status`
+The menu bar also includes a read-only `Default Handler Status` section.
 
 If you hide both the Dock icon and the menu bar icon, BrowserRouter keeps
 running as a headless helper. Opening the app bundle again will bring up

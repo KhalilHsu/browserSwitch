@@ -4,7 +4,7 @@ import Foundation
 import BrowserRouterCore
 
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var configuration = RouterConfiguration.load()
     private let launcher = BrowserLauncher()
@@ -38,22 +38,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func installStatusItem() {
         guard statusItem == nil else {
+            statusItem?.menu = buildStatusMenu()
             return
         }
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.button?.title = "Router"
-
-        let menu = NSMenu()
-        menu.addItem(NSMenuItem(title: "Set as HTTP/HTTPS Default", action: #selector(setAsDefaultBrowser), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Show Default Handler Status", action: #selector(showDefaultHandlerStatus), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "Open Config", action: #selector(openConfig), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Show Test Chooser", action: #selector(showTestChooser), keyEquivalent: "t"))
-        menu.addItem(.separator())
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q"))
-        item.menu = menu
+        item.menu = buildStatusMenu()
         statusItem = item
+    }
+
+    private func buildStatusMenu() -> NSMenu {
+        let menu = NSMenu()
+        menu.delegate = self
+        menu.autoenablesItems = false
+        return menu
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        menu.addItem(actionMenuItem(
+            title: "Set as Default Browser",
+            systemImageName: "checkmark.seal",
+            action: #selector(setAsDefaultBrowser),
+            keyEquivalent: ""
+        ))
+        menu.addItem(actionMenuItem(
+            title: "Settings...",
+            systemImageName: "gearshape",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        ))
+        menu.addItem(.separator())
+
+        let manager = currentDefaultBrowserManager()
+        menu.addItem(statusHeaderItem("Routing"))
+        for item in statusItems(for: manager) {
+            menu.addItem(item)
+        }
+
+        menu.addItem(.separator())
+        menu.addItem(actionMenuItem(
+            title: "Quit",
+            systemImageName: "power",
+            action: #selector(quit),
+            keyEquivalent: "q"
+        ))
     }
 
     private func removeStatusItem() {
@@ -172,8 +203,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func setAsDefaultBrowser() {
         Task { @MainActor in
             do {
-                let manager = try DefaultBrowserManager()
-                defaultBrowserManager = manager
+                guard let manager = currentDefaultBrowserManager(forceReload: true) else {
+                    showMessage(
+                        title: "Could Not Set BrowserRouter As Default",
+                        message: "BrowserRouter could not initialize its default-handler manager."
+                    )
+                    return
+                }
 
                 guard manager.isInstalledInApplications() else {
                     showMessage(
@@ -189,27 +225,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     title: "BrowserRouter Is Now The Default",
                     message: manager.statusSummary()
                 )
+                settingsWindowController?.reload(with: configuration)
             } catch {
                 NSLog("BrowserRouter failed to become the default browser: \(error)")
                 showMessage(
                     title: "Could Not Set BrowserRouter As Default",
-                    message: "\(error.localizedDescription)\n\nCurrent handlers:\n\((try? DefaultBrowserManager().statusSummary()) ?? "Unavailable")"
+                    message: "\(error.localizedDescription)\n\nCurrent handlers:\n\((currentDefaultBrowserManager()?.statusSummary()) ?? "Unavailable")"
                 )
             }
         }
-    }
-
-    @objc private func showDefaultHandlerStatus() {
-        let summary = defaultBrowserManager?.statusSummary()
-            ?? (try? DefaultBrowserManager().statusSummary())
-            ?? "Unavailable"
-        showMessage(title: "Default Handler Status", message: summary)
-    }
-
-    @objc private func openConfig() {
-        _ = RouterConfiguration.load()
-        rememberConfigModificationDate()
-        NSWorkspace.shared.open(RouterConfiguration.configURL)
     }
 
     @objc private func openSettings() {
@@ -218,11 +242,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         applyPresentationSettings()
 
         if settingsWindowController == nil {
-            settingsWindowController = SettingsWindowController(configuration: configuration) { [weak self] newConfiguration in
-                self?.configuration = newConfiguration
-                self?.rememberConfigModificationDate()
-                self?.applyPresentationSettings()
-            }
+            settingsWindowController = SettingsWindowController(
+                configuration: configuration,
+                onSave: { [weak self] newConfiguration in
+                    self?.configuration = newConfiguration
+                    self?.rememberConfigModificationDate()
+                    self?.applyPresentationSettings()
+                },
+                onRequestSetAsDefaultBrowser: { [weak self] in
+                    self?.setAsDefaultBrowser()
+                }
+            )
         } else {
             settingsWindowController?.reload(with: configuration)
         }
@@ -232,12 +262,88 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
-    @objc private func showTestChooser() {
-        showChooser(for: URL(string: "https://example.com")!)
-    }
-
     @objc private func quit() {
         NSApp.terminate(nil)
+    }
+
+    private func currentDefaultBrowserManager(forceReload: Bool = false) -> DefaultBrowserManager? {
+        if forceReload || defaultBrowserManager == nil {
+            defaultBrowserManager = try? DefaultBrowserManager()
+        }
+
+        return defaultBrowserManager
+    }
+
+    private func actionMenuItem(title: String, systemImageName: String, action: Selector, keyEquivalent: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: keyEquivalent)
+        item.target = self
+        item.image = menuIcon(named: systemImageName)
+        return item
+    }
+
+    private func statusHeaderItem(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.image = menuIcon(named: "arrow.triangle.branch")
+        item.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 13, weight: .regular),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ]
+        )
+        return item
+    }
+
+    private func statusLineItem(title: String, emphasized: Bool = false) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        item.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 13, weight: .regular),
+                .foregroundColor: emphasized ? NSColor.labelColor : NSColor.secondaryLabelColor
+            ]
+        )
+        return item
+    }
+
+    private func selectedBrowserProfileName() -> String {
+        configuration.browserOptions.first(where: { $0.id == configuration.defaultOptionID })?.name
+            ?? "Unknown browser/profile"
+    }
+
+    private func statusItems(for manager: DefaultBrowserManager?) -> [NSMenuItem] {
+        guard let manager else {
+            return [
+                statusLineItem(title: "Status unavailable", emphasized: true),
+                statusLineItem(title: "Open Settings to check your browser profile")
+            ]
+        }
+
+        if manager.isRoutingToSelf() {
+            var items: [NSMenuItem] = [
+                statusLineItem(title: "Opening with \(selectedBrowserProfileName())", emphasized: true)
+            ]
+
+            let modifier = ChooserModifier(rawValue: configuration.chooserModifier) ?? .commandShift
+            if modifier == .always {
+                items.append(statusLineItem(title: "Chooser always on"))
+            } else {
+                items.append(statusLineItem(title: "Hold \(modifier.title) for chooser"))
+            }
+
+            return items
+        }
+
+        return [
+            statusLineItem(title: "Set Router as your default browser", emphasized: true)
+        ]
+    }
+
+    private func menuIcon(named systemImageName: String) -> NSImage? {
+        NSImage(systemSymbolName: systemImageName, accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 13, weight: .regular))
     }
 
     private func showMessage(title: String, message: String) {
