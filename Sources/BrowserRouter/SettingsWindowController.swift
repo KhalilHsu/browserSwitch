@@ -795,8 +795,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: aboutPageView.topAnchor, constant: settingsPageTopPadding),
             stack.leadingAnchor.constraint(equalTo: aboutPageView.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: aboutPageView.trailingAnchor, constant: -32),
-            stack.bottomAnchor.constraint(equalTo: aboutPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
+            stack.trailingAnchor.constraint(equalTo: aboutPageView.trailingAnchor, constant: -32),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: aboutPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
         ])
     }
 
@@ -1063,14 +1063,15 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         ruleBrowserPopup.action = #selector(ruleBrowserChanged)
 
         aboutLogoLabel.font = .systemFont(ofSize: 34, weight: .light)
-        aboutLogoLabel.alignment = .center
+        aboutLogoLabel.alignment = .left
         aboutLogoLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutDescriptionLabel.font = .systemFont(ofSize: 14)
         aboutDescriptionLabel.textColor = .secondaryLabelColor
-        aboutDescriptionLabel.alignment = .center
+        aboutDescriptionLabel.alignment = .left
         aboutDescriptionLabel.lineBreakMode = .byWordWrapping
-        aboutDescriptionLabel.maximumNumberOfLines = 2
+        aboutDescriptionLabel.maximumNumberOfLines = 0
+        aboutDescriptionLabel.preferredMaxLayoutWidth = settingsTabContentWidth - 64
         aboutDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutVersionLabel.font = .systemFont(ofSize: 13, weight: .regular)
@@ -1291,6 +1292,10 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     private func updateDefaultBrowserNotice() {
         let isDefaultBrowser = (try? DefaultBrowserManager())?.isRoutingToSelf() ?? false
+        // Use setVisibilityPriority so NSStackView immediately recalculates
+        // fittingSize — this works correctly even before the view is in a window.
+        let priority: NSStackView.VisibilityPriority = isDefaultBrowser ? .notVisible : .mustHold
+        basicPageContentStack?.setVisibilityPriority(priority, for: defaultBrowserNoticeView)
         defaultBrowserNoticeView.isHidden = isDefaultBrowser
     }
 
