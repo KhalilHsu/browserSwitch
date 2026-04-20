@@ -592,11 +592,17 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             stack.topAnchor.constraint(equalTo: basicPageView.topAnchor, constant: settingsPageTopPadding),
             stack.leadingAnchor.constraint(equalTo: basicPageView.leadingAnchor, constant: 32),
             stack.trailingAnchor.constraint(lessThanOrEqualTo: basicPageView.trailingAnchor, constant: -32),
-            stack.bottomAnchor.constraint(equalTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+
+            // Notice banner fills full row width
+            defaultBrowserNoticeView.widthAnchor.constraint(equalTo: basicPageView.widthAnchor, constant: -64),
 
             defaultBrowserNoticeIcon.widthAnchor.constraint(equalToConstant: 16),
             defaultBrowserNoticeIcon.heightAnchor.constraint(equalToConstant: 16),
-            defaultBrowserNoticeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 104)
+            defaultBrowserNoticeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 104),
+
+            // Make both popup buttons the same width so they align
+            modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor)
         ])
     }
 
@@ -1096,6 +1102,10 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         )
         buildAboutPage(versionStaticLabel: makeAboutVersionLabel())
 
+        // Apply notice visibility BEFORE measuring preferredContentSize so the
+        // hidden notice view is excluded from the height calculation.
+        updateDefaultBrowserNotice()
+
         settingsTabViewController.tabStyle = .toolbar
         settingsTabViewController.transitionOptions = []
         settingsTabViewController.tabViewItems.forEach { settingsTabViewController.removeTabViewItem($0) }
@@ -1136,7 +1146,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         window.contentViewController = settingsTabViewController
         settingsTabViewController.selectedTabViewItemIndex = 0
         updateAboutVersion()
-        updateDefaultBrowserNotice()
     }
 
     private func preferredContentSize(for tab: SettingsTab) -> NSSize {
