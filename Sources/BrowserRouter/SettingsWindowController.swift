@@ -97,7 +97,6 @@ private final class SettingsTabViewController: NSTabViewController {
     override func viewDidAppear() {
         super.viewDidAppear()
         installLayoutIfNeeded()
-        updateWindowSize()
     }
 
     override func viewDidLayout() {
@@ -130,47 +129,10 @@ private final class SettingsTabViewController: NSTabViewController {
             backgroundVisualEffectView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
     }
-
-    override func tabView(_ tabView: NSTabView, didSelect tabViewItem: NSTabViewItem?) {
-        updateWindowSize()
-    }
-
-    func updateWindowSize() {
-        guard let currentWindow = view.window,
-              selectedTabViewItemIndex >= 0,
-              selectedTabViewItemIndex < tabViewItems.count else {
-            return
-        }
-
-        let currentTabViewItem = tabViewItems[selectedTabViewItemIndex]
-        currentWindow.contentView?.layoutSubtreeIfNeeded()
-        currentTabViewItem.viewController?.view.layoutSubtreeIfNeeded()
-        let measuredSize = currentTabViewItem.viewController?.view.fittingSize ?? .zero
-        let preferredSize = currentTabViewItem.viewController?.preferredContentSize ?? .zero
-        let contentSize = NSSize(
-            width: max(settingsTabContentWidth, measuredSize.width, preferredSize.width),
-            height: max(measuredSize.height, preferredSize.height)
-        )
-        let tabViewSize = tabView.fittingSize
-        let toolbarHeight = max(tabViewSize.height - contentSize.height, settingsToolbarHeight)
-        let windowSize = currentWindow.frame.size
-        let targetWidth = max(contentSize.width, tabViewSize.width, currentWindow.minSize.width)
-        let targetHeight = contentSize.height + toolbarHeight
-        let heightDiff = targetHeight - windowSize.height
-        let targetOrigin = NSPoint(x: currentWindow.frame.origin.x, y: currentWindow.frame.origin.y - heightDiff)
-        let targetSize = NSSize(width: targetWidth, height: targetHeight)
-        let targetRect = NSRect(origin: targetOrigin, size: targetSize)
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.28
-            context.allowsImplicitAnimation = true
-            currentWindow.setFrame(targetRect, display: true)
-        }
-    }
 }
 
-private let settingsToolbarHeight = CGFloat(112.0)
-private let settingsTabContentWidth = CGFloat(450.0)
+private let settingsToolbarHeight = CGFloat(76.0)
+private let settingsTabContentWidth = CGFloat(520.0)
 private let settingsPageVerticalPadding = CGFloat(24.0)
 private let settingsPageTopPadding = settingsToolbarHeight + settingsPageVerticalPadding
 
@@ -247,7 +209,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     private let advancedPageView = NSView()
     private let aboutPageView = NSView()
     private let aboutLogoLabel = NSTextField(labelWithString: "BrowserRouter")
-    private let aboutDescriptionLabel = NSTextField(labelWithString: "Route links to the right browser and profile with a single click.")
+    private let aboutDescriptionLabel = NSTextField(labelWithString: "Regrettably, I have only made some minor contributions to the open-source community.")
     private let aboutVersionLabel = NSTextField(labelWithString: "")
     private let aboutGitHubButton = NSButton(title: "GitHub", target: nil, action: nil)
     private let aboutWebsiteButton = NSButton(title: "Project", target: nil, action: nil)
@@ -462,18 +424,18 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         aboutVersionStaticLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutLogoLabel.font = .systemFont(ofSize: 34, weight: .light)
-        aboutLogoLabel.alignment = .center
+        aboutLogoLabel.alignment = .left
         aboutLogoLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutDescriptionLabel.font = .systemFont(ofSize: 14)
         aboutDescriptionLabel.textColor = .secondaryLabelColor
-        aboutDescriptionLabel.alignment = .center
+        aboutDescriptionLabel.alignment = .left
         aboutDescriptionLabel.lineBreakMode = .byWordWrapping
         aboutDescriptionLabel.maximumNumberOfLines = 2
         aboutDescriptionLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutVersionLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        aboutVersionLabel.alignment = .center
+        aboutVersionLabel.alignment = .left
         aboutVersionLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutGitHubButton.target = self
@@ -628,9 +590,9 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         basicPageView.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: basicPageView.topAnchor, constant: settingsPageTopPadding),
-            stack.leadingAnchor.constraint(equalTo: basicPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: basicPageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+            stack.leadingAnchor.constraint(equalTo: basicPageView.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: basicPageView.trailingAnchor, constant: -32),
+            stack.bottomAnchor.constraint(equalTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
             defaultBrowserNoticeIcon.widthAnchor.constraint(equalToConstant: 16),
             defaultBrowserNoticeIcon.heightAnchor.constraint(equalToConstant: 16),
@@ -665,9 +627,9 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         appearancePageView.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: appearancePageView.topAnchor, constant: settingsPageTopPadding),
-            stack.leadingAnchor.constraint(equalTo: appearancePageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: appearancePageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: appearancePageView.bottomAnchor, constant: -settingsPageVerticalPadding)
+            stack.leadingAnchor.constraint(equalTo: appearancePageView.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: appearancePageView.trailingAnchor, constant: -32),
+            stack.bottomAnchor.constraint(equalTo: appearancePageView.bottomAnchor, constant: -settingsPageVerticalPadding)
         ])
     }
 
@@ -742,9 +704,9 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
         NSLayoutConstraint.activate([
             pageStack.topAnchor.constraint(equalTo: rulesPageView.topAnchor, constant: settingsPageTopPadding),
-            pageStack.leadingAnchor.constraint(equalTo: rulesPageView.leadingAnchor, constant: 24),
-            pageStack.trailingAnchor.constraint(equalTo: rulesPageView.trailingAnchor, constant: -24),
-            pageStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+            pageStack.leadingAnchor.constraint(equalTo: rulesPageView.leadingAnchor, constant: 32),
+            pageStack.trailingAnchor.constraint(equalTo: rulesPageView.trailingAnchor, constant: -32),
+            pageStack.bottomAnchor.constraint(equalTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
             rulesScrollView.topAnchor.constraint(equalTo: rulesHeaderStack.bottomAnchor, constant: 16),
             editorStack.topAnchor.constraint(equalTo: rulesScrollView.bottomAnchor, constant: 18),
@@ -791,16 +753,16 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         advancedPageView.addSubview(stack)
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: advancedPageView.topAnchor, constant: settingsPageTopPadding),
-            stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(equalTo: advancedPageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
+            stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: advancedPageView.trailingAnchor, constant: -32),
+            stack.bottomAnchor.constraint(equalTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
         ])
     }
 
     private func buildAboutPage(versionStaticLabel: NSTextField) {
         let titleStack = NSStackView(views: [aboutLogoLabel, aboutDescriptionLabel])
         titleStack.orientation = .vertical
-        titleStack.alignment = .centerX
+        titleStack.alignment = .leading
         titleStack.spacing = 8
         titleStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -818,18 +780,17 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
         let stack = NSStackView(views: [titleStack, versionRow, linkRow])
         stack.orientation = .vertical
-        stack.alignment = .centerX
+        stack.alignment = .leading
         stack.spacing = 18
         stack.translatesAutoresizingMaskIntoConstraints = false
         aboutPageContentStack = stack
 
         aboutPageView.addSubview(stack)
         NSLayoutConstraint.activate([
-            stack.centerXAnchor.constraint(equalTo: aboutPageView.centerXAnchor),
             stack.topAnchor.constraint(equalTo: aboutPageView.topAnchor, constant: settingsPageTopPadding),
-            stack.leadingAnchor.constraint(greaterThanOrEqualTo: aboutPageView.leadingAnchor, constant: 24),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: aboutPageView.trailingAnchor, constant: -24),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: aboutPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
+            stack.leadingAnchor.constraint(equalTo: aboutPageView.leadingAnchor, constant: 32),
+            stack.trailingAnchor.constraint(lessThanOrEqualTo: aboutPageView.trailingAnchor, constant: -32),
+            stack.bottomAnchor.constraint(equalTo: aboutPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
         ])
     }
 
@@ -1063,11 +1024,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
         rulesTableView.tableColumns[0].title = "Rule"
-        rulesTableView.tableColumns[0].width = 160
+        rulesTableView.tableColumns[0].width = 120
         rulesTableView.tableColumns[1].title = "Match"
-        rulesTableView.tableColumns[1].width = 240
+        rulesTableView.tableColumns[1].width = 160
         rulesTableView.tableColumns[2].title = "Browser/Profile"
-        rulesTableView.tableColumns[2].width = 260
+        rulesTableView.tableColumns[2].width = 170
         rulesTableView.delegate = self
         rulesTableView.dataSource = self
         rulesTableView.usesAlternatingRowBackgroundColors = true
@@ -1176,14 +1137,21 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         settingsTabViewController.selectedTabViewItemIndex = 0
         updateAboutVersion()
         updateDefaultBrowserNotice()
-
-        DispatchQueue.main.async { [weak self] in
-            self?.settingsTabViewController.updateWindowSize()
-        }
     }
 
     private func preferredContentSize(for tab: SettingsTab) -> NSSize {
-        NSSize(width: settingsTabContentWidth, height: preferredPageHeight(for: tab))
+        let view: NSView
+        switch tab {
+        case .basic: view = basicPageView
+        case .appearance: view = appearancePageView
+        case .rules: view = rulesPageView
+        case .advanced: view = advancedPageView
+        case .about: view = aboutPageView
+        }
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.widthAnchor.constraint(equalToConstant: settingsTabContentWidth).isActive = true
+        view.layoutSubtreeIfNeeded()
+        return NSSize(width: settingsTabContentWidth, height: view.fittingSize.height)
     }
 
     private func configureDefaultBrowserNoticeContent() {
@@ -1217,6 +1185,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         controller.view = view
         controller.preferredContentSize = size
         view.translatesAutoresizingMaskIntoConstraints = true
+        view.autoresizingMask = [.width, .minYMargin]
 
         let item = NSTabViewItem(viewController: controller)
         item.label = title
@@ -1314,13 +1283,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     private func updateDefaultBrowserNotice() {
         let isDefaultBrowser = (try? DefaultBrowserManager())?.isRoutingToSelf() ?? false
         defaultBrowserNoticeView.isHidden = isDefaultBrowser
-        scheduleSettingsWindowResize()
-    }
-
-    private func scheduleSettingsWindowResize() {
-        DispatchQueue.main.async { [weak self] in
-            self?.settingsTabViewController.updateWindowSize()
-        }
     }
 
     @objc private func detectProfiles() {
@@ -1372,7 +1334,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             : "\(configuration.routingRules.count) rule(s), \(unresolvedRuleCount) need attention"
         ruleSummaryLabel.textColor = unresolvedRuleCount == 0 ? .secondaryLabelColor : .systemOrange
         rulesScrollViewHeightConstraint?.constant = preferredRulesListHeight()
-        scheduleSettingsWindowResize()
     }
 
     @objc private func revealConfigFile() {
