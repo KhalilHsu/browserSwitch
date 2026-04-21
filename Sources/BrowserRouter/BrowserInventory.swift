@@ -41,8 +41,11 @@ enum BrowserInventory {
     static func refreshConfiguration(_ configuration: RouterConfiguration) -> BrowserRefreshResult {
         let unavailableOptions = configuration.browserOptions.filter { !BrowserAvailability.isInstalled($0) }
         let installedExistingOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
-        let systemOptions = detectedSystemHandlerOptions(existingOptions: installedExistingOptions)
         let profileOptions = ChromiumProfileScanner.detectedOptions()
+        let profileBundleIdentifiers = Set(profileOptions.map(\.bundleIdentifier))
+        let systemOptions = detectedSystemHandlerOptions(existingOptions: installedExistingOptions).filter { option in
+            !profileBundleIdentifiers.contains(option.bundleIdentifier)
+        }
         let detectedOptions = systemOptions + profileOptions
 
         var mergedByID = Dictionary(uniqueKeysWithValues: installedExistingOptions.map { ($0.id, $0) })
@@ -67,9 +70,13 @@ enum BrowserInventory {
 
         let availableIDs = Set(mergedOptions.map(\.id))
         let unresolvedRuleCount = configuration.routingRules.filter { !availableIDs.contains($0.browserOptionID) }.count
+        let previousDefaultOption = configuration.browserOptions.first { $0.id == configuration.defaultOptionID }
+        let replacementDefaultID = previousDefaultOption.flatMap { previousOption in
+            mergedOptions.first { $0.bundleIdentifier == previousOption.bundleIdentifier }?.id
+        }
         let resolvedDefaultID = availableIDs.contains(configuration.defaultOptionID)
             ? configuration.defaultOptionID
-            : mergedOptions.first?.id ?? configuration.defaultOptionID
+            : replacementDefaultID ?? mergedOptions.first?.id ?? configuration.defaultOptionID
 
         let addedOptionNames = detectedIDs.compactMap { mergedByID[$0]?.name }
 

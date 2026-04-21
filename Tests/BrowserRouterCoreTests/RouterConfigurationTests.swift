@@ -38,6 +38,39 @@ import Testing
     #expect(configuration.browserOptions.filter { $0.bundleIdentifier == "com.google.Chrome" }.count == 2)
 }
 
+@Test func adoptingDefaultBrowserPrefersDefaultProfileOverGenericBundleOption() {
+    var configuration = RouterConfiguration(
+        defaultOptionID: "system-com-google-chrome",
+        chooserModifier: "command+shift",
+        browserOptions: [
+            BrowserOption(
+                id: "system-com-google-chrome",
+                name: "Google Chrome",
+                bundleIdentifier: "com.google.Chrome",
+                appName: "Google Chrome",
+                profileDirectory: nil,
+                extraArguments: nil
+            ),
+            BrowserOption(
+                id: "chrome-default",
+                name: "Chrome - Khalil",
+                bundleIdentifier: "com.google.Chrome",
+                appName: "Google Chrome",
+                profileDirectory: "Default",
+                extraArguments: nil
+            )
+        ]
+    )
+
+    configuration.adoptDefaultBrowser(
+        bundleIdentifier: "com.google.Chrome",
+        displayName: "Google Chrome",
+        appName: "Google Chrome"
+    )
+
+    #expect(configuration.defaultOptionID == "chrome-default")
+}
+
 @Test func adoptingDefaultBrowserAddsUnknownBrowserOption() {
     var configuration = RouterConfiguration.sample()
 

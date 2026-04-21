@@ -176,13 +176,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
     }
 
-    private let onRequestSetAsDefaultBrowser: () -> Void
     private let showDockIconCheckBox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
     private let showStatusItemCheckBox = NSButton(checkboxWithTitle: "Show menu bar icon", target: nil, action: nil)
-    private let defaultBrowserNoticeView = NSView()
-    private let defaultBrowserNoticeIcon = NSImageView()
-    private let defaultBrowserNoticeLabel = NSTextField(labelWithString: "Set Router as your default browser.")
-    private let defaultBrowserNoticeButton = NSButton(title: "Set Default", target: nil, action: nil)
     private let defaultBrowserLabel = NSTextField(labelWithString: "Default browser/profile")
     private let chooserModifierLabel = NSTextField(labelWithString: "Show chooser when")
     private let defaultBrowserPopup = NSPopUpButton()
@@ -230,12 +225,10 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     init(
         configuration: RouterConfiguration,
-        onSave: @escaping (RouterConfiguration) -> Void,
-        onRequestSetAsDefaultBrowser: @escaping () -> Void = {}
+        onSave: @escaping (RouterConfiguration) -> Void
     ) {
         self.configuration = configuration
         self.onSave = onSave
-        self.onRequestSetAsDefaultBrowser = onRequestSetAsDefaultBrowser
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 680),
@@ -304,7 +297,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         stack.translatesAutoresizingMaskIntoConstraints = false
         basicPageContentStack = stack
 
-        stack.addArrangedSubview(defaultBrowserNoticeView)
         stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
         stack.addArrangedSubview(formRow(label: chooserModifierLabel, control: modifierPopup))
         stack.addArrangedSubview(browserSummaryLabel)
@@ -315,13 +307,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             stack.leadingAnchor.constraint(equalTo: basicPageView.leadingAnchor, constant: 32),
             stack.trailingAnchor.constraint(lessThanOrEqualTo: basicPageView.trailingAnchor, constant: -32),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
-
-            // Notice banner fills full row width
-            defaultBrowserNoticeView.widthAnchor.constraint(equalTo: basicPageView.widthAnchor, constant: -64),
-
-            defaultBrowserNoticeIcon.widthAnchor.constraint(equalToConstant: 16),
-            defaultBrowserNoticeIcon.heightAnchor.constraint(equalToConstant: 16),
-            defaultBrowserNoticeButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 104),
 
             // Make both popup buttons the same width so they align
             modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor)
@@ -679,7 +664,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     func reload(with configuration: RouterConfiguration) {
         self.configuration = configuration
         reloadControls()
-        updateDefaultBrowserNotice()
     }
 
     private func configureMosStylePreferences(in contentView: NSView) {
@@ -699,30 +683,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
         window.minSize = NSSize(width: 620, height: 240)
         window.center()
-
-        defaultBrowserNoticeView.wantsLayer = true
-        defaultBrowserNoticeView.layer?.cornerRadius = 12
-        defaultBrowserNoticeView.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.12).cgColor
-        defaultBrowserNoticeView.layer?.borderWidth = 1
-        defaultBrowserNoticeView.layer?.borderColor = NSColor.systemBlue.withAlphaComponent(0.18).cgColor
-        defaultBrowserNoticeView.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeIcon.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
-        defaultBrowserNoticeIcon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 15, weight: .regular)
-        defaultBrowserNoticeIcon.contentTintColor = .systemBlue
-        defaultBrowserNoticeIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeLabel.font = .systemFont(ofSize: 13, weight: .regular)
-        defaultBrowserNoticeLabel.textColor = .labelColor
-        defaultBrowserNoticeLabel.lineBreakMode = .byTruncatingTail
-        defaultBrowserNoticeLabel.maximumNumberOfLines = 1
-        defaultBrowserNoticeLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeButton.target = self
-        defaultBrowserNoticeButton.action = #selector(requestSetAsDefaultBrowser)
-        defaultBrowserNoticeButton.bezelStyle = .rounded
-        defaultBrowserNoticeButton.translatesAutoresizingMaskIntoConstraints = false
-        configureDefaultBrowserNoticeContent()
 
         showDockIconCheckBox.target = self
         showDockIconCheckBox.action = #selector(presentationChanged)
@@ -825,10 +785,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         )
         buildAboutPage(versionStaticLabel: makeAboutVersionLabel())
 
-        // Apply notice visibility BEFORE measuring preferredContentSize so the
-        // hidden notice view is excluded from the height calculation.
-        updateDefaultBrowserNotice()
-
         settingsTabViewController.tabStyle = .toolbar
         settingsTabViewController.transitionOptions = []
         settingsTabViewController.tabViewItems.forEach { settingsTabViewController.removeTabViewItem($0) }
@@ -884,32 +840,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         view.widthAnchor.constraint(equalToConstant: settingsTabContentWidth).isActive = true
         view.layoutSubtreeIfNeeded()
         return NSSize(width: settingsTabContentWidth, height: view.fittingSize.height)
-    }
-
-    private func configureDefaultBrowserNoticeContent() {
-        guard defaultBrowserNoticeView.subviews.isEmpty else {
-            return
-        }
-
-        let noticeTextStack = NSStackView(views: [defaultBrowserNoticeLabel])
-        noticeTextStack.orientation = .vertical
-        noticeTextStack.alignment = .leading
-        noticeTextStack.spacing = 2
-        noticeTextStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let noticeStack = NSStackView(views: [defaultBrowserNoticeIcon, noticeTextStack, defaultBrowserNoticeButton])
-        noticeStack.orientation = .horizontal
-        noticeStack.alignment = .centerY
-        noticeStack.spacing = 12
-        noticeStack.translatesAutoresizingMaskIntoConstraints = false
-
-        defaultBrowserNoticeView.addSubview(noticeStack)
-        NSLayoutConstraint.activate([
-            noticeStack.topAnchor.constraint(equalTo: defaultBrowserNoticeView.topAnchor, constant: 10),
-            noticeStack.leadingAnchor.constraint(equalTo: defaultBrowserNoticeView.leadingAnchor, constant: 12),
-            noticeStack.trailingAnchor.constraint(equalTo: defaultBrowserNoticeView.trailingAnchor, constant: -12),
-            noticeStack.bottomAnchor.constraint(equalTo: defaultBrowserNoticeView.bottomAnchor, constant: -10)
-        ])
     }
 
     private func addTab(title: String, symbolName: String, view: NSView, size: NSSize) {
@@ -1012,15 +942,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
     }
 
-    private func updateDefaultBrowserNotice() {
-        let isDefaultBrowser = (try? DefaultBrowserManager())?.isRoutingToSelf() ?? false
-        // Use setVisibilityPriority so NSStackView immediately recalculates
-        // fittingSize — this works correctly even before the view is in a window.
-        let priority: NSStackView.VisibilityPriority = isDefaultBrowser ? .notVisible : .mustHold
-        basicPageContentStack?.setVisibilityPriority(priority, for: defaultBrowserNoticeView)
-        defaultBrowserNoticeView.isHidden = isDefaultBrowser
-    }
-
     @objc private func detectProfiles() {
         configuration = ChromiumProfileScanner.mergeDetectedOptions(into: configuration)
         reloadControls()
@@ -1075,10 +996,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     @objc private func revealConfigFile() {
         _ = RouterConfiguration.load()
         NSWorkspace.shared.activateFileViewerSelecting([RouterConfiguration.configURL])
-    }
-
-    @objc private func requestSetAsDefaultBrowser() {
-        onRequestSetAsDefaultBrowser()
     }
 
     @objc private func closeWindow() {

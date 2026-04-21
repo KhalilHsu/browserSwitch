@@ -19,10 +19,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
         applyPresentationSettings()
-        if configuration.hasCompletedOnboarding {
-            showSettingsIfPresentationHidden()
-        } else {
+        if needsOnboarding(forceReload: true) {
             openOnboarding()
+        } else {
+            showSettingsIfPresentationHidden()
         }
     }
 
@@ -31,10 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return true
         }
 
-        if configuration.hasCompletedOnboarding {
-            showSettingsIfPresentationHidden()
-        } else {
+        if needsOnboarding(forceReload: true) {
             openOnboarding()
+        } else {
+            showSettingsIfPresentationHidden()
         }
         return true
     }
@@ -67,12 +67,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
-        menu.addItem(actionMenuItem(
-            title: "Set as Default Browser",
-            systemImageName: "checkmark.seal",
-            action: #selector(setAsDefaultBrowser),
-            keyEquivalent: ""
-        ))
         menu.addItem(actionMenuItem(
             title: "Settings...",
             systemImageName: "gearshape",
@@ -124,6 +118,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         openSettings()
+    }
+
+    private func needsOnboarding(forceReload: Bool = false) -> Bool {
+        if !configuration.hasCompletedOnboarding {
+            return true
+        }
+
+        guard let manager = currentDefaultBrowserManager(forceReload: forceReload) else {
+            return false
+        }
+
+        return !manager.isRoutingToSelf()
     }
 
     private func handle(_ url: URL) {
@@ -207,10 +213,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func availableBrowserOptions() -> [BrowserOption] {
         BrowserAvailability.installedOptions(from: configuration.browserOptions)
-    }
-
-    @objc private func setAsDefaultBrowser() {
-        performSetAsDefaultBrowser(showAlert: true)
     }
 
     private func performSetAsDefaultBrowser(
@@ -300,7 +302,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func openSettings() {
-        if !configuration.hasCompletedOnboarding {
+        if needsOnboarding(forceReload: true) {
             openOnboarding()
             return
         }
@@ -316,9 +318,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.configuration = newConfiguration
                     self?.rememberConfigModificationDate()
                     self?.applyPresentationSettings()
-                },
-                onRequestSetAsDefaultBrowser: { [weak self] in
-                    self?.setAsDefaultBrowser()
                 }
             )
         } else {
@@ -423,7 +422,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         return [
-            statusLineItem(title: "Set Router as your default browser", emphasized: true)
+            statusLineItem(title: "BrowserRouter is not the default browser", emphasized: true)
         ]
     }
 

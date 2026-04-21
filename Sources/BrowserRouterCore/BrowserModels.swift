@@ -137,10 +137,13 @@ public struct RouterConfiguration: Codable {
         displayName: String,
         appName: String?
     ) {
-        if let existingOption = browserOptions.first(where: {
-            $0.bundleIdentifier == bundleIdentifier
-                && ($0.profileDirectory == nil || $0.profileDirectory == "Default" || $0.id.hasSuffix("-default"))
-        }) ?? browserOptions.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
+        let existingOption = browserOptions.first {
+            $0.bundleIdentifier == bundleIdentifier && ($0.profileDirectory == "Default" || $0.id.hasSuffix("-default"))
+        } ?? browserOptions.first {
+            $0.bundleIdentifier == bundleIdentifier && $0.profileDirectory == nil
+        } ?? browserOptions.first(where: { $0.bundleIdentifier == bundleIdentifier })
+
+        if let existingOption {
             defaultOptionID = existingOption.id
             return
         }

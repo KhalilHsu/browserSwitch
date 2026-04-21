@@ -5,18 +5,24 @@ import BrowserRouterCore
 private let onboardingContentWidth = CGFloat(520.0)
 private let onboardingHorizontalPadding = CGFloat(40.0)
 private let onboardingTextWidth = onboardingContentWidth - (onboardingHorizontalPadding * 2)
+private let onboardingTakeoverHeight = CGFloat(244.0)
+private let onboardingSelectionHeight = CGFloat(286.0)
+private let onboardingFinishHeight = CGFloat(270.0)
 
 @MainActor
 final class OnboardingWindowController: NSWindowController {
     private enum Step {
         case takeover
         case chooseDefault
+        case chooseModifier
+        case finish
     }
 
     private let stepLabel = NSTextField(labelWithString: "")
     private let titleLabel = NSTextField(labelWithString: "")
     private let bodyLabel = NSTextField(labelWithString: "")
     private let defaultBrowserPopup = NSPopUpButton()
+    private let modifierPopup = NSPopUpButton()
     private let statusLabel = NSTextField(labelWithString: "")
     private let primaryButton = NSButton(title: "", target: nil, action: nil)
     private let onRequestSetAsDefaultBrowser: (@escaping (Bool, RouterConfiguration) -> Void) -> Void
@@ -38,7 +44,7 @@ final class OnboardingWindowController: NSWindowController {
         self.onComplete = onComplete
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: onboardingContentWidth, height: 330),
+            contentRect: NSRect(x: 0, y: 0, width: onboardingContentWidth, height: onboardingTakeoverHeight),
             styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -55,7 +61,7 @@ final class OnboardingWindowController: NSWindowController {
             window.titlebarSeparatorStyle = .none
         }
         window.center()
-        window.minSize = NSSize(width: onboardingContentWidth, height: 320)
+        window.minSize = NSSize(width: onboardingContentWidth, height: onboardingTakeoverHeight)
         window.maxSize = NSSize(width: onboardingContentWidth, height: .greatestFiniteMagnitude)
 
         super.init(window: window)
@@ -103,6 +109,10 @@ final class OnboardingWindowController: NSWindowController {
         defaultBrowserPopup.target = self
         defaultBrowserPopup.action = #selector(defaultBrowserChanged)
 
+        modifierPopup.translatesAutoresizingMaskIntoConstraints = false
+        modifierPopup.target = self
+        modifierPopup.action = #selector(modifierChanged)
+
         statusLabel.font = .systemFont(ofSize: 12)
         statusLabel.textColor = .secondaryLabelColor
         statusLabel.maximumNumberOfLines = 0
@@ -121,6 +131,7 @@ final class OnboardingWindowController: NSWindowController {
             titleLabel,
             bodyLabel,
             defaultBrowserPopup,
+            modifierPopup,
             statusLabel
         ])
         contentStack.orientation = .vertical
@@ -152,6 +163,7 @@ final class OnboardingWindowController: NSWindowController {
             statusLabel.widthAnchor.constraint(equalToConstant: onboardingTextWidth),
 
             defaultBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 280),
+            modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor),
 
             footerStack.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: onboardingHorizontalPadding),
             footerStack.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -onboardingHorizontalPadding),
@@ -179,6 +191,13 @@ final class OnboardingWindowController: NSWindowController {
             defaultBrowserPopup.lastItem?.representedObject = option.id
         }
 
+        modifierPopup.removeAllItems()
+        for modifier in ChooserModifier.allCases {
+            modifierPopup.addItem(withTitle: modifier.title)
+            modifierPopup.lastItem?.representedObject = modifier.rawValue
+        }
+        modifierPopup.selectItem(withRepresentedObject: configuration.chooserModifier)
+
         let resolvedDefaultID = visibleBrowserOptions.contains(where: { $0.id == configuration.defaultOptionID })
             ? configuration.defaultOptionID
             : visibleBrowserOptions.first?.id
@@ -189,32 +208,57 @@ final class OnboardingWindowController: NSWindowController {
 
         switch step {
         case .takeover:
-            stepLabel.stringValue = "Step 1 of 2"
-            titleLabel.stringValue = "Make BrowserRouter the default browser"
-            bodyLabel.stringValue = "BrowserRouter needs to become the macOS default handler first. We will read your current default browser before takeover and use it as the suggested route."
+            stepLabel.stringValue = "Step 1 of 4"
+            titleLabel.stringValue = "Make BrowserRouter default"
+            bodyLabel.stringValue = "Set BrowserRouter as the macOS default so it can route links to the browser or profile you choose."
             defaultBrowserPopup.isHidden = true
-            primaryButton.title = "Take Over Default Browser"
+            modifierPopup.isHidden = true
+            statusLabel.isHidden = statusLabel.stringValue.isEmpty
+            primaryButton.title = "Set as Default"
             primaryButton.action = #selector(requestSetAsDefaultBrowser)
             primaryButton.isEnabled = true
-            if statusLabel.stringValue.isEmpty {
-                statusLabel.stringValue = "You can change the route in the next step."
-            }
         case .chooseDefault:
-            stepLabel.stringValue = "Step 2 of 2"
-            titleLabel.stringValue = "Choose where links open by default"
-            bodyLabel.stringValue = "This browser/profile will receive links when no rule matches. If we detected your previous default browser, it is already selected."
+            stepLabel.stringValue = "Step 2 of 4"
+            titleLabel.stringValue = "Choose your default route"
+            bodyLabel.stringValue = "When no rule matches, links open here."
             defaultBrowserPopup.isHidden = false
-            primaryButton.title = "Finish Setup"
-            primaryButton.action = #selector(finishSetup)
+            modifierPopup.isHidden = true
+            statusLabel.isHidden = false
+            primaryButton.title = "Continue"
+            primaryButton.action = #selector(continueToModifier)
             primaryButton.isEnabled = !visibleBrowserOptions.isEmpty
             statusLabel.stringValue = visibleBrowserOptions.isEmpty
                 ? "No installed browsers were detected from the current configuration."
                 : "Default route: \(defaultBrowserPopup.titleOfSelectedItem ?? "Choose a browser")"
+        case .chooseModifier:
+            stepLabel.stringValue = "Step 3 of 4"
+            titleLabel.stringValue = "Choose your chooser shortcut"
+            bodyLabel.stringValue = "Hold this shortcut while opening a link to pick a browser/profile instead of using the default route."
+            defaultBrowserPopup.isHidden = true
+            modifierPopup.isHidden = false
+            statusLabel.isHidden = false
+            primaryButton.title = "Continue"
+            primaryButton.action = #selector(continueToFinish)
+            primaryButton.isEnabled = true
+            statusLabel.stringValue = "Shortcut: \(modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)"
+        case .finish:
+            stepLabel.stringValue = "Step 4 of 4"
+            titleLabel.stringValue = "You're ready to route links"
+            bodyLabel.stringValue = "Use Settings later to add site rules, refresh browser profiles, or change menu bar options."
+            defaultBrowserPopup.isHidden = true
+            modifierPopup.isHidden = true
+            statusLabel.isHidden = false
+            primaryButton.title = "Finish"
+            primaryButton.action = #selector(finishSetup)
+            primaryButton.isEnabled = true
+            statusLabel.stringValue = "Rules live in Settings > Rules."
         }
+        resizeWindowForCurrentStep()
     }
 
     @objc private func requestSetAsDefaultBrowser() {
         primaryButton.isEnabled = false
+        statusLabel.isHidden = false
         statusLabel.stringValue = "Waiting for macOS to update the default browser..."
 
         onRequestSetAsDefaultBrowser { [weak self] success, configuration in
@@ -226,20 +270,39 @@ final class OnboardingWindowController: NSWindowController {
             if success {
                 self.step = .chooseDefault
                 self.statusLabel.stringValue = ""
+                self.statusLabel.isHidden = true
             } else {
+                self.statusLabel.isHidden = false
                 self.statusLabel.stringValue = "BrowserRouter was not set as the default browser. Try again from this step."
             }
             self.reloadControls()
         }
     }
 
-    @objc private func finishSetup() {
+    @objc private func continueToModifier() {
         guard let selectedID = selectedRepresentedObject(defaultBrowserPopup) else {
-            statusLabel.stringValue = "Choose a browser/profile before finishing setup."
+            statusLabel.isHidden = false
+            statusLabel.stringValue = "Choose a browser/profile before continuing."
             return
         }
 
         configuration.defaultOptionID = selectedID
+        statusLabel.stringValue = ""
+        statusLabel.isHidden = true
+        step = .chooseModifier
+        reloadControls()
+    }
+
+    @objc private func continueToFinish() {
+        configuration.chooserModifier = selectedRepresentedObject(modifierPopup)
+            ?? ChooserModifier.commandShift.rawValue
+        statusLabel.stringValue = ""
+        statusLabel.isHidden = true
+        step = .finish
+        reloadControls()
+    }
+
+    @objc private func finishSetup() {
         configuration.hasCompletedOnboarding = true
 
         do {
@@ -247,15 +310,52 @@ final class OnboardingWindowController: NSWindowController {
             onComplete(configuration)
             close()
         } catch {
+            statusLabel.isHidden = false
             statusLabel.stringValue = "Could not save setup: \(error.localizedDescription)"
         }
     }
 
     @objc private func defaultBrowserChanged() {
+        statusLabel.isHidden = false
         statusLabel.stringValue = "Default route: \(defaultBrowserPopup.titleOfSelectedItem ?? "Choose a browser")"
+    }
+
+    @objc private func modifierChanged() {
+        configuration.chooserModifier = selectedRepresentedObject(modifierPopup)
+            ?? ChooserModifier.commandShift.rawValue
+        statusLabel.isHidden = false
+        statusLabel.stringValue = "Shortcut: \(modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)"
     }
 
     private func selectedRepresentedObject(_ popup: NSPopUpButton) -> String? {
         popup.selectedItem?.representedObject as? String
+    }
+
+    private func resizeWindowForCurrentStep() {
+        guard let window else {
+            return
+        }
+
+        let targetHeight: CGFloat
+        switch step {
+        case .takeover:
+            targetHeight = onboardingTakeoverHeight
+        case .chooseDefault, .chooseModifier:
+            targetHeight = onboardingSelectionHeight
+        case .finish:
+            targetHeight = onboardingFinishHeight
+        }
+        let currentFrame = window.frame
+        guard abs(currentFrame.height - targetHeight) > 1 else {
+            return
+        }
+
+        let newFrame = NSRect(
+            x: currentFrame.minX,
+            y: currentFrame.maxY - targetHeight,
+            width: currentFrame.width,
+            height: targetHeight
+        )
+        window.setFrame(newFrame, display: true, animate: false)
     }
 }
