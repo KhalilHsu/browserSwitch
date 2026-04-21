@@ -89,6 +89,7 @@ enum ChromiumProfileScanner {
             chooserModifier: configuration.chooserModifier,
             showsDockIcon: configuration.showsDockIcon,
             showsStatusItem: configuration.showsStatusItem,
+            hasCompletedOnboarding: configuration.hasCompletedOnboarding,
             browserOptions: mergedOptions,
             routingRules: configuration.routingRules
         )

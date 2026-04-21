@@ -58,6 +58,7 @@ public struct RouterConfiguration: Codable {
     public var chooserModifier: String
     public var showsDockIcon: Bool
     public var showsStatusItem: Bool
+    public var hasCompletedOnboarding: Bool
     public var browserOptions: [BrowserOption]
     public var routingRules: [RoutingRule]
 
@@ -66,6 +67,7 @@ public struct RouterConfiguration: Codable {
         case chooserModifier
         case showsDockIcon
         case showsStatusItem
+        case hasCompletedOnboarding
         case browserOptions
         case routingRules
     }
@@ -75,6 +77,7 @@ public struct RouterConfiguration: Codable {
         chooserModifier: String,
         showsDockIcon: Bool = false,
         showsStatusItem: Bool = true,
+        hasCompletedOnboarding: Bool = false,
         browserOptions: [BrowserOption],
         routingRules: [RoutingRule] = []
     ) {
@@ -82,6 +85,7 @@ public struct RouterConfiguration: Codable {
         self.chooserModifier = chooserModifier
         self.showsDockIcon = showsDockIcon
         self.showsStatusItem = showsStatusItem
+        self.hasCompletedOnboarding = hasCompletedOnboarding
         self.browserOptions = browserOptions
         self.routingRules = routingRules
     }
@@ -92,6 +96,7 @@ public struct RouterConfiguration: Codable {
         chooserModifier = try container.decodeIfPresent(String.self, forKey: .chooserModifier) ?? "command+shift"
         showsDockIcon = try container.decodeIfPresent(Bool.self, forKey: .showsDockIcon) ?? false
         showsStatusItem = try container.decodeIfPresent(Bool.self, forKey: .showsStatusItem) ?? true
+        hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? true
         browserOptions = try container.decode([BrowserOption].self, forKey: .browserOptions)
         routingRules = try container.decodeIfPresent([RoutingRule].self, forKey: .routingRules) ?? []
     }
@@ -125,6 +130,64 @@ public struct RouterConfiguration: Codable {
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(self)
         try data.write(to: Self.configURL, options: .atomic)
+    }
+
+    public mutating func adoptDefaultBrowser(
+        bundleIdentifier: String,
+        displayName: String,
+        appName: String?
+    ) {
+        if let existingOption = browserOptions.first(where: {
+            $0.bundleIdentifier == bundleIdentifier
+                && ($0.profileDirectory == nil || $0.profileDirectory == "Default" || $0.id.hasSuffix("-default"))
+        }) ?? browserOptions.first(where: { $0.bundleIdentifier == bundleIdentifier }) {
+            defaultOptionID = existingOption.id
+            return
+        }
+
+        let optionID = uniqueBrowserOptionID(prefix: "previous-default-\(Self.slug(bundleIdentifier))")
+        browserOptions.insert(
+            BrowserOption(
+                id: optionID,
+                name: displayName,
+                bundleIdentifier: bundleIdentifier,
+                appName: appName,
+                profileDirectory: nil,
+                extraArguments: nil
+            ),
+            at: 0
+        )
+        defaultOptionID = optionID
+    }
+
+    private func uniqueBrowserOptionID(prefix: String) -> String {
+        let existingIDs = Set(browserOptions.map(\.id))
+        guard existingIDs.contains(prefix) else {
+            return prefix
+        }
+
+        var suffix = 2
+        while existingIDs.contains("\(prefix)-\(suffix)") {
+            suffix += 1
+        }
+        return "\(prefix)-\(suffix)"
+    }
+
+    private static func slug(_ value: String) -> String {
+        let slug = value
+            .lowercased()
+            .map { character in
+                character.isLetter || character.isNumber ? character : "-"
+            }
+            .reduce(into: "") { partial, character in
+                if character == "-", partial.last == "-" {
+                    return
+                }
+                partial.append(character)
+            }
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+
+        return slug.isEmpty ? "browser" : slug
     }
 
     public static func sample() -> RouterConfiguration {

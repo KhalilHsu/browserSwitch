@@ -12,13 +12,6 @@ enum BrowserAvailability {
     }
 }
 
-struct StaticBrowserSpec {
-    var id: String
-    var name: String
-    var bundleIdentifier: String
-    var appName: String?
-}
-
 struct BrowserRefreshResult {
     var configuration: RouterConfiguration
     var removedUnavailableOptionNames: [String]
@@ -45,58 +38,31 @@ struct BrowserRefreshResult {
 }
 
 enum BrowserInventory {
-    static let staticSpecs = [
-        StaticBrowserSpec(
-            id: "arc-default",
-            name: "Arc",
-            bundleIdentifier: "company.thebrowser.Browser",
-            appName: "Arc"
-        ),
-        StaticBrowserSpec(
-            id: "safari",
-            name: "Safari",
-            bundleIdentifier: "com.apple.Safari",
-            appName: "Safari"
-        ),
-        StaticBrowserSpec(
-            id: "firefox-default",
-            name: "Firefox",
-            bundleIdentifier: "org.mozilla.firefox",
-            appName: "Firefox"
-        )
-    ]
-
-    static func detectedStaticOptions() -> [BrowserOption] {
-        staticSpecs.compactMap { spec in
-            guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: spec.bundleIdentifier) != nil else {
-                return nil
-            }
-
-            return BrowserOption(
-                id: spec.id,
-                name: spec.name,
-                bundleIdentifier: spec.bundleIdentifier,
-                appName: spec.appName,
-                profileDirectory: nil,
-                extraArguments: nil
-            )
-        }
-    }
-
     static func refreshConfiguration(_ configuration: RouterConfiguration) -> BrowserRefreshResult {
         let unavailableOptions = configuration.browserOptions.filter { !BrowserAvailability.isInstalled($0) }
-        var mergedByID = Dictionary(
-            uniqueKeysWithValues: BrowserAvailability.installedOptions(from: configuration.browserOptions).map { ($0.id, $0) }
-        )
+        let installedExistingOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
+        let systemOptions = detectedSystemHandlerOptions(existingOptions: installedExistingOptions)
+        let profileOptions = ChromiumProfileScanner.detectedOptions()
+        let detectedOptions = systemOptions + profileOptions
 
-        let detectedOptions = detectedStaticOptions() + ChromiumProfileScanner.detectedOptions()
-        for option in detectedOptions {
+        var mergedByID = Dictionary(uniqueKeysWithValues: installedExistingOptions.map { ($0.id, $0) })
+        for option in systemOptions {
+            mergedByID[option.id] = option
+        }
+        for option in profileOptions {
             mergedByID[option.id] = option
         }
 
         let originalIDs = configuration.browserOptions.map(\.id)
-        let detectedIDs = detectedOptions.map(\.id).filter { !originalIDs.contains($0) }
-        let mergedIDs = originalIDs.filter { mergedByID[$0] != nil } + detectedIDs
+        let detectedIDs = detectedOptions.map(\.id)
+        let preservedProfileIDs = originalIDs.filter { id in
+            guard let option = mergedByID[id] else {
+                return false
+            }
+
+            return option.profileDirectory != nil && !detectedIDs.contains(id)
+        }
+        let mergedIDs = detectedIDs + preservedProfileIDs
         let mergedOptions = mergedIDs.compactMap { mergedByID[$0] }
 
         let availableIDs = Set(mergedOptions.map(\.id))
@@ -113,6 +79,7 @@ enum BrowserInventory {
                 chooserModifier: configuration.chooserModifier,
                 showsDockIcon: configuration.showsDockIcon,
                 showsStatusItem: configuration.showsStatusItem,
+                hasCompletedOnboarding: configuration.hasCompletedOnboarding,
                 browserOptions: mergedOptions,
                 routingRules: configuration.routingRules
             ),
@@ -120,5 +87,104 @@ enum BrowserInventory {
             addedOptionNames: addedOptionNames,
             unresolvedRuleCount: unresolvedRuleCount
         )
+    }
+
+    private static func detectedSystemHandlerOptions(existingOptions: [BrowserOption]) -> [BrowserOption] {
+        let routerBundleIdentifiers = Set([
+            Bundle.main.bundleIdentifier,
+            "local.browser-router"
+        ].compactMap { $0 })
+        let handlerBundleIdentifiers = allURLHandlerBundleIdentifiers()
+        var seenDisplayNames = Set<String>()
+
+        var options: [BrowserOption] = []
+        for bundleIdentifier in handlerBundleIdentifiers {
+            guard !routerBundleIdentifiers.contains(bundleIdentifier) else {
+                continue
+            }
+
+            guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
+                continue
+            }
+
+            let bundle = Bundle(url: appURL)
+            let displayName = bundleDisplayName(bundle, fallback: bundleIdentifier)
+            guard !seenDisplayNames.contains(displayName) else {
+                continue
+            }
+            seenDisplayNames.insert(displayName)
+
+            let appName = bundleName(bundle)
+                ?? displayName
+            let id = existingAppOptionID(for: bundleIdentifier, in: existingOptions)
+                ?? "system-\(slug(bundleIdentifier))"
+
+            options.append(BrowserOption(
+                id: id,
+                name: displayName,
+                bundleIdentifier: bundleIdentifier,
+                appName: appName,
+                profileDirectory: nil,
+                extraArguments: nil
+            ))
+        }
+
+        return options
+    }
+
+    private static func allURLHandlerBundleIdentifiers() -> [String] {
+        var seen = Set<String>()
+        var bundleIdentifiers: [String] = []
+
+        for scheme in ["http", "https"] {
+            guard let url = URL(string: "\(scheme)://example.com") else {
+                continue
+            }
+
+            let handlers = NSWorkspace.shared.urlsForApplications(toOpen: url)
+                .compactMap { Bundle(url: $0)?.bundleIdentifier }
+            for bundleIdentifier in handlers where !seen.contains(bundleIdentifier) {
+                seen.insert(bundleIdentifier)
+                bundleIdentifiers.append(bundleIdentifier)
+            }
+        }
+
+        return bundleIdentifiers
+    }
+
+    private static func existingAppOptionID(for bundleIdentifier: String, in options: [BrowserOption]) -> String? {
+        options.first {
+            $0.bundleIdentifier == bundleIdentifier && $0.profileDirectory == nil
+        }?.id
+    }
+
+    private static func bundleDisplayName(_ bundle: Bundle?, fallback: String) -> String {
+        bundle?.localizedInfoDictionary?["CFBundleDisplayName"] as? String
+            ?? bundle?.localizedInfoDictionary?["CFBundleName"] as? String
+            ?? bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? fallback
+    }
+
+    private static func bundleName(_ bundle: Bundle?) -> String? {
+        bundle?.localizedInfoDictionary?["CFBundleName"] as? String
+            ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+    }
+
+    private static func slug(_ value: String) -> String {
+        let slug = value
+            .lowercased()
+            .map { character in
+                character.isLetter || character.isNumber ? character : "-"
+            }
+            .reduce(into: "") { partial, character in
+                if character == "-", partial.last == "-" {
+                    return
+                }
+                partial.append(character)
+            }
+            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
+
+        return slug.isEmpty ? "browser" : slug
     }
 }

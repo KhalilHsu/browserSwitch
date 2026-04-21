@@ -2,6 +2,12 @@ import AppKit
 import CoreServices
 import Foundation
 
+struct DefaultBrowserHandler {
+    var bundleIdentifier: String
+    var displayName: String
+    var appName: String?
+}
+
 enum DefaultBrowserError: LocalizedError {
     case missingBundleIdentifier
     case registrationFailed(OSStatus)
@@ -82,6 +88,18 @@ final class DefaultBrowserManager {
         currentHandler(for: "http") == bundleIdentifier && currentHandler(for: "https") == bundleIdentifier
     }
 
+    func currentExternalDefaultHandler() -> DefaultBrowserHandler? {
+        for scheme in ["http", "https"] {
+            guard let handler = currentHandlerDetails(for: scheme), handler.bundleIdentifier != bundleIdentifier else {
+                continue
+            }
+
+            return handler
+        }
+
+        return nil
+    }
+
     func isInstalledInApplications() -> Bool {
         bundleURL.path.hasPrefix("/Applications/")
     }
@@ -96,6 +114,33 @@ final class DefaultBrowserManager {
         }
 
         return Bundle(url: appURL)?.bundleIdentifier
+    }
+
+    private func currentHandlerDetails(for scheme: String) -> DefaultBrowserHandler? {
+        guard let url = URL(string: "\(scheme)://example.com") else {
+            return nil
+        }
+
+        guard let appURL = NSWorkspace.shared.urlForApplication(toOpen: url) else {
+            return nil
+        }
+
+        let bundle = Bundle(url: appURL)
+        guard let bundleIdentifier = bundle?.bundleIdentifier else {
+            return nil
+        }
+
+        let displayName = bundle?.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? bundleIdentifier
+        let appName = bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? displayName
+
+        return DefaultBrowserHandler(
+            bundleIdentifier: bundleIdentifier,
+            displayName: displayName,
+            appName: appName
+        )
     }
 
     private func currentHandlerDisplayName(for scheme: String) -> String? {

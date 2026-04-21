@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var configuration = RouterConfiguration.load()
     private let launcher = BrowserLauncher()
     private var settingsWindowController: SettingsWindowController?
+    private var onboardingWindowController: OnboardingWindowController?
     private var chooserWindowController: BrowserChooserWindowController?
     private var defaultBrowserManager: DefaultBrowserManager?
     private var lastConfigModificationDate: Date?
@@ -18,7 +19,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
         applyPresentationSettings()
-        showSettingsIfPresentationHidden()
+        if configuration.hasCompletedOnboarding {
+            showSettingsIfPresentationHidden()
+        } else {
+            openOnboarding()
+        }
     }
 
     func applicationShouldHandleReopen(_ application: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -26,7 +31,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return true
         }
 
-        showSettingsIfPresentationHidden()
+        if configuration.hasCompletedOnboarding {
+            showSettingsIfPresentationHidden()
+        } else {
+            openOnboarding()
+        }
         return true
     }
 
@@ -201,42 +210,101 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func setAsDefaultBrowser() {
+        performSetAsDefaultBrowser(showAlert: true)
+    }
+
+    private func performSetAsDefaultBrowser(
+        showAlert: Bool,
+        completion: ((Bool, RouterConfiguration) -> Void)? = nil
+    ) {
         Task { @MainActor in
             do {
                 guard let manager = currentDefaultBrowserManager(forceReload: true) else {
-                    showMessage(
-                        title: "Could Not Set BrowserRouter As Default",
-                        message: "BrowserRouter could not initialize its default-handler manager."
-                    )
+                    if showAlert {
+                        showMessage(
+                            title: "Could Not Set BrowserRouter As Default",
+                            message: "BrowserRouter could not initialize its default-handler manager."
+                        )
+                    }
+                    completion?(false, configuration)
                     return
                 }
 
                 guard manager.isInstalledInApplications() else {
-                    showMessage(
-                        title: "Install BrowserRouter First",
-                        message: "Move BrowserRouter.app into /Applications before setting it as the default browser. The new scripts/install.sh command does this for you."
-                    )
+                    if showAlert {
+                        showMessage(
+                            title: "Install BrowserRouter First",
+                            message: "Move BrowserRouter.app into /Applications before setting it as the default browser. The new scripts/install.sh command does this for you."
+                        )
+                    }
+                    completion?(false, configuration)
                     return
                 }
 
+                let previousDefaultHandler = manager.currentExternalDefaultHandler()
                 try await manager.setAsDefaultBrowser()
+                if let previousDefaultHandler {
+                    adoptPreviousDefaultBrowser(previousDefaultHandler)
+                }
                 NSLog("BrowserRouter default handler set successfully:\n\(manager.statusSummary())")
-                showMessage(
-                    title: "BrowserRouter Is Now The Default",
-                    message: manager.statusSummary()
-                )
+                if showAlert {
+                    showMessage(
+                        title: "BrowserRouter Is Now The Default",
+                        message: manager.statusSummary()
+                    )
+                }
                 settingsWindowController?.reload(with: configuration)
+                onboardingWindowController?.reload(with: configuration, isRoutingToSelf: manager.isRoutingToSelf())
+                completion?(true, configuration)
             } catch {
                 NSLog("BrowserRouter failed to become the default browser: \(error)")
-                showMessage(
-                    title: "Could Not Set BrowserRouter As Default",
-                    message: "\(error.localizedDescription)\n\nCurrent handlers:\n\((currentDefaultBrowserManager()?.statusSummary()) ?? "Unavailable")"
-                )
+                if showAlert {
+                    showMessage(
+                        title: "Could Not Set BrowserRouter As Default",
+                        message: "\(error.localizedDescription)\n\nCurrent handlers:\n\((currentDefaultBrowserManager()?.statusSummary()) ?? "Unavailable")"
+                    )
+                }
+                completion?(false, configuration)
             }
         }
     }
 
+    private func openOnboarding() {
+        configuration = cleanupGhostBrowsersIfNeeded()
+        rememberConfigModificationDate()
+        applyPresentationSettings()
+
+        let manager = currentDefaultBrowserManager(forceReload: true)
+        if onboardingWindowController == nil {
+            onboardingWindowController = OnboardingWindowController(
+                configuration: configuration,
+                isRoutingToSelf: manager?.isRoutingToSelf() ?? false,
+                onRequestSetAsDefaultBrowser: { [weak self] completion in
+                    self?.performSetAsDefaultBrowser(showAlert: false, completion: completion)
+                },
+                onComplete: { [weak self] newConfiguration in
+                    self?.configuration = newConfiguration
+                    self?.rememberConfigModificationDate()
+                    self?.applyPresentationSettings()
+                    self?.settingsWindowController?.reload(with: newConfiguration)
+                    self?.onboardingWindowController = nil
+                }
+            )
+        } else {
+            onboardingWindowController?.reload(with: configuration, isRoutingToSelf: manager?.isRoutingToSelf() ?? false)
+        }
+
+        onboardingWindowController?.showWindow(nil)
+        onboardingWindowController?.window?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     @objc private func openSettings() {
+        if !configuration.hasCompletedOnboarding {
+            openOnboarding()
+            return
+        }
+
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
         applyPresentationSettings()
@@ -272,6 +340,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         return defaultBrowserManager
+    }
+
+    private func adoptPreviousDefaultBrowser(_ handler: DefaultBrowserHandler) {
+        var updatedConfiguration = BrowserInventory.refreshConfiguration(configuration).configuration
+        updatedConfiguration.adoptDefaultBrowser(
+            bundleIdentifier: handler.bundleIdentifier,
+            displayName: handler.displayName,
+            appName: handler.appName
+        )
+
+        do {
+            try updatedConfiguration.save()
+            configuration = updatedConfiguration
+            rememberConfigModificationDate()
+            settingsWindowController?.reload(with: configuration)
+        } catch {
+            NSLog("BrowserRouter failed to persist previous default browser \(handler.bundleIdentifier): \(error)")
+        }
     }
 
     private func actionMenuItem(title: String, systemImageName: String, action: Selector, keyEquivalent: String) -> NSMenuItem {
