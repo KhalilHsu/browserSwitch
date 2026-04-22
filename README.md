@@ -84,24 +84,76 @@ The app bundle is created at:
 .build/BrowserRouter.app
 ```
 
-## Install For Local Testing
+## Install From Source
 
-For a real trial, install the app into `/Applications` before setting it as the
-default browser. Launch Services can otherwise keep a reference to a temporary
-build path that may be deleted later.
+Install the app into `/Applications` before setting it as the default browser.
+Launch Services can otherwise keep a reference to a temporary build path that
+may be deleted later.
 
 ```bash
 chmod +x scripts/install.sh
 scripts/install.sh
 ```
 
-The install script rebuilds the app, replaces:
+The install script checks local build tools, rebuilds the app, replaces:
 
 ```text
 /Applications/BrowserRouter.app
 ```
 
 and relaunches BrowserRouter.
+
+Useful install options:
+
+```bash
+scripts/install.sh --dry-run
+scripts/install.sh --no-open
+```
+
+If `/Applications` is not writable from your account, run the script from an
+admin account or with `sudo`.
+
+## Update From Source
+
+Pull the latest code and run the install script again:
+
+```bash
+git pull
+scripts/install.sh
+```
+
+The script quits the running app, replaces `/Applications/BrowserRouter.app`,
+registers the new app bundle with Launch Services, and relaunches it.
+
+## Uninstall
+
+Before uninstalling, open BrowserRouter settings and restore your previous
+default browser if BrowserRouter is currently the default.
+
+```bash
+chmod +x scripts/uninstall.sh
+scripts/uninstall.sh
+```
+
+The uninstall script removes:
+
+```text
+/Applications/BrowserRouter.app
+```
+
+It keeps local configuration by default. To also delete BrowserRouter's local
+configuration, run:
+
+```bash
+scripts/uninstall.sh --remove-config
+```
+
+Useful uninstall options:
+
+```bash
+scripts/uninstall.sh --dry-run
+scripts/uninstall.sh --yes
+```
 
 ## First Run
 
@@ -214,8 +266,13 @@ pushes and pull requests.
 
 ## Distribution Notes
 
-The current scripts are enough for local testing, but public releases still need
-some polish:
+The current distribution path is source-based local install:
+
+```bash
+scripts/install.sh
+```
+
+Public binary releases still need some polish:
 
 - Decide on a stable GitHub repository URL and update the About links.
 - Add notarized release builds if distributing outside source builds.

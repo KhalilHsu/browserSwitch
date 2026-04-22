@@ -87,6 +87,7 @@ enum BrowserInventory {
                 showsDockIcon: configuration.showsDockIcon,
                 showsStatusItem: configuration.showsStatusItem,
                 hasCompletedOnboarding: configuration.hasCompletedOnboarding,
+                previousDefaultBrowser: configuration.previousDefaultBrowser,
                 browserOptions: mergedOptions,
                 routingRules: configuration.routingRules
             ),

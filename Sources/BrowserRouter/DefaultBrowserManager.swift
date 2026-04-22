@@ -1,4 +1,5 @@
 import AppKit
+import BrowserRouterCore
 import CoreServices
 import Foundation
 
@@ -13,6 +14,8 @@ enum DefaultBrowserError: LocalizedError {
     case registrationFailed(OSStatus)
     case setFailed(scheme: String, status: OSStatus)
     case verificationFailed(http: String?, https: String?)
+    case restoreTargetUnavailable(bundleIdentifier: String)
+    case restoreVerificationFailed(target: String, http: String?, https: String?)
 
     var errorDescription: String? {
         switch self {
@@ -24,6 +27,10 @@ enum DefaultBrowserError: LocalizedError {
             return "Setting the default handler for \(scheme) failed with status \(status)."
         case .verificationFailed(let http, let https):
             return "Verification failed. Current handlers are http=\(http ?? "nil"), https=\(https ?? "nil")."
+        case .restoreTargetUnavailable(let bundleIdentifier):
+            return "Could not find an installed app for \(bundleIdentifier)."
+        case .restoreVerificationFailed(let target, let http, let https):
+            return "Restore verification failed for \(target). Current handlers are http=\(http ?? "nil"), https=\(https ?? "nil")."
         }
     }
 }
@@ -68,6 +75,38 @@ final class DefaultBrowserManager {
         let httpsHandler = currentHandler(for: "https")
         guard httpHandler == bundleIdentifier, httpsHandler == bundleIdentifier else {
             throw DefaultBrowserError.verificationFailed(http: httpHandler, https: httpsHandler)
+        }
+    }
+
+    @MainActor
+    func restoreDefaultBrowser(to handler: SavedDefaultBrowser) async throws {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: handler.bundleIdentifier) else {
+            throw DefaultBrowserError.restoreTargetUnavailable(bundleIdentifier: handler.bundleIdentifier)
+        }
+
+        for scheme in ["http", "https"] {
+            do {
+                try await NSWorkspace.shared.setDefaultApplication(at: appURL, toOpenURLsWithScheme: scheme)
+            } catch {
+                let current = currentHandler(for: scheme)
+                guard current == handler.bundleIdentifier else {
+                    let nsError = error as NSError
+                    let status = nsError.userInfo[NSUnderlyingErrorKey]
+                        .flatMap { ($0 as? NSError)?.code }
+                        ?? nsError.code
+                    throw DefaultBrowserError.setFailed(scheme: scheme, status: OSStatus(status))
+                }
+            }
+        }
+
+        let httpHandler = currentHandler(for: "http")
+        let httpsHandler = currentHandler(for: "https")
+        guard httpHandler == handler.bundleIdentifier, httpsHandler == handler.bundleIdentifier else {
+            throw DefaultBrowserError.restoreVerificationFailed(
+                target: handler.bundleIdentifier,
+                http: httpHandler,
+                https: httpsHandler
+            )
         }
     }
 

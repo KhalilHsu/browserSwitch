@@ -321,6 +321,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.configuration = newConfiguration
                     self?.rememberConfigModificationDate()
                     self?.applyPresentationSettings()
+                },
+                onRestoreDefaultBrowser: { [weak self] in
+                    self?.confirmAndRestorePreviousDefaultBrowser()
                 }
             )
         } else {
@@ -342,6 +345,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         return defaultBrowserManager
+    }
+
+    private func restoreDefaultBrowserCandidate() -> SavedDefaultBrowser? {
+        if let previousDefaultBrowser = configuration.previousDefaultBrowser {
+            return previousDefaultBrowser
+        }
+
+        guard let option = configuration.browserOptions.first(where: { $0.id == configuration.defaultOptionID }) else {
+            return nil
+        }
+
+        return SavedDefaultBrowser(
+            bundleIdentifier: option.bundleIdentifier,
+            displayName: option.appName ?? option.name,
+            appName: option.appName
+        )
+    }
+
+    private func confirmAndRestorePreviousDefaultBrowser() {
+        refreshConfigurationIfNeeded()
+
+        guard let target = restoreDefaultBrowserCandidate() else {
+            showMessage(
+                title: "No Previous Default Browser",
+                message: "BrowserRouter does not have a saved previous default browser. Choose another default browser in macOS System Settings."
+            )
+            return
+        }
+
+        guard let manager = currentDefaultBrowserManager(forceReload: true) else {
+            showMessage(
+                title: "Could Not Restore Default Browser",
+                message: "BrowserRouter could not initialize its default-handler manager."
+            )
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Restore Previous Default Browser?"
+        alert.informativeText = "This will set both http and https links to open with \(target.displayName) instead of BrowserRouter."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Restore")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else {
+            return
+        }
+
+        Task { @MainActor in
+            do {
+                try await manager.restoreDefaultBrowser(to: target)
+                appDelegateLogger.info("BrowserRouter restored default browser to \(target.bundleIdentifier, privacy: .public)")
+                showMessage(
+                    title: "Default Browser Restored",
+                    message: "\(target.displayName) now handles http and https links. BrowserRouter can still be opened from /Applications."
+                )
+                settingsWindowController?.reload(with: configuration)
+                onboardingWindowController?.reload(with: configuration, isRoutingToSelf: manager.isRoutingToSelf())
+            } catch {
+                appDelegateLogger.error("BrowserRouter failed to restore default browser to \(target.bundleIdentifier, privacy: .public): \(String(describing: error), privacy: .public)")
+                showMessage(
+                    title: "Could Not Restore Default Browser",
+                    message: "\(error.localizedDescription)\n\nCurrent handlers:\n\(manager.statusSummary())"
+                )
+            }
+        }
     }
 
     private func adoptPreviousDefaultBrowser(_ handler: DefaultBrowserHandler) {

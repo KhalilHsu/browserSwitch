@@ -102,6 +102,10 @@ extension SettingsWindowController {
         NSWorkspace.shared.activateFileViewerSelecting([RouterConfiguration.configURL])
     }
 
+    @objc func restorePreviousDefaultBrowser() {
+        onRestoreDefaultBrowser()
+    }
+
     @objc func closeWindow() {
         window?.close()
     }

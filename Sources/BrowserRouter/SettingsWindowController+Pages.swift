@@ -148,10 +148,27 @@ extension SettingsWindowController {
         rulesScrollViewHeightConstraint?.isActive = true
     }
 
-    func buildAdvancedPage(advancedHintLabel: NSTextField, refreshButton: NSButton, detectButton: NSButton, revealButton: NSButton) {
+    func buildAdvancedPage(
+        advancedHintLabel: NSTextField,
+        refreshButton: NSButton,
+        detectButton: NSButton,
+        revealButton: NSButton,
+        restoreButton: NSButton
+    ) {
         let inventoryTitle = NSTextField(labelWithString: "Browser inventory")
         inventoryTitle.font = .systemFont(ofSize: 15, weight: .semibold)
         inventoryTitle.translatesAutoresizingMaskIntoConstraints = false
+
+        let defaultBrowserTitle = NSTextField(labelWithString: "Default browser")
+        defaultBrowserTitle.font = .systemFont(ofSize: 15, weight: .semibold)
+        defaultBrowserTitle.translatesAutoresizingMaskIntoConstraints = false
+
+        let defaultBrowserHint = NSTextField(labelWithString: "Stop routing http and https links through BrowserRouter by restoring the browser that was default before setup.")
+        defaultBrowserHint.font = .systemFont(ofSize: 12)
+        defaultBrowserHint.textColor = .secondaryLabelColor
+        defaultBrowserHint.lineBreakMode = .byWordWrapping
+        defaultBrowserHint.maximumNumberOfLines = 2
+        defaultBrowserHint.translatesAutoresizingMaskIntoConstraints = false
 
         let configTitle = NSTextField(labelWithString: "Config file")
         configTitle.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -169,7 +186,22 @@ extension SettingsWindowController {
         configButtons.spacing = 8
         configButtons.translatesAutoresizingMaskIntoConstraints = false
 
-        let stack = NSStackView(views: [advancedHintLabel, inventoryTitle, inventoryButtons, configTitle, configButtons])
+        let restoreButtons = NSStackView(views: [restoreButton])
+        restoreButtons.orientation = .horizontal
+        restoreButtons.alignment = .centerY
+        restoreButtons.spacing = 8
+        restoreButtons.translatesAutoresizingMaskIntoConstraints = false
+
+        let stack = NSStackView(views: [
+            advancedHintLabel,
+            inventoryTitle,
+            inventoryButtons,
+            defaultBrowserTitle,
+            defaultBrowserHint,
+            restoreButtons,
+            configTitle,
+            configButtons
+        ])
         stack.orientation = .vertical
         stack.alignment = .leading
         stack.spacing = 14
@@ -181,7 +213,8 @@ extension SettingsWindowController {
             stack.topAnchor.constraint(equalTo: advancedPageView.topAnchor, constant: settingsPageTopPadding),
             stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 32),
             stack.trailingAnchor.constraint(lessThanOrEqualTo: advancedPageView.trailingAnchor, constant: -32),
-            stack.bottomAnchor.constraint(equalTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+            defaultBrowserHint.widthAnchor.constraint(lessThanOrEqualToConstant: 560)
         ])
     }
 

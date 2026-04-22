@@ -56,12 +56,29 @@ public struct RoutingRule: Codable, Hashable {
     }
 }
 
+public struct SavedDefaultBrowser: Codable, Hashable {
+    public var bundleIdentifier: String
+    public var displayName: String
+    public var appName: String?
+
+    public init(
+        bundleIdentifier: String,
+        displayName: String,
+        appName: String?
+    ) {
+        self.bundleIdentifier = bundleIdentifier
+        self.displayName = displayName
+        self.appName = appName
+    }
+}
+
 public struct RouterConfiguration: Codable {
     public var defaultOptionID: String
     public var chooserModifier: String
     public var showsDockIcon: Bool
     public var showsStatusItem: Bool
     public var hasCompletedOnboarding: Bool
+    public var previousDefaultBrowser: SavedDefaultBrowser?
     public var browserOptions: [BrowserOption]
     public var routingRules: [RoutingRule]
 
@@ -71,6 +88,7 @@ public struct RouterConfiguration: Codable {
         case showsDockIcon
         case showsStatusItem
         case hasCompletedOnboarding
+        case previousDefaultBrowser
         case browserOptions
         case routingRules
     }
@@ -81,6 +99,7 @@ public struct RouterConfiguration: Codable {
         showsDockIcon: Bool = false,
         showsStatusItem: Bool = true,
         hasCompletedOnboarding: Bool = false,
+        previousDefaultBrowser: SavedDefaultBrowser? = nil,
         browserOptions: [BrowserOption],
         routingRules: [RoutingRule] = []
     ) {
@@ -89,6 +108,7 @@ public struct RouterConfiguration: Codable {
         self.showsDockIcon = showsDockIcon
         self.showsStatusItem = showsStatusItem
         self.hasCompletedOnboarding = hasCompletedOnboarding
+        self.previousDefaultBrowser = previousDefaultBrowser
         self.browserOptions = browserOptions
         self.routingRules = routingRules
     }
@@ -100,6 +120,7 @@ public struct RouterConfiguration: Codable {
         showsDockIcon = try container.decodeIfPresent(Bool.self, forKey: .showsDockIcon) ?? false
         showsStatusItem = try container.decodeIfPresent(Bool.self, forKey: .showsStatusItem) ?? true
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? true
+        previousDefaultBrowser = try container.decodeIfPresent(SavedDefaultBrowser.self, forKey: .previousDefaultBrowser)
         browserOptions = try container.decode([BrowserOption].self, forKey: .browserOptions)
         routingRules = try container.decodeIfPresent([RoutingRule].self, forKey: .routingRules) ?? []
     }
@@ -140,6 +161,12 @@ public struct RouterConfiguration: Codable {
         displayName: String,
         appName: String?
     ) {
+        previousDefaultBrowser = SavedDefaultBrowser(
+            bundleIdentifier: bundleIdentifier,
+            displayName: displayName,
+            appName: appName
+        )
+
         let existingOption = browserOptions.first {
             $0.bundleIdentifier == bundleIdentifier && ($0.profileDirectory == "Default" || $0.id.hasSuffix("-default"))
         } ?? browserOptions.first {

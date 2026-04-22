@@ -222,13 +222,16 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     var advancedPageContentStack: NSStackView?
     var aboutPageContentStack: NSStackView?
     let onSave: (RouterConfiguration) -> Void
+    let onRestoreDefaultBrowser: () -> Void
 
     init(
         configuration: RouterConfiguration,
-        onSave: @escaping (RouterConfiguration) -> Void
+        onSave: @escaping (RouterConfiguration) -> Void,
+        onRestoreDefaultBrowser: @escaping () -> Void
     ) {
         self.configuration = configuration
         self.onSave = onSave
+        self.onRestoreDefaultBrowser = onRestoreDefaultBrowser
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 680),

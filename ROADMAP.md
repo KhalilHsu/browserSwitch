@@ -64,21 +64,29 @@ Acceptance criteria:
 - README, app links, and release scripts use the same project name.
 - About copy is concise and product-focused.
 
-#### Release Packaging
+#### Local Install And Uninstall Scripts
 
-Make the release scripts produce the app bundle users expect.
+Status: Done.
+
+Make source-based installation and removal clear for users who download or clone
+the repository and run local scripts.
 
 Why it matters:
 
-- `scripts/build-app.sh` is the source of the `.app` bundle.
-- Release scripts should not accidentally package stale or incomplete output.
+- The current distribution path is local source install, not DMG distribution.
+- BrowserRouter must live at a stable `/Applications` path before users set it
+  as the default browser.
+- Users need an obvious uninstall path before they trust a default browser
+  helper.
 
 Acceptance criteria:
 
-- DMG scripts call `scripts/build-app.sh` or share the same bundle-building path.
-- Release artifacts include the generated icon and Info.plist.
-- Version naming comes from one stable source.
-- The documented release process matches the scripts.
+- [x] `scripts/install.sh` builds the app, installs it to `/Applications`, handles
+  replacement, and reports common failure cases clearly.
+- [x] `scripts/uninstall.sh` removes the installed app and can optionally remove
+  local configuration.
+- [x] README documents source install, update, uninstall, and configuration
+  removal behavior.
 
 #### Rule Tester
 

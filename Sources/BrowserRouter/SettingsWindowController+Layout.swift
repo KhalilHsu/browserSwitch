@@ -154,7 +154,8 @@ extension SettingsWindowController {
             advancedHintLabel: makeAdvancedHintLabel(),
             refreshButton: makeRefreshButton(),
             detectButton: makeDetectButton(),
-            revealButton: makeRevealButton()
+            revealButton: makeRevealButton(),
+            restoreButton: makeRestoreDefaultBrowserButton()
         )
         buildAboutPage(versionStaticLabel: makeAboutVersionLabel())
 
@@ -266,6 +267,10 @@ extension SettingsWindowController {
 
     func makeRevealButton() -> NSButton {
         makeButton("Open Config", action: #selector(revealConfigFile))
+    }
+
+    func makeRestoreDefaultBrowserButton() -> NSButton {
+        makeButton("Restore Previous Default Browser", action: #selector(restorePreviousDefaultBrowser))
     }
 
     func makeAboutVersionLabel() -> NSTextField {
