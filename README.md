@@ -44,7 +44,7 @@ Current assumptions:
   - Brave
   - Vivaldi
 - Firefox profile discovery from `profiles.ini`.
-- Searchable chooser for any number of detected browsers or profiles.
+- Native menu chooser for detected browsers or profiles.
 - Browser inventory refresh for installed system URL handlers.
 - Settings window with Basic, Appearance, Rules, Advanced, and About sections.
 - Optional Dock icon and menu bar icon.
