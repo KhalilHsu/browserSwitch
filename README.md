@@ -1,26 +1,75 @@
 # BrowserRouter
 
-BrowserRouter is a native macOS MVP for routing external `http` and `https`
-links to a chosen browser/profile.
+BrowserRouter is a native macOS utility that routes external `http` and `https`
+links to the browser or Chromium profile you choose.
 
-It is designed for people who use multiple browsers or multiple Chromium
-profiles and want external links, OAuth flows, and app-launched URLs to land in
-the right place.
+It is built for people who keep separate browsers or profiles for work,
+personal browsing, testing, client accounts, OAuth flows, and app-launched links.
 
 ## Status
 
-This is an experimental MVP. It works by becoming the macOS default handler for
-`http` and `https`, then forwarding links to the browser/profile you choose.
+BrowserRouter is beta-quality software. The core link routing flow works, but
+the project is still young and the release/distribution story is intentionally
+simple.
+
+Current assumptions:
+
+- macOS 14 or newer.
+- Local builds are ad-hoc signed.
+- BrowserRouter must be installed in `/Applications` before you set it as the
+  default browser.
+- Configuration is local JSON in Application Support.
 
 ## Features
 
 - Native Swift/AppKit menu bar app.
-- Default browser/profile selection.
-- Configurable chooser trigger.
-- Simplified domain routing rules.
-- Chromium profile discovery for Chrome, Chrome Canary, Edge, Brave, and
-  Vivaldi.
-- Local-only config stored in Application Support.
+- First-run onboarding for setting BrowserRouter as the macOS default browser.
+- Default browser/profile fallback when no rule matches.
+- Keyboard-triggered chooser for picking a browser per link.
+- Configurable chooser shortcut:
+  - `Command + Shift`
+  - `Option + Shift`
+  - `Control + Shift`
+  - `Command + Option`
+  - always show chooser
+- Routing rules for:
+  - host suffix
+  - host contains
+  - path prefix
+  - URL contains
+- Chromium profile discovery for:
+  - Google Chrome
+  - Google Chrome Canary
+  - Microsoft Edge
+  - Brave
+  - Vivaldi
+- Browser inventory refresh for installed system URL handlers.
+- Settings window with Basic, Appearance, Rules, Advanced, and About sections.
+- Optional Dock icon and menu bar icon.
+- Headless helper mode when both icons are hidden.
+- Local-only configuration.
+
+## How It Works
+
+BrowserRouter registers itself as the macOS handler for `http` and `https`.
+When another app opens a web link, macOS sends that URL to BrowserRouter.
+
+BrowserRouter then chooses where to forward the link:
+
+1. If the chooser shortcut is active, show the chooser.
+2. Otherwise, use the first matching routing rule.
+3. Otherwise, use the configured default browser/profile.
+4. If the configured target is unavailable, fall back to another detected
+   browser option.
+
+Chromium profiles are opened with:
+
+```text
+--profile-directory=<profileDirectory>
+```
+
+Safari and non-Chromium browsers are opened through `NSWorkspace` without a
+profile argument.
 
 ## Build
 
@@ -35,101 +84,88 @@ The app bundle is created at:
 .build/BrowserRouter.app
 ```
 
-For a real trial, move the app to a stable location such as `/Applications`
-before setting it as the default browser. Otherwise Launch Services may keep a
-reference to a temporary build path that you later delete.
+## Install For Local Testing
 
-## Install For Testing
+For a real trial, install the app into `/Applications` before setting it as the
+default browser. Launch Services can otherwise keep a reference to a temporary
+build path that may be deleted later.
 
 ```bash
 chmod +x scripts/install.sh
 scripts/install.sh
 ```
 
-Then use the `Router` menu bar item to set BrowserRouter as the `http` and
-`https` default handler.
-
-From now on, updates are the same one-liner:
-
-```bash
-scripts/install.sh
-```
-
-It rebuilds the app, replaces `/Applications/BrowserRouter.app`, and relaunches
-BrowserRouter.
-
-## Try It
-
-1. Open `.build/BrowserRouter.app`.
-2. Move it to `/Applications` if you want to keep testing it across rebuilds.
-3. Use the menu bar item named `Router`.
-4. Choose `Set as Default Browser`.
-5. Click a link from another app.
-6. Hold `Command + Shift` while opening a link to show the browser chooser.
-
-If `Command + Shift` is not held, BrowserRouter forwards the URL to the
-configured default option.
-
-## Configuration
-
-On first launch, BrowserRouter creates:
+The install script rebuilds the app, replaces:
 
 ```text
-~/Library/Application Support/BrowserRouter/config.json
+/Applications/BrowserRouter.app
 ```
 
-Edit `defaultOptionID` and `browserOptions` to match your installed browsers and
-Chromium profile directories.
+and relaunches BrowserRouter.
 
-You can also use `Router` -> `Settings...` from the menu bar app. The settings
-window includes:
+## First Run
 
-- A Dock icon visibility toggle.
-- A menu bar icon visibility toggle.
-- A default browser/profile dropdown.
-- A chooser modifier dropdown.
-- A simplified routing rules table.
-- A routing rule match type dropdown for host suffix, host contains, path
-  prefix, and URL contains rules.
-- A `Detect Chromium Profiles` button that merges profiles discovered from
-  Chrome, Chrome Canary, Edge, Brave, and Vivaldi.
+1. Run `scripts/install.sh`.
+2. Open `/Applications/BrowserRouter.app`.
+3. Follow onboarding to set BrowserRouter as the default browser.
+4. Choose your default browser/profile.
+5. Choose the shortcut that should show the chooser.
 
-The menu bar also includes a read-only `Default Handler Status` section.
+After setup, click a link from another app. BrowserRouter will route it to the
+default browser/profile unless a rule matches or the chooser shortcut is active.
 
-If you hide both the Dock icon and the menu bar icon, BrowserRouter keeps
-running as a headless helper. Opening the app bundle again will bring up
-Settings so you can turn one or both back on, and the browser chooser also has
-a Settings shortcut. You can still edit `config.json` manually or reopen the
-app bundle from Finder.
+## Settings
+
+Open settings from the `Router` menu bar item, from the chooser menu, or by
+opening the app again when BrowserRouter is running without visible icons.
+
+Settings includes:
+
+- **Basic**: default browser/profile and chooser shortcut.
+- **Appearance**: Dock icon and menu bar icon visibility.
+- **Rules**: add, update, and remove routing rules.
+- **Advanced**: refresh browser inventory, detect Chromium profiles, and reveal
+  the config file in Finder.
+- **About**: version and project links.
 
 Settings changes are saved automatically when you:
 
 - change the default browser/profile
-- change the chooser modifier
+- change the chooser shortcut
+- change Dock or menu bar visibility
 - refresh browsers
 - detect Chromium profiles
 - add, update, or remove a rule
 - finish editing an existing selected rule
 
-Rule text fields are not saved on every keystroke. They save only when you
-finish editing a selected rule or explicitly commit the rule with `Add Rule`,
+Rule text fields are not saved on every keystroke. They save when you finish
+editing a selected rule or explicitly commit the rule with `Add Rule`,
 `Update Selected`, or `Remove Selected`.
 
-Chromium-style profiles use:
+## Configuration
+
+BrowserRouter stores configuration at:
 
 ```text
---profile-directory=<profileDirectory>
+~/Library/Application Support/BrowserRouter/config.json
 ```
 
-Safari and other browsers are opened through `NSWorkspace` without a profile
-argument in this MVP.
+The app can reveal this file from Settings > Advanced.
 
-## Rules
+Example browser option:
 
-Rules live in `routingRules` and are checked before the default browser fallback.
-The configured chooser modifier still wins and always shows the chooser.
+```json
+{
+  "id": "chrome-default",
+  "name": "Chrome - Default",
+  "bundleIdentifier": "com.google.Chrome",
+  "appName": "Google Chrome",
+  "profileDirectory": "Default",
+  "extraArguments": null
+}
+```
 
-Example:
+Example routing rule:
 
 ```json
 {
@@ -140,24 +176,71 @@ Example:
 }
 ```
 
+## Rule Matching
+
+Rules are checked in the order they appear in `routingRules`. The first matching
+rule whose browser/profile is installed wins. If no rule matches, BrowserRouter
+uses the configured default option.
+
 Supported match fields:
 
 - `hostSuffix`: matches an exact host or subdomain, such as `chatgpt.com`.
 - `hostContains`: matches any host containing the string.
-- `pathPrefix`: matches URL paths that start with the string, using case-sensitive path matching.
-- `urlContains`: matches anywhere in the full URL.
+- `pathPrefix`: matches URL paths that start with the string. Path matching is
+  case-sensitive.
+- `urlContains`: matches anywhere in the full URL after percent decoding.
+
+When a rule has multiple match fields in JSON, all populated fields must match.
+The current settings UI edits one match field per rule.
+
+The configured chooser shortcut always wins over rules and default routing.
+
+## Development
+
+Build the app:
+
+```bash
+scripts/build-app.sh
+```
+
+Run tests:
+
+```bash
+swift test
+```
+
+The project also has a GitHub Actions workflow that builds the app bundle on
+pushes and pull requests.
+
+## Distribution Notes
+
+The current scripts are enough for local testing, but public releases still need
+some polish:
+
+- Decide on a stable GitHub repository URL and update the About links.
+- Add notarized release builds if distributing outside source builds.
+- Add a documented release process and changelog.
+- Consider automatic update support after the first public release.
+- Add screenshots or a short demo GIF to this README.
 
 ## Privacy
 
-BrowserRouter runs locally and does not upload URLs. Because it is the macOS
-default URL handler, it can see external `http` and `https` URLs long enough to
-match rules and forward them to the selected browser.
+BrowserRouter runs locally and does not upload URLs.
 
-The MVP stores configuration at:
+Because BrowserRouter is the macOS default URL handler, it can see external
+`http` and `https` URLs long enough to match rules and forward them to the
+selected browser.
 
-```text
-~/Library/Application Support/BrowserRouter/config.json
-```
+Current development logs may include opened URLs in macOS unified logging. Avoid
+sharing logs publicly if the URLs are sensitive.
+
+Please avoid adding telemetry or persistent URL history unless it is explicit,
+optional, and documented.
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned product improvements and open-source
+readiness work.
 
 ## License
 

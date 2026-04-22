@@ -2,10 +2,10 @@
 
 Thanks for taking a look at BrowserRouter.
 
-This project is still an MVP, so small focused pull requests are easiest to
+This project is still beta-quality software, so small focused pull requests are easiest to
 review.
 
-## Local Build
+## Local Development
 
 ```bash
 scripts/build-app.sh
@@ -17,13 +17,21 @@ The app bundle is written to:
 .build/BrowserRouter.app
 ```
 
+Run tests with:
+
+```bash
+swift test
+```
+
 ## Good First Areas
 
 - Browser/profile detection for more browsers.
 - Better rule editing UI.
+- Rule reordering and rule enable/disable toggles.
 - Safer default-browser restore flows.
 - A richer chooser UI than the current alert.
-- Tests around rule matching and config migration.
+- Tests around config migration, browser inventory refresh, and rule matching.
+- Release packaging, notarization, screenshots, and documentation polish.
 
 ## Privacy
 
