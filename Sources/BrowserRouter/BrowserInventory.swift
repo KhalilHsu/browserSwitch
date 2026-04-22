@@ -124,7 +124,7 @@ enum BrowserInventory {
             let appName = bundleName(bundle)
                 ?? displayName
             let id = existingAppOptionID(for: bundleIdentifier, in: existingOptions)
-                ?? "system-\(slug(bundleIdentifier))"
+                ?? "system-\(BrowserSlug.make(bundleIdentifier))"
 
             options.append(BrowserOption(
                 id: id,
@@ -178,20 +178,4 @@ enum BrowserInventory {
             ?? bundle?.object(forInfoDictionaryKey: "CFBundleName") as? String
     }
 
-    private static func slug(_ value: String) -> String {
-        let slug = value
-            .lowercased()
-            .map { character in
-                character.isLetter || character.isNumber ? character : "-"
-            }
-            .reduce(into: "") { partial, character in
-                if character == "-", partial.last == "-" {
-                    return
-                }
-                partial.append(character)
-            }
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-
-        return slug.isEmpty ? "browser" : slug
-    }
 }

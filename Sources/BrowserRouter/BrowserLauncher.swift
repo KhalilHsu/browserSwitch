@@ -1,6 +1,9 @@
 import AppKit
 import Foundation
+import OSLog
 import BrowserRouterCore
+
+private let browserLauncherLogger = Logger(subsystem: "local.browser-router", category: "browser-launcher")
 
 final class BrowserLauncher {
     func isInstalled(_ option: BrowserOption) -> Bool {
@@ -8,7 +11,7 @@ final class BrowserLauncher {
     }
 
     func open(_ url: URL, with option: BrowserOption) {
-        NSLog("BrowserRouter opening \(url.absoluteString) with option \(option.id)")
+        browserLauncherLogger.info("BrowserRouter opening \(url.absoluteString, privacy: .public) with option \(option.id, privacy: .public)")
         if let profileDirectory = option.profileDirectory, isChromium(option) {
             openChromium(url, option: option, profileDirectory: profileDirectory)
             return
@@ -18,7 +21,7 @@ final class BrowserLauncher {
             let configuration = NSWorkspace.OpenConfiguration()
             NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in
                 if let error {
-                    NSLog("BrowserRouter failed to open \(url) with \(option.name): \(error)")
+                    browserLauncherLogger.error("BrowserRouter failed to open \(url.absoluteString, privacy: .public) with \(option.name, privacy: .public): \(String(describing: error), privacy: .public)")
                 }
             }
             return
@@ -64,20 +67,20 @@ final class BrowserLauncher {
         do {
             try process.run()
         } catch {
-            NSLog("BrowserRouter chromium launch failed: \(error)")
+            browserLauncherLogger.error("BrowserRouter chromium launch failed: \(String(describing: error), privacy: .public)")
             openFallback(url)
         }
     }
 
     private func openFallback(_ url: URL) {
         guard let safariURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Safari") else {
-            NSLog("BrowserRouter fallback failed: Safari is not available")
+            browserLauncherLogger.error("BrowserRouter fallback failed: Safari is not available")
             return
         }
 
         NSWorkspace.shared.open([url], withApplicationAt: safariURL, configuration: NSWorkspace.OpenConfiguration()) { _, error in
             if let error {
-                NSLog("BrowserRouter Safari fallback failed: \(error)")
+                browserLauncherLogger.error("BrowserRouter Safari fallback failed: \(String(describing: error), privacy: .public)")
             }
         }
     }

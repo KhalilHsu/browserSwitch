@@ -1,7 +1,10 @@
 import AppKit
 import CoreGraphics
 import Foundation
+import OSLog
 import BrowserRouterCore
+
+private let appDelegateLogger = Logger(subsystem: "local.browser-router", category: "app-delegate")
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -200,7 +203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.openSettings()
             },
             onSelect: { [weak self] option in
-                NSLog("BrowserRouter chooser selected option \(option.id) for \(url.absoluteString)")
+                appDelegateLogger.info("BrowserRouter chooser selected option \(option.id, privacy: .public) for \(url.absoluteString, privacy: .public)")
                 self?.launcher.open(url, with: option)
             },
             onClose: { [weak self] in
@@ -248,7 +251,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if let previousDefaultHandler {
                     adoptPreviousDefaultBrowser(previousDefaultHandler)
                 }
-                NSLog("BrowserRouter default handler set successfully:\n\(manager.statusSummary())")
+                appDelegateLogger.info("BrowserRouter default handler set successfully:\n\(manager.statusSummary(), privacy: .public)")
                 if showAlert {
                     showMessage(
                         title: "BrowserRouter Is Now The Default",
@@ -259,7 +262,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 onboardingWindowController?.reload(with: configuration, isRoutingToSelf: manager.isRoutingToSelf())
                 completion?(true, configuration)
             } catch {
-                NSLog("BrowserRouter failed to become the default browser: \(error)")
+                appDelegateLogger.error("BrowserRouter failed to become the default browser: \(String(describing: error), privacy: .public)")
                 if showAlert {
                     showMessage(
                         title: "Could Not Set BrowserRouter As Default",
@@ -355,7 +358,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             rememberConfigModificationDate()
             settingsWindowController?.reload(with: configuration)
         } catch {
-            NSLog("BrowserRouter failed to persist previous default browser \(handler.bundleIdentifier): \(error)")
+            appDelegateLogger.error("BrowserRouter failed to persist previous default browser \(handler.bundleIdentifier, privacy: .public): \(String(describing: error), privacy: .public)")
         }
     }
 
@@ -452,7 +455,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         do {
             try result.configuration.save()
         } catch {
-            NSLog("BrowserRouter failed to persist browser cleanup: \(error)")
+            appDelegateLogger.error("BrowserRouter failed to persist browser cleanup: \(String(describing: error), privacy: .public)")
         }
 
         return result.configuration
@@ -467,7 +470,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             configuration = RouterConfiguration.load()
             rememberConfigModificationDate()
             applyPresentationSettings()
-            NSLog("BrowserRouter recreated config after it was removed")
+            appDelegateLogger.info("BrowserRouter recreated config after it was removed")
             return
         }
 
@@ -478,7 +481,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         configuration = RouterConfiguration.load()
         rememberConfigModificationDate()
         applyPresentationSettings()
-        NSLog("BrowserRouter reloaded config after external modification")
+        appDelegateLogger.info("BrowserRouter reloaded config after external modification")
     }
 
     private func rememberConfigModificationDate() {

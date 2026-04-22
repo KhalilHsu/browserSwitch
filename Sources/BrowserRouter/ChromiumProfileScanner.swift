@@ -57,7 +57,7 @@ enum ChromiumProfileScanner {
 
             return profileDirectories(for: spec).map { profile in
                 BrowserOption(
-                    id: "\(spec.idPrefix)-\(slug(profile.directory))",
+                    id: "\(spec.idPrefix)-\(BrowserSlug.makeProfileIDComponent(profile.directory))",
                     name: "\(spec.optionNamePrefix) - \(profile.displayName)",
                     bundleIdentifier: spec.bundleIdentifier,
                     appName: spec.appName,
@@ -139,16 +139,14 @@ enum ChromiumProfileScanner {
             }
 
             let name = info["name"] as? String
-            return (directory: directory, displayName: name?.isEmpty == false ? name! : directory)
+            let displayName = if let name, !name.isEmpty {
+                name
+            } else {
+                directory
+            }
+            return (directory: directory, displayName: displayName)
         }
 
         return profiles.sorted { $0.directory.localizedStandardCompare($1.directory) == .orderedAscending }
-    }
-
-    private static func slug(_ value: String) -> String {
-        value
-            .lowercased()
-            .replacingOccurrences(of: " ", with: "-")
-            .filter { $0.isLetter || $0.isNumber || $0 == "-" }
     }
 }

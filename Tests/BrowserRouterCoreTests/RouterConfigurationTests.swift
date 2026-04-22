@@ -25,6 +25,16 @@ import Testing
     #expect(configuration.hasCompletedOnboarding == false)
 }
 
+@Test func browserSlugPreservesBundleIdentifierIDFormat() {
+    #expect(BrowserSlug.make("com.google.Chrome") == "com-google-chrome")
+    #expect(BrowserSlug.make("...") == "browser")
+}
+
+@Test func browserSlugPreservesChromiumProfileIDFormat() {
+    #expect(BrowserSlug.makeProfileIDComponent("Default") == "default")
+    #expect(BrowserSlug.makeProfileIDComponent("Profile 1") == "profile-1")
+}
+
 @Test func adoptingDefaultBrowserReusesExistingDefaultOptionForBundle() {
     var configuration = RouterConfiguration.sample()
 

@@ -1,4 +1,7 @@
 import Foundation
+import OSLog
+
+private let configurationLogger = Logger(subsystem: "local.browser-router", category: "configuration")
 
 public struct BrowserOption: Codable, Hashable {
     public var id: String
@@ -120,7 +123,7 @@ public struct RouterConfiguration: Codable {
             try config.save()
             return config
         } catch {
-            NSLog("BrowserRouter config load failed: \(error)")
+            configurationLogger.error("BrowserRouter config load failed: \(String(describing: error), privacy: .public)")
             return .sample()
         }
     }
@@ -148,7 +151,7 @@ public struct RouterConfiguration: Codable {
             return
         }
 
-        let optionID = uniqueBrowserOptionID(prefix: "previous-default-\(Self.slug(bundleIdentifier))")
+        let optionID = uniqueBrowserOptionID(prefix: "previous-default-\(BrowserSlug.make(bundleIdentifier))")
         browserOptions.insert(
             BrowserOption(
                 id: optionID,
@@ -174,23 +177,6 @@ public struct RouterConfiguration: Codable {
             suffix += 1
         }
         return "\(prefix)-\(suffix)"
-    }
-
-    private static func slug(_ value: String) -> String {
-        let slug = value
-            .lowercased()
-            .map { character in
-                character.isLetter || character.isNumber ? character : "-"
-            }
-            .reduce(into: "") { partial, character in
-                if character == "-", partial.last == "-" {
-                    return
-                }
-                partial.append(character)
-            }
-            .trimmingCharacters(in: CharacterSet(charactersIn: "-"))
-
-        return slug.isEmpty ? "browser" : slug
     }
 
     public static func sample() -> RouterConfiguration {
