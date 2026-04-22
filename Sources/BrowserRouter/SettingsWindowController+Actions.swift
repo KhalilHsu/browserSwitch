@@ -38,6 +38,7 @@ extension SettingsWindowController {
 
         rulesTableView.reloadData()
         updateSummaryLabels()
+        updateRuleTesterResult()
         if !configuration.routingRules.isEmpty {
             rulesTableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
             populateRuleForm(from: configuration.routingRules[0])
@@ -48,6 +49,7 @@ extension SettingsWindowController {
 
     @objc func detectProfiles() {
         configuration = ChromiumProfileScanner.mergeDetectedOptions(into: configuration)
+        configuration = FirefoxProfileScanner.mergeDetectedOptions(into: configuration)
         reloadControls()
         _ = persistConfiguration(statusMessage: "Profiles detected and saved")
     }
@@ -88,11 +90,18 @@ extension SettingsWindowController {
         browserSummaryLabel.stringValue = browserText
 
         let unresolvedRuleCount = configuration.routingRules.filter { rule in
+            rule.isEnabled &&
             !visibleBrowserOptions.contains(where: { $0.id == rule.browserOptionID })
         }.count
-        ruleSummaryLabel.stringValue = unresolvedRuleCount == 0
-            ? "\(configuration.routingRules.count) rule(s)"
-            : "\(configuration.routingRules.count) rule(s), \(unresolvedRuleCount) need attention"
+        let disabledRuleCount = configuration.routingRules.filter { !$0.isEnabled }.count
+        var ruleParts = ["\(configuration.routingRules.count) rule(s)"]
+        if disabledRuleCount > 0 {
+            ruleParts.append("\(disabledRuleCount) disabled")
+        }
+        if unresolvedRuleCount > 0 {
+            ruleParts.append("\(unresolvedRuleCount) need attention")
+        }
+        ruleSummaryLabel.stringValue = ruleParts.joined(separator: ", ")
         ruleSummaryLabel.textColor = unresolvedRuleCount == 0 ? .secondaryLabelColor : .systemOrange
         rulesScrollViewHeightConstraint?.constant = preferredRulesListHeight()
     }
@@ -111,10 +120,12 @@ extension SettingsWindowController {
     }
 
     @objc func defaultBrowserChanged() {
+        updateRuleTesterResult()
         _ = persistConfiguration(statusMessage: "Default browser saved")
     }
 
     @objc func modifierChanged() {
+        updateRuleTesterResult()
         _ = persistConfiguration(statusMessage: "Chooser modifier saved")
     }
 

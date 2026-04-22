@@ -49,7 +49,14 @@ import Testing
     #expect(!RuleMatcher.matches(makeRule(), url: try makeURL("https://example.com")))
 }
 
+@Test func disabledRuleDoesNotMatch() throws {
+    let rule = makeRule(isEnabled: false, hostSuffix: "example.com")
+
+    #expect(!RuleMatcher.matches(rule, url: try makeURL("https://example.com")))
+}
+
 private func makeRule(
+    isEnabled: Bool = true,
     hostContains: String? = nil,
     hostSuffix: String? = nil,
     pathPrefix: String? = nil,
@@ -58,6 +65,7 @@ private func makeRule(
     RoutingRule(
         id: "test",
         name: "Test",
+        isEnabled: isEnabled,
         browserOptionID: "browser",
         hostContains: hostContains,
         hostSuffix: hostSuffix,

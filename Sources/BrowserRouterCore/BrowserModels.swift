@@ -31,15 +31,28 @@ public struct BrowserOption: Codable, Hashable {
 public struct RoutingRule: Codable, Hashable {
     public var id: String
     public var name: String
+    public var isEnabled: Bool
     public var browserOptionID: String
     public var hostContains: String?
     public var hostSuffix: String?
     public var pathPrefix: String?
     public var urlContains: String?
 
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case isEnabled
+        case browserOptionID
+        case hostContains
+        case hostSuffix
+        case pathPrefix
+        case urlContains
+    }
+
     public init(
         id: String,
         name: String,
+        isEnabled: Bool = true,
         browserOptionID: String,
         hostContains: String?,
         hostSuffix: String?,
@@ -48,11 +61,24 @@ public struct RoutingRule: Codable, Hashable {
     ) {
         self.id = id
         self.name = name
+        self.isEnabled = isEnabled
         self.browserOptionID = browserOptionID
         self.hostContains = hostContains
         self.hostSuffix = hostSuffix
         self.pathPrefix = pathPrefix
         self.urlContains = urlContains
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        browserOptionID = try container.decode(String.self, forKey: .browserOptionID)
+        hostContains = try container.decodeIfPresent(String.self, forKey: .hostContains)
+        hostSuffix = try container.decodeIfPresent(String.self, forKey: .hostSuffix)
+        pathPrefix = try container.decodeIfPresent(String.self, forKey: .pathPrefix)
+        urlContains = try container.decodeIfPresent(String.self, forKey: .urlContains)
     }
 }
 

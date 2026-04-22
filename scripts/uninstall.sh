@@ -83,7 +83,7 @@ done
 
 command -v osascript >/dev/null 2>&1 || fail "osascript is not available on this system."
 
-log "Before uninstalling, use BrowserRouter Settings to restore your previous default browser if BrowserRouter is currently the default."
+log "Before removing ${APP_NAME}, this script will try to restore the previous default browser unless --skip-restore is used."
 
 if [ "${DRY_RUN}" = true ]; then
   log "Dry run:"

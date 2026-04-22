@@ -86,6 +86,10 @@ extension SettingsWindowController {
         browserLabel.textColor = .secondaryLabelColor
         browserLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        let testerTitle = NSTextField(labelWithString: "Rule tester")
+        testerTitle.font = .systemFont(ofSize: 13, weight: .medium)
+        testerTitle.translatesAutoresizingMaskIntoConstraints = false
+
         let compactRuleNameRow = NSStackView(views: [ruleNameLabel, ruleNameField])
         compactRuleNameRow.orientation = .horizontal
         compactRuleNameRow.alignment = .centerY
@@ -110,6 +114,18 @@ extension SettingsWindowController {
         editorStack.spacing = 10
         editorStack.translatesAutoresizingMaskIntoConstraints = false
 
+        let testerRow = NSStackView(views: [ruleTesterURLField])
+        testerRow.orientation = .horizontal
+        testerRow.alignment = .centerY
+        testerRow.spacing = 8
+        testerRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let testerStack = NSStackView(views: [testerTitle, testerRow, ruleTesterResultLabel])
+        testerStack.orientation = .vertical
+        testerStack.alignment = .leading
+        testerStack.spacing = 7
+        testerStack.translatesAutoresizingMaskIntoConstraints = false
+
         ruleNameLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
         matchLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
         browserLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
@@ -118,8 +134,10 @@ extension SettingsWindowController {
         ruleMatchValueField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         ruleBrowserPopup.setContentHuggingPriority(.required, for: .horizontal)
         ruleBrowserPopup.setContentCompressionResistancePriority(.required, for: .horizontal)
+        ruleTesterURLField.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        ruleTesterURLField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let pageStack = NSStackView(views: [rulesHeaderStack, rulesScrollView, editorStack])
+        let pageStack = NSStackView(views: [rulesHeaderStack, rulesScrollView, editorStack, testerStack])
         pageStack.orientation = .vertical
         pageStack.alignment = .leading
         pageStack.spacing = 0
@@ -136,11 +154,14 @@ extension SettingsWindowController {
 
             rulesScrollView.topAnchor.constraint(equalTo: rulesHeaderStack.bottomAnchor, constant: 16),
             editorStack.topAnchor.constraint(equalTo: rulesScrollView.bottomAnchor, constant: 18),
-            editorStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
+            testerStack.topAnchor.constraint(equalTo: editorStack.bottomAnchor, constant: 18),
+            testerStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
             ruleNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
             ruleMatchValueField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160),
-            ruleBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180)
+            ruleBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
+            testerRow.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
+            ruleTesterResultLabel.widthAnchor.constraint(equalTo: pageStack.widthAnchor)
         ])
 
         rulesScrollViewHeightConstraint = rulesScrollView.heightAnchor.constraint(equalToConstant: preferredRulesListHeight())
@@ -163,12 +184,14 @@ extension SettingsWindowController {
         defaultBrowserTitle.font = .systemFont(ofSize: 15, weight: .semibold)
         defaultBrowserTitle.translatesAutoresizingMaskIntoConstraints = false
 
-        let defaultBrowserHint = NSTextField(labelWithString: "Stop routing http and https links through BrowserRouter by restoring the browser that was default before setup.")
+        let defaultBrowserHint = NSTextField(labelWithString: "Restore the browser that handled http and https links before BrowserRouter setup.")
         defaultBrowserHint.font = .systemFont(ofSize: 12)
         defaultBrowserHint.textColor = .secondaryLabelColor
         defaultBrowserHint.lineBreakMode = .byWordWrapping
         defaultBrowserHint.maximumNumberOfLines = 2
+        defaultBrowserHint.preferredMaxLayoutWidth = settingsTabContentWidth - 64
         defaultBrowserHint.translatesAutoresizingMaskIntoConstraints = false
+        defaultBrowserHint.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
         let configTitle = NSTextField(labelWithString: "Config file")
         configTitle.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -192,19 +215,33 @@ extension SettingsWindowController {
         restoreButtons.spacing = 8
         restoreButtons.translatesAutoresizingMaskIntoConstraints = false
 
+        let inventorySection = NSStackView(views: [inventoryTitle, inventoryButtons])
+        inventorySection.orientation = .vertical
+        inventorySection.alignment = .leading
+        inventorySection.spacing = 8
+        inventorySection.translatesAutoresizingMaskIntoConstraints = false
+
+        let defaultBrowserSection = NSStackView(views: [defaultBrowserTitle, defaultBrowserHint, restoreButtons])
+        defaultBrowserSection.orientation = .vertical
+        defaultBrowserSection.alignment = .leading
+        defaultBrowserSection.spacing = 7
+        defaultBrowserSection.translatesAutoresizingMaskIntoConstraints = false
+
+        let configSection = NSStackView(views: [configTitle, configButtons])
+        configSection.orientation = .vertical
+        configSection.alignment = .leading
+        configSection.spacing = 8
+        configSection.translatesAutoresizingMaskIntoConstraints = false
+
         let stack = NSStackView(views: [
             advancedHintLabel,
-            inventoryTitle,
-            inventoryButtons,
-            defaultBrowserTitle,
-            defaultBrowserHint,
-            restoreButtons,
-            configTitle,
-            configButtons
+            inventorySection,
+            defaultBrowserSection,
+            configSection
         ])
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 14
+        stack.spacing = 18
         stack.translatesAutoresizingMaskIntoConstraints = false
         advancedPageContentStack = stack
 
@@ -212,9 +249,9 @@ extension SettingsWindowController {
         NSLayoutConstraint.activate([
             stack.topAnchor.constraint(equalTo: advancedPageView.topAnchor, constant: settingsPageTopPadding),
             stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: advancedPageView.trailingAnchor, constant: -32),
+            stack.trailingAnchor.constraint(equalTo: advancedPageView.trailingAnchor, constant: -32),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
-            defaultBrowserHint.widthAnchor.constraint(lessThanOrEqualToConstant: 560)
+            defaultBrowserHint.widthAnchor.constraint(lessThanOrEqualTo: stack.widthAnchor)
         ])
     }
 

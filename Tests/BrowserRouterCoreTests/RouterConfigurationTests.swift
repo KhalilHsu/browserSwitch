@@ -17,6 +17,22 @@ import Testing
     #expect(configuration.showsDockIcon == false)
     #expect(configuration.showsStatusItem == true)
     #expect(configuration.hasCompletedOnboarding == true)
+    #expect(configuration.previousDefaultBrowser == nil)
+}
+
+@Test func legacyRoutingRuleDecodesEnabledByDefault() throws {
+    let json = """
+    {
+      "id": "legacy",
+      "name": "Legacy",
+      "browserOptionID": "chrome",
+      "hostSuffix": "example.com"
+    }
+    """
+
+    let rule = try JSONDecoder().decode(RoutingRule.self, from: Data(json.utf8))
+
+    #expect(rule.isEnabled)
 }
 
 @Test func sampleConfigurationRequiresOnboarding() {
@@ -46,6 +62,8 @@ import Testing
 
     #expect(configuration.defaultOptionID == "chrome-default")
     #expect(configuration.browserOptions.filter { $0.bundleIdentifier == "com.google.Chrome" }.count == 2)
+    #expect(configuration.previousDefaultBrowser?.bundleIdentifier == "com.google.Chrome")
+    #expect(configuration.previousDefaultBrowser?.displayName == "Google Chrome")
 }
 
 @Test func adoptingDefaultBrowserPrefersDefaultProfileOverGenericBundleOption() {
@@ -94,4 +112,21 @@ import Testing
     #expect(configuration.browserOptions.first?.id == "previous-default-com-example-custombrowser")
     #expect(configuration.browserOptions.first?.name == "Custom Browser")
     #expect(configuration.browserOptions.first?.bundleIdentifier == "com.example.CustomBrowser")
+    #expect(configuration.previousDefaultBrowser?.bundleIdentifier == "com.example.CustomBrowser")
+}
+
+@Test func adoptingDefaultBrowserEncodesPreviousDefaultBrowser() throws {
+    var configuration = RouterConfiguration.sample()
+
+    configuration.adoptDefaultBrowser(
+        bundleIdentifier: "com.apple.Safari",
+        displayName: "Safari",
+        appName: "Safari"
+    )
+
+    let data = try JSONEncoder().encode(configuration)
+    let decoded = try JSONDecoder().decode(RouterConfiguration.self, from: data)
+
+    #expect(decoded.previousDefaultBrowser?.bundleIdentifier == "com.apple.Safari")
+    #expect(decoded.previousDefaultBrowser?.displayName == "Safari")
 }

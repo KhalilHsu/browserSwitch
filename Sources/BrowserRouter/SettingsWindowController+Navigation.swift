@@ -88,7 +88,7 @@ extension SettingsWindowController {
         case .appearance:
             return 220
         case .rules:
-            return 424
+            return 500
         case .advanced:
             return 270
         case .about:

@@ -11,9 +11,15 @@ final class BrowserLauncher {
     }
 
     func open(_ url: URL, with option: BrowserOption) {
-        browserLauncherLogger.info("BrowserRouter opening \(url.absoluteString, privacy: .public) with option \(option.id, privacy: .public)")
+        let summary = URLLogSummary(url: url)
+        browserLauncherLogger.info("BrowserRouter opening \(summary.description, privacy: .public) with option \(option.id, privacy: .public)")
         if let profileDirectory = option.profileDirectory, isChromium(option) {
             openChromium(url, option: option, profileDirectory: profileDirectory)
+            return
+        }
+
+        if let extraArguments = option.extraArguments, !extraArguments.isEmpty {
+            openWithArguments(url, option: option, extraArguments: extraArguments)
             return
         }
 
@@ -21,7 +27,7 @@ final class BrowserLauncher {
             let configuration = NSWorkspace.OpenConfiguration()
             NSWorkspace.shared.open([url], withApplicationAt: appURL, configuration: configuration) { _, error in
                 if let error {
-                    browserLauncherLogger.error("BrowserRouter failed to open \(url.absoluteString, privacy: .public) with \(option.name, privacy: .public): \(String(describing: error), privacy: .public)")
+                    browserLauncherLogger.error("BrowserRouter failed to open \(summary.description, privacy: .public) with \(option.name, privacy: .public): \(String(describing: error), privacy: .public)")
                 }
             }
             return
@@ -43,6 +49,12 @@ final class BrowserLauncher {
     ]
 
     private func openChromium(_ url: URL, option: BrowserOption, profileDirectory: String) {
+        var extraArguments = ["--profile-directory=\(profileDirectory)"]
+        extraArguments.append(contentsOf: option.extraArguments ?? [])
+        openWithArguments(url, option: option, extraArguments: extraArguments)
+    }
+
+    private func openWithArguments(_ url: URL, option: BrowserOption, extraArguments: [String]) {
         guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: option.bundleIdentifier) != nil else {
             openFallback(url)
             return
@@ -59,15 +71,14 @@ final class BrowserLauncher {
         }
 
         arguments.append("--args")
-        arguments.append("--profile-directory=\(profileDirectory)")
-        arguments.append(contentsOf: option.extraArguments ?? [])
+        arguments.append(contentsOf: extraArguments)
         arguments.append(url.absoluteString)
         process.arguments = arguments
 
         do {
             try process.run()
         } catch {
-            browserLauncherLogger.error("BrowserRouter chromium launch failed: \(String(describing: error), privacy: .public)")
+            browserLauncherLogger.error("BrowserRouter argument launch failed for option \(option.id, privacy: .public): \(String(describing: error), privacy: .public)")
             openFallback(url)
         }
     }

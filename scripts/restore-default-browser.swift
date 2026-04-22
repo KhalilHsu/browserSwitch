@@ -90,13 +90,13 @@ guard let target else {
     fail("BrowserRouter config does not contain a previous default browser.", code: 4)
 }
 
-guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: target.bundleIdentifier) != nil else {
-    fail("Could not find an installed app for \(target.bundleIdentifier).", code: 5)
-}
-
 if dryRun {
     log("Would restore http and https handlers to \(target.displayName) (\(target.bundleIdentifier)).")
     exit(0)
+}
+
+guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: target.bundleIdentifier) != nil else {
+    fail("Could not find an installed app for \(target.bundleIdentifier).", code: 5)
 }
 
 for scheme in ["http", "https"] {

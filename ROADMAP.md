@@ -13,6 +13,8 @@ reduce trust risk or make the app substantially better for everyday use.
 
 #### Restore Default Browser
 
+Status: Done.
+
 Add a clear way to disable BrowserRouter and restore the previous `http` and
 `https` default browser.
 
@@ -25,12 +27,16 @@ Why it matters:
 
 Acceptance criteria:
 
-- Settings includes a restore or disable action.
-- The action restores both `http` and `https` handlers when possible.
-- The UI explains what will happen before changing system defaults.
-- Failure states show the current handlers and a useful next step.
+- [x] Settings includes a restore or disable action.
+- [x] The action restores both `http` and `https` handlers when possible.
+- [x] The UI explains what will happen before changing system defaults.
+- [x] Failure states show the current handlers and a useful next step.
+- [x] `scripts/uninstall.sh` attempts to restore the previous default browser
+  before removing the app.
 
 #### Privacy-Safe Logging
+
+Status: Done.
 
 Avoid writing full URLs to public logs by default.
 
@@ -43,13 +49,15 @@ Why it matters:
 
 Acceptance criteria:
 
-- Normal logs avoid full URL strings.
-- Logs can include non-sensitive routing facts such as host, rule id, and target
-  browser option id.
-- Full URL logging is limited to a deliberate debug or diagnostic mode.
-- README privacy notes match the implementation.
+- [x] Normal logs avoid full URL strings.
+- [x] Logs can include non-sensitive routing facts such as host, rule id, and
+  target browser option id.
+- [x] Full URL strings are not logged by default.
+- [x] README privacy notes match the implementation.
 
 #### Release Links And About Page
+
+Status: Done.
 
 Update project links and product copy before publishing.
 
@@ -60,9 +68,9 @@ Why it matters:
 
 Acceptance criteria:
 
-- About page links point to the final repository and releases page.
-- README, app links, and release scripts use the same project name.
-- About copy is concise and product-focused.
+- [x] About page links point to the final repository and releases page.
+- [x] README, app links, and release scripts use the same project name.
+- [x] About copy is concise and product-focused.
 
 #### Local Install And Uninstall Scripts
 
@@ -90,38 +98,46 @@ Acceptance criteria:
 
 #### Rule Tester
 
+Status: Done.
+
 Add a Settings tool where users can paste a URL and see the matched rule and
 target browser/profile.
 
 Acceptance criteria:
 
-- The tester shows whether the chooser shortcut would override routing.
-- It shows the first matching rule, or that the default route will be used.
-- It shows when the target browser/profile is unavailable.
+- [x] The tester shows whether the chooser shortcut would override routing.
+- [x] It shows the first matching rule, or that the default route will be used.
+- [x] It shows when the target browser/profile is unavailable.
 
 #### Rule Enable/Disable
+
+Status: Done.
 
 Allow temporary disabling of rules without deleting them.
 
 Acceptance criteria:
 
-- Each rule has an enabled state.
-- Disabled rules are skipped by the matcher.
-- The rules table visually distinguishes disabled rules.
-- Config decoding preserves compatibility with older files.
+- [x] Each rule has an enabled state.
+- [x] Disabled rules are skipped by the matcher.
+- [x] The rules table visually distinguishes disabled rules.
+- [x] Config decoding preserves compatibility with older files.
 
 #### Richer Chooser
+
+Status: Done.
 
 Improve the browser chooser for users with many browsers or profiles.
 
 Acceptance criteria:
 
-- More than 12 options can be reached.
-- Keyboard navigation remains fast.
-- Search or filtering works for browser/profile names.
-- The default option remains visually clear.
+- [x] More than 12 options can be reached.
+- [x] Keyboard navigation remains fast.
+- [x] Search or filtering works for browser/profile names.
+- [x] The default option remains visually clear.
 
 #### Broader Browser Profile Support
+
+Status: Done for Firefox MVP.
 
 Detect and expose profile/profile-like targets for browsers that are not covered
 by the current Chromium scanner.
@@ -135,9 +151,12 @@ Why it matters:
 - Some browsers do not expose profiles the same way Chromium does, so each
   browser needs explicit launch and detection research.
 
-Initial candidates:
+MVP candidate:
 
 - Firefox profiles from Firefox profile metadata.
+
+Deferred candidates:
+
 - Firefox Developer Edition, LibreWolf, Waterfox, and other Firefox-family
   browsers where profile launching is reliable.
 - Arc spaces/profiles if there is a supported or stable external launch path.
@@ -145,12 +164,16 @@ Initial candidates:
 
 Acceptance criteria:
 
-- Supported profile targets have stable ids and readable names.
-- Launch behavior opens the selected profile target reliably, or the browser is
+- [x] Supported profile targets have stable ids and readable names.
+- [x] Launch behavior opens the selected Firefox profile target, or the browser is
   left unsupported with documentation explaining why.
-- Missing or malformed profile metadata does not break app startup.
-- Browser-specific scanners are isolated enough that adding one browser does not
+- [x] Missing or malformed profile metadata does not break app startup.
+- [x] Browser-specific scanners are isolated enough that adding one browser does not
   make existing Chromium detection fragile.
+
+MVP scope:
+
+- [x] Firefox profiles from `profiles.ini`.
 
 ## P1: Daily Use Improvements
 
@@ -342,25 +365,25 @@ Acceptance criteria:
 
 These are open-source hygiene tasks that can happen alongside feature work.
 
-- Add screenshots or a short demo GIF to README.
-- Add uninstall instructions.
-- Add a changelog.
-- Add issue templates for bugs and feature requests.
-- Document release signing and notarization once public binaries are shipped.
-- Consider Sparkle automatic updates after public signed releases exist.
-- Consider English and Simplified Chinese localization after UI text stabilizes.
-- Add more tests around config migration, browser inventory refresh, profile
+- [ ] Add screenshots or a short demo GIF to README.
+- [x] Add uninstall instructions.
+- [ ] Add a changelog.
+- [ ] Add issue templates for bugs and feature requests.
+- [ ] Document release signing and notarization once public binaries are shipped.
+- [ ] Consider Sparkle automatic updates after public signed releases exist.
+- [ ] Consider English and Simplified Chinese localization after UI text stabilizes.
+- [ ] Add more tests around config migration, browser inventory refresh, profile
   scanning, unavailable fallback, source app routing, tracking stripping, and
   rule priority.
 
 ## Done
 
-- Native Swift/AppKit app.
-- First-run onboarding.
-- Default browser/profile selection.
-- Chooser shortcut selection.
-- Basic routing rules.
-- Chromium profile detection.
-- Browser inventory refresh.
-- Local JSON configuration.
-- Basic GitHub Actions build workflow.
+- [x] Native Swift/AppKit app.
+- [x] First-run onboarding.
+- [x] Default browser/profile selection.
+- [x] Chooser shortcut selection.
+- [x] Basic routing rules.
+- [x] Chromium profile detection.
+- [x] Browser inventory refresh.
+- [x] Local JSON configuration.
+- [x] Basic GitHub Actions build workflow.

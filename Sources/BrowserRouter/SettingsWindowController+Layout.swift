@@ -4,9 +4,10 @@ private let formRowSpacing = CGFloat(12.0)
 private let formLabelWidth = CGFloat(160.0)
 private let settingsWindowMinimumSize = NSSize(width: 620, height: 240)
 private let settingsSummaryFontSize = CGFloat(12.0)
-private let rulesNameColumnWidth = CGFloat(120.0)
-private let rulesMatchColumnWidth = CGFloat(160.0)
-private let rulesBrowserColumnWidth = CGFloat(170.0)
+private let rulesEnabledColumnWidth = CGFloat(44.0)
+private let rulesNameColumnWidth = CGFloat(108.0)
+private let rulesMatchColumnWidth = CGFloat(154.0)
+private let rulesBrowserColumnWidth = CGFloat(164.0)
 private let rulesTableRowHeight = CGFloat(28.0)
 private let rulesTableIntercellSpacing = NSSize(width: 8, height: 4)
 private let aboutLogoFontSize = CGFloat(34.0)
@@ -81,15 +82,18 @@ extension SettingsWindowController {
         ruleSummaryLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
         ruleSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("enabled")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
-        rulesTableView.tableColumns[0].title = "Rule"
-        rulesTableView.tableColumns[0].width = rulesNameColumnWidth
-        rulesTableView.tableColumns[1].title = "Match"
-        rulesTableView.tableColumns[1].width = rulesMatchColumnWidth
-        rulesTableView.tableColumns[2].title = "Browser/Profile"
-        rulesTableView.tableColumns[2].width = rulesBrowserColumnWidth
+        rulesTableView.tableColumns[0].title = "On"
+        rulesTableView.tableColumns[0].width = rulesEnabledColumnWidth
+        rulesTableView.tableColumns[1].title = "Rule"
+        rulesTableView.tableColumns[1].width = rulesNameColumnWidth
+        rulesTableView.tableColumns[2].title = "Match"
+        rulesTableView.tableColumns[2].width = rulesMatchColumnWidth
+        rulesTableView.tableColumns[3].title = "Browser/Profile"
+        rulesTableView.tableColumns[3].width = rulesBrowserColumnWidth
         rulesTableView.delegate = self
         rulesTableView.dataSource = self
         rulesTableView.usesAlternatingRowBackgroundColors = true
@@ -116,6 +120,15 @@ extension SettingsWindowController {
         ruleBrowserPopup.translatesAutoresizingMaskIntoConstraints = false
         ruleBrowserPopup.target = self
         ruleBrowserPopup.action = #selector(ruleBrowserChanged)
+
+        ruleTesterURLField.placeholderString = "Paste a URL or domain, e.g. www.baidu.com"
+        ruleTesterURLField.translatesAutoresizingMaskIntoConstraints = false
+        ruleTesterURLField.delegate = self
+        ruleTesterResultLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        ruleTesterResultLabel.textColor = .secondaryLabelColor
+        ruleTesterResultLabel.lineBreakMode = .byWordWrapping
+        ruleTesterResultLabel.maximumNumberOfLines = 3
+        ruleTesterResultLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutLogoLabel.font = .systemFont(ofSize: aboutLogoFontSize, weight: .light)
         aboutLogoLabel.alignment = .left

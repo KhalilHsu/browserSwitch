@@ -2,6 +2,10 @@ import Foundation
 
 public enum RuleMatcher {
     public static func matches(_ rule: RoutingRule, url: URL) -> Bool {
+        guard rule.isEnabled else {
+            return false
+        }
+
         let absolute = url.absoluteString.removingPercentEncoding ?? url.absoluteString
         let lowercasedAbsolute = absolute.lowercased()
         let host = (url.host ?? "").lowercased()

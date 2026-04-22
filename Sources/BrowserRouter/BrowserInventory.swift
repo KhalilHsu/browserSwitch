@@ -41,7 +41,7 @@ enum BrowserInventory {
     static func refreshConfiguration(_ configuration: RouterConfiguration) -> BrowserRefreshResult {
         let unavailableOptions = configuration.browserOptions.filter { !BrowserAvailability.isInstalled($0) }
         let installedExistingOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
-        let profileOptions = ChromiumProfileScanner.detectedOptions()
+        let profileOptions = ChromiumProfileScanner.detectedOptions() + FirefoxProfileScanner.detectedOptions()
         let profileBundleIdentifiers = Set(profileOptions.map(\.bundleIdentifier))
         let systemOptions = detectedSystemHandlerOptions(existingOptions: installedExistingOptions).filter { option in
             !profileBundleIdentifiers.contains(option.bundleIdentifier)

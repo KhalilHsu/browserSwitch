@@ -43,6 +43,8 @@ Current assumptions:
   - Microsoft Edge
   - Brave
   - Vivaldi
+- Firefox profile discovery from `profiles.ini`.
+- Searchable chooser for any number of detected browsers or profiles.
 - Browser inventory refresh for installed system URL handlers.
 - Settings window with Basic, Appearance, Rules, Advanced, and About sections.
 - Optional Dock icon and menu bar icon.
@@ -127,8 +129,9 @@ registers the new app bundle with Launch Services, and relaunches it.
 
 ## Uninstall
 
-Before uninstalling, open BrowserRouter settings and restore your previous
-default browser if BrowserRouter is currently the default.
+By default, the uninstall script first tries to restore the browser that was
+default before BrowserRouter setup. If that cannot be restored, it prints a
+warning and you can choose a default browser in macOS System Settings.
 
 ```bash
 chmod +x scripts/uninstall.sh
@@ -153,6 +156,7 @@ Useful uninstall options:
 ```bash
 scripts/uninstall.sh --dry-run
 scripts/uninstall.sh --yes
+scripts/uninstall.sh --skip-restore
 ```
 
 ## First Run
@@ -175,7 +179,7 @@ Settings includes:
 
 - **Basic**: default browser/profile and chooser shortcut.
 - **Appearance**: Dock icon and menu bar icon visibility.
-- **Rules**: add, update, and remove routing rules.
+- **Rules**: add, update, enable, disable, remove, and test routing rules.
 - **Advanced**: refresh browser inventory, detect Chromium profiles, and reveal
   the config file in Finder.
 - **About**: version and project links.
@@ -188,6 +192,7 @@ Settings changes are saved automatically when you:
 - refresh browsers
 - detect Chromium profiles
 - add, update, or remove a rule
+- enable or disable a rule
 - finish editing an existing selected rule
 
 Rule text fields are not saved on every keystroke. They save when you finish
@@ -223,6 +228,7 @@ Example routing rule:
 {
   "id": "gmail-work",
   "name": "Gmail Work",
+  "isEnabled": true,
   "browserOptionID": "chrome-default",
   "hostSuffix": "mail.google.com"
 }
@@ -230,22 +236,32 @@ Example routing rule:
 
 ## Rule Matching
 
-Rules are checked in the order they appear in `routingRules`. The first matching
-rule whose browser/profile is installed wins. If no rule matches, BrowserRouter
-uses the configured default option.
+Enabled rules are checked in the order they appear in `routingRules`. The first
+matching enabled rule wins when its browser/profile is available. If the matched
+target is unavailable, BrowserRouter falls back to the default or another
+available browser option. If no enabled rule matches, BrowserRouter uses the
+configured default option.
 
 Supported match fields:
 
-- `hostSuffix`: matches an exact host or subdomain, such as `chatgpt.com`.
-- `hostContains`: matches any host containing the string.
-- `pathPrefix`: matches URL paths that start with the string. Path matching is
-  case-sensitive.
-- `urlContains`: matches anywhere in the full URL after percent decoding.
+- `hostSuffix` / **Domain Suffix**: matches an exact domain or subdomain, such
+  as `baidu.com` and `www.baidu.com`.
+- `hostContains` / **Domain Contains**: matches any domain containing the
+  string, such as `baidu` in `www.baidu.com`.
+- `pathPrefix` / **Path Starts With**: matches URL paths that start with the
+  string, such as `/docs`. Path matching is case-sensitive and does not inspect
+  the domain.
+- `urlContains` / **Full URL Contains**: matches anywhere in the full URL after
+  percent decoding.
 
 When a rule has multiple match fields in JSON, all populated fields must match.
 The current settings UI edits one match field per rule.
 
 The configured chooser shortcut always wins over rules and default routing.
+
+The Rules settings page includes a tester. Paste a URL to preview the matching
+enabled rule, target browser/profile, unavailable-target state, default route,
+and chooser override behavior.
 
 ## Development
 
@@ -274,7 +290,6 @@ scripts/install.sh
 
 Public binary releases still need some polish:
 
-- Decide on a stable GitHub repository URL and update the About links.
 - Add notarized release builds if distributing outside source builds.
 - Add a documented release process and changelog.
 - Consider automatic update support after the first public release.
@@ -288,8 +303,9 @@ Because BrowserRouter is the macOS default URL handler, it can see external
 `http` and `https` URLs long enough to match rules and forward them to the
 selected browser.
 
-Current development logs may include opened URLs in macOS unified logging. Avoid
-sharing logs publicly if the URLs are sensitive.
+Default logs avoid full URL strings. Routing logs may include non-sensitive
+facts such as scheme, host, whether a path exists, query item count, matched
+rule id, and target browser/profile id.
 
 Please avoid adding telemetry or persistent URL history unless it is explicit,
 optional, and documented.

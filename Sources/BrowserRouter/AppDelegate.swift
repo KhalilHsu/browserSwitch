@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var lastConfigModificationDate: Date?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        installMainMenu()
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
         rememberConfigModificationDate()
@@ -27,6 +28,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             showSettingsIfPresentationHidden()
         }
+    }
+
+    private func installMainMenu() {
+        let mainMenu = NSMenu()
+
+        let appItem = NSMenuItem()
+        let appMenu = NSMenu(title: "BrowserRouter")
+        let settingsItem = NSMenuItem(
+            title: "Settings...",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.target = self
+        appMenu.addItem(settingsItem)
+        appMenu.addItem(.separator())
+        let quitItem = NSMenuItem(
+            title: "Quit BrowserRouter",
+            action: #selector(quit),
+            keyEquivalent: "q"
+        )
+        quitItem.target = self
+        appMenu.addItem(quitItem)
+        appItem.submenu = appMenu
+        mainMenu.addItem(appItem)
+
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        editMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        editItem.submenu = editMenu
+        mainMenu.addItem(editItem)
+
+        NSApp.mainMenu = mainMenu
     }
 
     func applicationShouldHandleReopen(_ application: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -54,10 +90,74 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
 
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "Router"
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        configureStatusButton(item.button)
         item.menu = buildStatusMenu()
         statusItem = item
+    }
+
+    private func configureStatusButton(_ button: NSStatusBarButton?) {
+        guard let button else {
+            return
+        }
+
+        button.title = ""
+        button.image = makeStatusItemIcon()
+        button.imagePosition = .imageOnly
+        button.toolTip = "BrowserRouter"
+        button.setAccessibilityLabel("BrowserRouter")
+    }
+
+    private func makeStatusItemIcon() -> NSImage {
+        let size = NSSize(width: 22, height: 22)
+        let image = NSImage(size: size)
+        image.lockFocus()
+
+        NSGraphicsContext.current?.imageInterpolation = .high
+        NSColor.black.setStroke()
+        NSColor.black.setFill()
+
+        let transform = NSAffineTransform()
+        transform.translateX(by: 0, yBy: size.height)
+        transform.scaleX(by: 1, yBy: -1)
+        transform.concat()
+
+        func strokePath(_ path: NSBezierPath, width: CGFloat = 2.1) {
+            path.lineWidth = width
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            path.stroke()
+        }
+
+        let trunk = NSBezierPath()
+        trunk.move(to: NSPoint(x: 3, y: 11))
+        trunk.line(to: NSPoint(x: 8.9, y: 11))
+        strokePath(trunk)
+
+        let upperRoute = NSBezierPath()
+        upperRoute.move(to: NSPoint(x: 8.9, y: 11))
+        upperRoute.curve(
+            to: NSPoint(x: 13.8, y: 7),
+            controlPoint1: NSPoint(x: 11, y: 10.9),
+            controlPoint2: NSPoint(x: 12.3, y: 9.7)
+        )
+        strokePath(upperRoute)
+
+        let lowerRoute = NSBezierPath()
+        lowerRoute.move(to: NSPoint(x: 8.9, y: 11))
+        lowerRoute.curve(
+            to: NSPoint(x: 13.7, y: 15),
+            controlPoint1: NSPoint(x: 11, y: 11.1),
+            controlPoint2: NSPoint(x: 12.2, y: 12.3)
+        )
+        strokePath(lowerRoute)
+
+        NSBezierPath(ovalIn: NSRect(x: 13.7, y: 2.6, width: 5.2, height: 5.2)).fill()
+        NSBezierPath(roundedRect: NSRect(x: 13.7, y: 14.2, width: 5.2, height: 5.2), xRadius: 1.1, yRadius: 1.1).fill()
+
+        image.unlockFocus()
+        image.isTemplate = true
+        return image
     }
 
     private func buildStatusMenu() -> NSMenu {
@@ -169,23 +269,42 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func routedOption(for url: URL) -> BrowserOption? {
-        for rule in configuration.routingRules where RuleMatcher.matches(rule, url: url) {
-            guard let option = configuration.browserOptions.first(where: { $0.id == rule.browserOptionID }) else {
-                continue
-            }
+        let availableOptions = availableBrowserOptions()
+        let availableOptionIDs = Set(availableOptions.map(\.id))
+        let resolution = RouteResolver.resolve(
+            url: url,
+            configuration: configuration,
+            availableOptionIDs: availableOptionIDs
+        )
+        let host = url.host?.lowercased() ?? "unknown"
 
-            if launcher.isInstalled(option) {
-                return option
-            }
+        switch resolution {
+        case .matchedRule(let rule, let option):
+            appDelegateLogger.info("BrowserRouter matched rule \(rule.id, privacy: .public) for host \(host, privacy: .public), target \(option.id, privacy: .public)")
+            return option
+        case .unavailableRule(let rule, let option):
+            let targetID = option?.id ?? rule.browserOptionID
+            appDelegateLogger.info("BrowserRouter matched rule \(rule.id, privacy: .public) for host \(host, privacy: .public), but target \(targetID, privacy: .public) is unavailable")
+            return availableDefaultOrFallback(from: availableOptions)
+        case .defaultRoute(let option):
+            return option
+        case .unavailableDefault:
+            return availableDefaultOrFallback(from: availableOptions)
+        case .fallback(let option):
+            return option
+        case .chooserOverride, .noOptions:
+            return nil
         }
+    }
 
-        return nil
+    private func availableDefaultOrFallback(from availableOptions: [BrowserOption]) -> BrowserOption? {
+        availableOptions.first
     }
 
     private func showChooser(for url: URL) {
         NSApp.activate(ignoringOtherApps: true)
 
-        let options = Array(availableBrowserOptions().prefix(12))
+        let options = availableBrowserOptions()
         guard !options.isEmpty else {
             showMessage(
                 title: "No Available Browsers",
@@ -203,7 +322,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.openSettings()
             },
             onSelect: { [weak self] option in
-                appDelegateLogger.info("BrowserRouter chooser selected option \(option.id, privacy: .public) for \(url.absoluteString, privacy: .public)")
+                let summary = URLLogSummary(url: url)
+                appDelegateLogger.info("BrowserRouter chooser selected option \(option.id, privacy: .public) for \(summary.description, privacy: .public)")
                 self?.launcher.open(url, with: option)
             },
             onClose: { [weak self] in

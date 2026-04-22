@@ -11,26 +11,39 @@ enum RuleMatchField: String, CaseIterable {
     var title: String {
         switch self {
         case .hostSuffix:
-            return "Host Suffix"
+            return "Domain Suffix"
         case .hostContains:
-            return "Host Contains"
+            return "Domain Contains"
         case .pathPrefix:
-            return "Path Prefix"
+            return "Path Starts With"
         case .urlContains:
-            return "URL Contains"
+            return "Full URL Contains"
         }
     }
 
     var placeholder: String {
         switch self {
         case .hostSuffix:
-            return "e.g. chatgpt.com"
+            return "e.g. baidu.com"
         case .hostContains:
-            return "e.g. google"
+            return "e.g. baidu"
         case .pathPrefix:
-            return "e.g. /work"
+            return "e.g. /docs"
         case .urlContains:
-            return "e.g. token"
+            return "e.g. ref=work"
+        }
+    }
+
+    var helpText: String {
+        switch self {
+        case .hostSuffix:
+            return "Domain Suffix matches a domain and its subdomains, like baidu.com and www.baidu.com."
+        case .hostContains:
+            return "Domain Contains matches text inside the domain, like baidu in www.baidu.com."
+        case .pathPrefix:
+            return "Path Starts With matches only the path after the domain, like /docs in example.com/docs."
+        case .urlContains:
+            return "Full URL Contains matches text anywhere in the full URL."
         }
     }
 
@@ -187,6 +200,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let ruleMatchTypePopup = NSPopUpButton()
     let ruleMatchValueField = NSTextField()
     let ruleBrowserPopup = NSPopUpButton()
+    let ruleTesterURLField = NSTextField()
+    let ruleTesterResultLabel = NSTextField(labelWithString: "")
     let autosaveStatusLabel = NSTextField(labelWithString: "Changes save automatically")
     let browserSummaryLabel = NSTextField(labelWithString: "")
     let ruleSummaryLabel = NSTextField(labelWithString: "")
@@ -204,7 +219,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let advancedPageView = NSView()
     let aboutPageView = NSView()
     let aboutLogoLabel = NSTextField(labelWithString: "BrowserRouter")
-    let aboutDescriptionLabel = NSTextField(labelWithString: "Regrettably, I have only made some minor contributions to the open-source community.")
+    let aboutDescriptionLabel = NSTextField(labelWithString: "A local macOS link router for opening each URL in the right browser or profile.")
     let aboutVersionLabel = NSTextField(labelWithString: "")
     let aboutGitHubButton = NSButton(title: "GitHub", target: nil, action: nil)
     let aboutWebsiteButton = NSButton(title: "Project", target: nil, action: nil)
@@ -212,6 +227,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     var configuration: RouterConfiguration
     var visibleBrowserOptions: [BrowserOption] = []
     var isPopulatingRuleForm = false
+    var isUpdatingRuleTester = false
     var selectedTab: SettingsTab = .basic
     var tabButtons: [SettingsTab: NSButton] = [:]
     var pageContainerHeightConstraint: NSLayoutConstraint?
