@@ -23,6 +23,12 @@ Run tests with:
 swift test
 ```
 
+If you want to validate the DMG packaging path, run:
+
+```bash
+scripts/build_dmg.sh
+```
+
 ## Good First Areas
 
 - Browser/profile detection for more browsers.

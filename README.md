@@ -86,6 +86,12 @@ The app bundle is created at:
 .build/BrowserRouter.app
 ```
 
+Optional DMG packaging uses the single release script:
+
+```bash
+scripts/build_dmg.sh
+```
+
 ## Install From Source
 
 Install the app into `/Applications` before setting it as the default browser.
@@ -294,6 +300,7 @@ Public binary releases still need some polish:
 - Add a documented release process and changelog.
 - Consider automatic update support after the first public release.
 - Add screenshots or a short demo GIF to this README.
+- If you publish a DMG, use `scripts/build_dmg.sh` as the packaging entry point.
 
 ## Privacy
 
