@@ -72,6 +72,58 @@ Acceptance criteria:
 - [x] README, app links, and release scripts use the same project name.
 - [x] About copy is concise and product-focused.
 
+#### Multilingual README And App Copy
+
+Status: Planned.
+
+Add English and Simplified Chinese localization for the app, README, and onboarding copy once the UI text stabilizes.
+
+Why it matters:
+
+- BrowserRouter is a system-level utility, so clear copy lowers setup friction for more users.
+- README and onboarding are part of the first-trust experience, not just marketing text.
+- A minimal two-language baseline is a practical first step before wider localization support.
+
+Acceptance criteria:
+
+- The app supports English and Simplified Chinese UI text.
+- The README has matching English and Simplified Chinese versions or sections.
+- Onboarding copy uses the same language set as the app.
+- The default language selection follows the system locale, with a predictable fallback.
+- New user-facing strings are added to localization before shipping new UI copy.
+
+#### Source App Routing
+
+Allow routing rules to consider the app that initiated the link open request,
+not only the destination URL.
+
+Examples:
+
+- Links opened from Slack, Feishu, or work email use a work Chrome profile.
+- Links opened from Telegram, WeChat, or personal chat apps use Safari or a
+  personal profile.
+
+Why it matters:
+
+- This matches a common real-world workflow for users who split work and
+  personal browsing.
+- It can be more ergonomic than maintaining large domain lists.
+
+Implementation notes:
+
+- Investigate whether Apple Events, Launch Services context, Accessibility API,
+  or frontmost application heuristics can identify the source app reliably.
+- Treat Accessibility permissions as a serious UX and privacy cost.
+- If detection is heuristic, the UI should say so and the rule tester should
+  expose the assumed source app context.
+
+Acceptance criteria:
+
+- Routing rules can optionally include a source application condition.
+- The rule tester can simulate or display the source app condition.
+- The feature degrades predictably when source app detection is unavailable.
+- Privacy documentation explains any required permissions.
+
 #### Local Install And Uninstall Scripts
 
 Status: Done.
@@ -197,38 +249,6 @@ Acceptance criteria:
 - The saved `routingRules` order matches the displayed order.
 - The UI makes first-match behavior clear.
 - Tests cover overlapping rules and priority.
-
-#### Source App Routing
-
-Allow routing rules to consider the app that initiated the link open request,
-not only the destination URL.
-
-Examples:
-
-- Links opened from Slack, Feishu, or work email use a work Chrome profile.
-- Links opened from Telegram, WeChat, or personal chat apps use Safari or a
-  personal profile.
-
-Why it matters:
-
-- This matches a common real-world workflow for users who split work and
-  personal browsing.
-- It can be more ergonomic than maintaining large domain lists.
-
-Implementation notes:
-
-- Investigate whether Apple Events, Launch Services context, Accessibility API,
-  or frontmost application heuristics can identify the source app reliably.
-- Treat Accessibility permissions as a serious UX and privacy cost.
-- If detection is heuristic, the UI should say so and the rule tester should
-  expose the assumed source app context.
-
-Acceptance criteria:
-
-- Routing rules can optionally include a source application condition.
-- The rule tester can simulate or display the source app condition.
-- The feature degrades predictably when source app detection is unavailable.
-- Privacy documentation explains any required permissions.
 
 #### Import And Export Configuration
 
@@ -372,7 +392,6 @@ These are open-source hygiene tasks that can happen alongside feature work.
 - [ ] Add issue templates for bugs and feature requests.
 - [ ] Document release signing and notarization once public binaries are shipped.
 - [ ] Consider Sparkle automatic updates after public signed releases exist.
-- [ ] Consider English and Simplified Chinese localization after UI text stabilizes.
 - [ ] Add more tests around config migration, browser inventory refresh, profile
   scanning, unavailable fallback, source app routing, tracking stripping, and
   rule priority.
