@@ -13,3 +13,6 @@ jobs:
 
       - name: Build app bundle
         run: scripts/build-app.sh
+
+      - name: Run tests
+        run: swift test

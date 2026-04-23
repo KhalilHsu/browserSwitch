@@ -2,12 +2,12 @@
 set -e
 
 APP_NAME="BrowserRouter"
-VERSION=$(grep -o 'v[0-9]*\.[0-9]*\.[0-9]*' Sources/BrowserRouter/SettingsWindowController.swift | head -1 || echo "v0.1.0")
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist 2>/dev/null || echo "0.1.0")
 DMG_NAME="${APP_NAME}-${VERSION}.dmg"
 STAGING_DIR="dmg_staging"
 
 echo "🚀 Building Release version..."
-swift build -c release --product BrowserRouter
+scripts/build-app.sh >/dev/null
 
 echo "📂 Preparing staging directory..."
 rm -rf "$STAGING_DIR"

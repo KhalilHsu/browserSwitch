@@ -151,13 +151,13 @@ extension SettingsWindowController {
     }
 
     @objc func openGitHub() {
-        if let url = URL(string: "https://github.com/KhalilHsu/broswerSwitch") {
+        if let url = URL(string: "https://github.com/KhalilHsu/browserSwitch") {
             NSWorkspace.shared.open(url)
         }
     }
 
     @objc func openReleases() {
-        if let url = URL(string: "https://github.com/KhalilHsu/broswerSwitch/releases") {
+        if let url = URL(string: "https://github.com/KhalilHsu/browserSwitch/releases") {
             NSWorkspace.shared.open(url)
         }
     }

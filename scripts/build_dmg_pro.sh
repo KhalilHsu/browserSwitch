@@ -2,14 +2,14 @@
 set -e
 
 APP_NAME="BrowserRouter"
-VERSION="Beta-0.01"
+VERSION=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Info.plist 2>/dev/null || echo "0.1.0")
 DMG_NAME="${APP_NAME}-${VERSION}.dmg"
 TEMPLATE_DMG="template.dmg"
 STAGING_DIR="dmg_staging"
 VOL_NAME="${APP_NAME} Installer"
 
 echo "🚀 Building Release version..."
-swift build -c release --product BrowserRouter
+scripts/build-app.sh >/dev/null
 
 echo "📂 Preparing staging folder..."
 rm -rf "$STAGING_DIR"
@@ -29,7 +29,7 @@ sleep 2
 # Set background and icons using AppleScript
 echo "🎨 Customizing DMG appearance..."
 mkdir -p "/Volumes/$VOL_NAME/.background"
-cp resources/background.png "/Volumes/$VOL_NAME/.background/background.png"
+cp Resources/background.png "/Volumes/$VOL_NAME/.background/background.png"
 
 echo "Running AppleScript for layout..."
 osascript <<EOF

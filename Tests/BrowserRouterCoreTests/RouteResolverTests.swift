@@ -81,6 +81,62 @@ import Testing
     #expect(resolution == .chooserOverride)
 }
 
+@Test func routeResolverFallsBackWhenConfiguredDefaultIsMissing() throws {
+    let chrome = makeOption(id: "chrome", name: "Chrome")
+    let safari = makeOption(id: "safari", name: "Safari")
+    let configuration = RouterConfiguration(
+        defaultOptionID: safari.id,
+        chooserModifier: "command+shift",
+        browserOptions: [chrome, safari],
+        routingRules: []
+    )
+
+    let resolution = RouteResolver.resolve(
+        url: try makeURL("https://example.com"),
+        configuration: configuration,
+        availableOptionIDs: [chrome.id]
+    )
+
+    #expect(resolution == .unavailableDefault(option: safari))
+}
+
+@Test func routeResolverReportsNoOptionsWhenNothingIsAvailable() throws {
+    let chrome = makeOption(id: "chrome", name: "Chrome")
+    let configuration = RouterConfiguration(
+        defaultOptionID: chrome.id,
+        chooserModifier: "command+shift",
+        browserOptions: [chrome],
+        routingRules: []
+    )
+
+    let resolution = RouteResolver.resolve(
+        url: try makeURL("https://example.com"),
+        configuration: configuration,
+        availableOptionIDs: []
+    )
+
+    #expect(resolution == .noOptions)
+}
+
+@Test func routeResolverFallsBackWhenDefaultOptionIsMissingFromConfiguration() throws {
+    let chrome = makeOption(id: "chrome", name: "Chrome")
+    let safari = makeOption(id: "safari", name: "Safari")
+    let configuration = RouterConfiguration(
+        defaultOptionID: "missing-default",
+        chooserModifier: "command+shift",
+        browserOptions: [chrome, safari],
+        routingRules: []
+    )
+
+    let resolution = RouteResolver.resolve(
+        url: try makeURL("https://example.com"),
+        configuration: configuration,
+        availableOptionIDs: [chrome.id, safari.id]
+    )
+
+    #expect(resolution == .fallback(option: chrome))
+}
+
 private func makeOption(id: String, name: String) -> BrowserOption {
     BrowserOption(
         id: id,

@@ -42,9 +42,6 @@ public enum RouteResolver {
         }
 
         guard availableOptionIDs.contains(configuredDefault.id) else {
-            if fallbackOption != nil {
-                return .unavailableDefault(option: configuredDefault)
-            }
             return .unavailableDefault(option: configuredDefault)
         }
 

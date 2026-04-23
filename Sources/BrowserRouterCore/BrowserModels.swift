@@ -193,7 +193,28 @@ public struct RouterConfiguration: Codable {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         let data = try encoder.encode(self)
-        try data.write(to: Self.configURL, options: .atomic)
+        let tempURL = Self.configURL.deletingLastPathComponent()
+            .appendingPathComponent(".config.json.\(UUID().uuidString).tmp")
+        do {
+            if FileManager.default.fileExists(atPath: tempURL.path) {
+                try FileManager.default.removeItem(at: tempURL)
+            }
+            let created = FileManager.default.createFile(
+                atPath: tempURL.path,
+                contents: data,
+                attributes: [.posixPermissions: NSNumber(value: 0o600)]
+            )
+            guard created else {
+                throw CocoaError(.fileWriteUnknown)
+            }
+            if FileManager.default.fileExists(atPath: Self.configURL.path) {
+                try FileManager.default.removeItem(at: Self.configURL)
+            }
+            try FileManager.default.moveItem(at: tempURL, to: Self.configURL)
+        } catch {
+            try? FileManager.default.removeItem(at: tempURL)
+            throw error
+        }
     }
 
     public mutating func adoptDefaultBrowser(
