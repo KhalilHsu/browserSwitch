@@ -81,7 +81,8 @@ the repository and run local scripts.
 
 Why it matters:
 
-- The current distribution path is local source install, not DMG distribution.
+- The current distribution path is source-based local install only; the project
+  does not ship or support DMG distribution.
 - BrowserRouter must live at a stable `/Applications` path before users set it
   as the default browser.
 - Users need an obvious uninstall path before they trust a default browser

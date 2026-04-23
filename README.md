@@ -282,13 +282,14 @@ pushes and pull requests.
 
 ## Distribution Notes
 
-The current distribution path is source-based local install:
+BrowserRouter is distributed only as source-based local install:
 
 ```bash
 scripts/install.sh
 ```
 
-Public binary releases still need some polish:
+Public binary releases are not part of the current release path. If that ever
+changes, they will still need:
 
 - Add notarized release builds if distributing outside source builds.
 - Add a documented release process and changelog.
