@@ -34,11 +34,12 @@ public enum RouteResolver {
         }
 
         let fallbackOption = configuration.browserOptions.first { availableOptionIDs.contains($0.id) }
-        guard let configuredDefault = configuration.browserOptions.first(where: { $0.id == configuration.defaultOptionID }) else {
-            if let fallbackOption {
-                return .fallback(option: fallbackOption)
-            }
+        guard let fallbackOption else {
             return .noOptions
+        }
+
+        guard let configuredDefault = configuration.browserOptions.first(where: { $0.id == configuration.defaultOptionID }) else {
+            return .fallback(option: fallbackOption)
         }
 
         guard availableOptionIDs.contains(configuredDefault.id) else {

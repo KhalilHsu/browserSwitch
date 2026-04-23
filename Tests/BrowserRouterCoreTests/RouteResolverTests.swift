@@ -101,11 +101,10 @@ import Testing
 }
 
 @Test func routeResolverReportsNoOptionsWhenNothingIsAvailable() throws {
-    let chrome = makeOption(id: "chrome", name: "Chrome")
     let configuration = RouterConfiguration(
-        defaultOptionID: chrome.id,
+        defaultOptionID: "missing-default",
         chooserModifier: "command+shift",
-        browserOptions: [chrome],
+        browserOptions: [],
         routingRules: []
     )
 
