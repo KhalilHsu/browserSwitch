@@ -101,6 +101,12 @@ public struct SavedDefaultBrowser: Codable, Hashable {
 public struct RouterConfiguration: Codable {
     public var defaultOptionID: String
     public var chooserModifier: String
+    /// Raw value of CGEventFlags for a user-recorded custom chooser shortcut.
+    /// Only used when chooserModifier == "custom".
+    public var customChooserFlags: UInt64?
+    /// Optional key code for a letter/number key that is part of the custom shortcut.
+    /// nil means the shortcut is modifier-keys only.
+    public var customChooserKeyCode: Int?
     public var showsDockIcon: Bool
     public var showsStatusItem: Bool
     public var hasCompletedOnboarding: Bool
@@ -111,6 +117,8 @@ public struct RouterConfiguration: Codable {
     enum CodingKeys: String, CodingKey {
         case defaultOptionID
         case chooserModifier
+        case customChooserFlags
+        case customChooserKeyCode
         case showsDockIcon
         case showsStatusItem
         case hasCompletedOnboarding
@@ -122,6 +130,8 @@ public struct RouterConfiguration: Codable {
     public init(
         defaultOptionID: String,
         chooserModifier: String,
+        customChooserFlags: UInt64? = nil,
+        customChooserKeyCode: Int? = nil,
         showsDockIcon: Bool = false,
         showsStatusItem: Bool = true,
         hasCompletedOnboarding: Bool = false,
@@ -131,6 +141,8 @@ public struct RouterConfiguration: Codable {
     ) {
         self.defaultOptionID = defaultOptionID
         self.chooserModifier = chooserModifier
+        self.customChooserFlags = customChooserFlags
+        self.customChooserKeyCode = customChooserKeyCode
         self.showsDockIcon = showsDockIcon
         self.showsStatusItem = showsStatusItem
         self.hasCompletedOnboarding = hasCompletedOnboarding
@@ -143,6 +155,8 @@ public struct RouterConfiguration: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         defaultOptionID = try container.decode(String.self, forKey: .defaultOptionID)
         chooserModifier = try container.decodeIfPresent(String.self, forKey: .chooserModifier) ?? "command+shift"
+        customChooserFlags = try container.decodeIfPresent(UInt64.self, forKey: .customChooserFlags)
+        customChooserKeyCode = try container.decodeIfPresent(Int.self, forKey: .customChooserKeyCode)
         showsDockIcon = try container.decodeIfPresent(Bool.self, forKey: .showsDockIcon) ?? false
         showsStatusItem = try container.decodeIfPresent(Bool.self, forKey: .showsStatusItem) ?? true
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? true

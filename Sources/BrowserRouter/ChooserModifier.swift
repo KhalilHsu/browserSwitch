@@ -6,6 +6,7 @@ enum ChooserModifier: String, CaseIterable {
     case controlShift = "control+shift"
     case commandOption = "command+option"
     case always = "always"
+    case custom = "custom"
 
     var title: String {
         switch self {
@@ -19,6 +20,8 @@ enum ChooserModifier: String, CaseIterable {
             return "Command + Option"
         case .always:
             return "Always show chooser"
+        case .custom:
+            return "Custom…"
         }
     }
 
@@ -34,6 +37,9 @@ enum ChooserModifier: String, CaseIterable {
             return flags.contains(.maskCommand) && flags.contains(.maskAlternate)
         case .always:
             return true
+        case .custom:
+            // Custom matching is handled in AppDelegate using customChooserFlags.
+            return false
         }
     }
 }

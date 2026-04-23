@@ -36,6 +36,15 @@ extension SettingsWindowController {
         }
         modifierPopup.selectItem(withRepresentedObject: configuration.chooserModifier)
 
+        let isCustom = configuration.chooserModifier == ChooserModifier.custom.rawValue
+        shortcutRecorderButton.isHidden = !isCustom
+        if isCustom, let rawFlags = configuration.customChooserFlags {
+            let flags = CGEventFlags(rawValue: rawFlags)
+            let keyCode = configuration.customChooserKeyCode
+            let shortcut = RecordedShortcut.make(flags: flags, keyCode: keyCode, characters: nil)
+            shortcutRecorderButton.recordedShortcut = shortcut
+        }
+
         rulesTableView.reloadData()
         updateSummaryLabels()
         updateRuleTesterResult()
@@ -125,8 +134,16 @@ extension SettingsWindowController {
     }
 
     @objc func modifierChanged() {
+        let isCustom = selectedRepresentedObject(modifierPopup) == ChooserModifier.custom.rawValue
+        shortcutRecorderButton.isHidden = !isCustom
         updateRuleTesterResult()
         _ = persistConfiguration(statusMessage: "Chooser modifier saved")
+    }
+
+    func shortcutRecorded(_ shortcut: RecordedShortcut) {
+        configuration.customChooserFlags = shortcut.flags.rawValue
+        configuration.customChooserKeyCode = shortcut.keyCode
+        _ = persistConfiguration(statusMessage: "Custom shortcut saved – \(shortcut.displayString)")
     }
 
     @objc func presentationChanged() {

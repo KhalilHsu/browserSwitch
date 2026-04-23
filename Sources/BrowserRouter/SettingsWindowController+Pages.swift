@@ -10,8 +10,23 @@ extension SettingsWindowController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         basicPageContentStack = stack
 
+        // Build the "Show chooser when" row manually so we can append the recorder button.
+        let chooserControlRow = NSStackView(views: [modifierPopup, shortcutRecorderButton])
+        chooserControlRow.orientation = .horizontal
+        chooserControlRow.alignment = .centerY
+        chooserControlRow.spacing = 8
+        chooserControlRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let chooserRow = NSStackView(views: [chooserModifierLabel, chooserControlRow])
+        chooserRow.orientation = .horizontal
+        chooserRow.alignment = .centerY
+        chooserRow.spacing = 12
+        chooserRow.translatesAutoresizingMaskIntoConstraints = false
+        chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
+        chooserModifierLabel.widthAnchor.constraint(equalToConstant: 160).isActive = true
+
         stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
-        stack.addArrangedSubview(formRow(label: chooserModifierLabel, control: modifierPopup))
+        stack.addArrangedSubview(chooserRow)
         stack.addArrangedSubview(browserSummaryLabel)
 
         basicPageView.addSubview(stack)
@@ -21,7 +36,7 @@ extension SettingsWindowController {
             stack.trailingAnchor.constraint(lessThanOrEqualTo: basicPageView.trailingAnchor, constant: -32),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
-            // Make both popup buttons the same width so they align
+            // Make the modifier popup the same width as the default browser popup
             modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor)
         ])
     }

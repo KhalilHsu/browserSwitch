@@ -75,6 +75,11 @@ extension SettingsWindowController {
         modifierPopup.target = self
         modifierPopup.action = #selector(modifierChanged)
 
+        shortcutRecorderButton.isHidden = true
+        shortcutRecorderButton.onRecorded = { [weak self] shortcut in
+            self?.shortcutRecorded(shortcut)
+        }
+
         browserSummaryLabel.textColor = .secondaryLabelColor
         browserSummaryLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
         browserSummaryLabel.translatesAutoresizingMaskIntoConstraints = false

@@ -16,8 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var chooserWindowController: BrowserChooserWindowController?
     private var defaultBrowserManager: DefaultBrowserManager?
     private var lastConfigModificationDate: Date?
+    private let keyMonitor = KeyStateMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        keyMonitor.start()
         installMainMenu()
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
@@ -261,11 +263,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func shouldShowChooser() -> Bool {
         guard let modifier = ChooserModifier(rawValue: configuration.chooserModifier) else {
-            return ChooserModifier.commandShift.matches(CGEventSource.flagsState(.hidSystemState))
+            return keyMonitor.modifiersMatch([.maskCommand, .maskShift])
         }
 
-        let flags = CGEventSource.flagsState(.hidSystemState)
-        return modifier.matches(flags)
+        switch modifier {
+        case .always:
+            return true
+
+        case .custom:
+            guard let rawFlags = configuration.customChooserFlags else {
+                // No shortcut recorded yet — fall back to commandShift
+                return keyMonitor.modifiersMatch([.maskCommand, .maskShift])
+            }
+            let recorded = CGEventFlags(rawValue: rawFlags)
+            let modMask: CGEventFlags = [.maskControl, .maskAlternate, .maskShift, .maskCommand]
+            let requiredMods = recorded.intersection(modMask)
+
+            // If the shortcut has modifier bits, all must be held
+            if !requiredMods.isEmpty && !keyMonitor.modifiersMatch(requiredMods) {
+                return false
+            }
+            // If the shortcut includes a non-modifier key, check it too
+            if let kc = configuration.customChooserKeyCode {
+                return keyMonitor.isKeyPressed(kc)
+            }
+            return !requiredMods.isEmpty
+
+        default:
+            // Built-in modifier combos — use cached flags
+            return modifier.matches(keyMonitor.effectiveFlags)
+        }
     }
 
     private func routedOption(for url: URL) -> BrowserOption? {

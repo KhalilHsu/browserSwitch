@@ -195,6 +195,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let chooserModifierLabel = NSTextField(labelWithString: "Show chooser when")
     let defaultBrowserPopup = NSPopUpButton()
     let modifierPopup = NSPopUpButton()
+    let shortcutRecorderButton = ShortcutRecorderButton()
     let rulesTableView = NSTableView()
     let ruleNameField = NSTextField()
     let ruleMatchTypePopup = NSPopUpButton()
