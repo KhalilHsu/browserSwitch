@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var chooserWindowController: BrowserChooserWindowController?
     private var defaultBrowserManager: DefaultBrowserManager?
     private var lastConfigModificationDate: Date?
-    private let keyMonitor = KeyStateMonitor()
+    let keyMonitor = KeyStateMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         keyMonitor.start()
@@ -261,7 +261,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func shouldShowChooser() -> Bool {
+    func shouldShowChooser() -> Bool {
         guard let modifier = ChooserModifier(rawValue: configuration.chooserModifier) else {
             return keyMonitor.modifiersMatch([.maskCommand, .maskShift])
         }

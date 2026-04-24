@@ -73,6 +73,28 @@ final class KeyStateMonitorTests: XCTestCase {
         XCTAssertTrue(lastEnableValue)
     }
 
+    func testResetCacheOnAppActiveStateChanges() {
+        let monitor = makeMonitor()
+        monitor.start()
+
+        // Simulate a pressed key using the C callback for direct cache modification test
+        let keyCode: CGKeyCode = 12
+        guard let keyDownEvent = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true) else {
+            XCTFail("Failed to create CGEvent")
+            return
+        }
+        invokeCallback(monitor: monitor, type: .keyDown, event: keyDownEvent)
+        XCTAssertTrue(monitor.pressedKeyCodes.contains(Int(keyCode)))
+
+        // Post the notification
+        NotificationCenter.default.post(name: NSApplication.didResignActiveNotification, object: nil)
+
+        // The pressed key cache should be empty after the reset
+        XCTAssertFalse(monitor.pressedKeyCodes.contains(Int(keyCode)))
+        
+        monitor.stop()
+    }
+
     private func makeMonitor() -> KeyStateMonitor {
         KeyStateMonitor()
     }

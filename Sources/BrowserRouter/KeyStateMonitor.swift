@@ -22,16 +22,23 @@ final class KeyStateMonitor {
     var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var nsMonitors: [Any] = []
+    private var notificationObservers: [Any] = []
 
     // MARK: - Lifecycle
 
     func start() {
+        resetCache()
+        let center = NotificationCenter.default
+        notificationObservers.append(center.addObserver(forName: NSApplication.didResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.resetCache()
+        })
+
         if tryInstallEventTap() {
             mode = .eventTap
             keyMonitorLogger.info("KeyStateMonitor: CGEventTap active (full coverage)")
         } else if tryInstallNSEventMonitor() {
             mode = .nsMonitor
-            keyMonitorLogger.info("KeyStateMonitor: NSEvent monitor active (modifiers only)")
+            keyMonitorLogger.info("KeyStateMonitor: NSEvent monitor active (fallback)")
         } else {
             mode = .polling
             keyMonitorLogger.warning("KeyStateMonitor: polling fallback — grant Accessibility for better accuracy")
@@ -44,7 +51,14 @@ final class KeyStateMonitor {
         runLoopSource = nil
         nsMonitors.forEach { NSEvent.removeMonitor($0) }
         nsMonitors.removeAll()
+        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
+        notificationObservers.removeAll()
         mode = .polling
+    }
+
+    func resetCache() {
+        cachedFlags = CGEventSource.flagsState(.hidSystemState)
+        pressedKeyCodes.removeAll()
     }
 
     // MARK: - Queries
@@ -146,20 +160,37 @@ final class KeyStateMonitor {
     // MARK: - NSEvent global monitor
 
     private func tryInstallNSEventMonitor() -> Bool {
+        // Global monitors (when app is in background)
         // flagsChanged typically doesn't require Input Monitoring permission.
-        guard let fm = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { [weak self] e in
+        guard let gFm = NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: { [weak self] e in
             self?.cachedFlags = e.modifierFlags.asCGEventFlags
         }) else { return false }
-        nsMonitors.append(fm)
+        nsMonitors.append(gFm)
 
         // keyDown/keyUp require Input Monitoring — add silently if available.
-        if let dm = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
+        if let gDm = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
             self?.pressedKeyCodes.insert(Int(e.keyCode))
-        }) { nsMonitors.append(dm) }
+        }) { nsMonitors.append(gDm) }
 
-        if let um = NSEvent.addGlobalMonitorForEvents(matching: .keyUp, handler: { [weak self] e in
+        if let gUm = NSEvent.addGlobalMonitorForEvents(matching: .keyUp, handler: { [weak self] e in
             self?.pressedKeyCodes.remove(Int(e.keyCode))
-        }) { nsMonitors.append(um) }
+        }) { nsMonitors.append(gUm) }
+
+        // Local monitors (when app is in foreground, e.g. Chooser is visible)
+        if let lFm = NSEvent.addLocalMonitorForEvents(matching: .flagsChanged, handler: { [weak self] e in
+            self?.cachedFlags = e.modifierFlags.asCGEventFlags
+            return e
+        }) { nsMonitors.append(lFm) }
+
+        if let lDm = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] e in
+            self?.pressedKeyCodes.insert(Int(e.keyCode))
+            return e
+        }) { nsMonitors.append(lDm) }
+
+        if let lUm = NSEvent.addLocalMonitorForEvents(matching: .keyUp, handler: { [weak self] e in
+            self?.pressedKeyCodes.remove(Int(e.keyCode))
+            return e
+        }) { nsMonitors.append(lUm) }
 
         return true
     }
