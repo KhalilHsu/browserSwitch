@@ -112,6 +112,20 @@ extension SettingsWindowController {
         rulesTableView.action = #selector(selectRule)
         rulesTableView.target = self
 
+        browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visible")))
+        browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
+        browsersTableView.tableColumns[0].title = "Vis"
+        browsersTableView.tableColumns[0].width = rulesEnabledColumnWidth
+        browsersTableView.tableColumns[1].title = "Browser/Profile"
+        browsersTableView.tableColumns[1].width = rulesNameColumnWidth + rulesMatchColumnWidth + rulesBrowserColumnWidth
+        browsersTableView.delegate = self
+        browsersTableView.dataSource = self
+        browsersTableView.usesAlternatingRowBackgroundColors = true
+        browsersTableView.allowsMultipleSelection = false
+        browsersTableView.rowHeight = rulesTableRowHeight
+        browsersTableView.intercellSpacing = rulesTableIntercellSpacing
+        browsersTableView.registerForDraggedTypes([NSPasteboard.PasteboardType("local.browser-router.browser-row")])
+
         ruleNameField.placeholderString = "Rule name"
         ruleNameField.translatesAutoresizingMaskIntoConstraints = false
         ruleNameField.delegate = self
@@ -173,6 +187,7 @@ extension SettingsWindowController {
             ruleButtonStack: makeRuleButtonStack()
         )
         buildAdvancedPage(
+            browsersScrollView: makeBrowsersScrollView(),
             advancedHintLabel: makeAdvancedHintLabel(),
             refreshButton: makeRefreshButton(),
             detectButton: makeDetectButton(),
@@ -257,6 +272,14 @@ extension SettingsWindowController {
         rulesScrollView.documentView = rulesTableView
         rulesScrollView.translatesAutoresizingMaskIntoConstraints = false
         return rulesScrollView
+    }
+
+    func makeBrowsersScrollView() -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        scrollView.documentView = browsersTableView
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        return scrollView
     }
 
     func makeRuleButtonStack() -> NSStackView {

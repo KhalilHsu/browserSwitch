@@ -3,10 +3,43 @@ import BrowserRouterCore
 
 extension SettingsWindowController {
     func numberOfRows(in tableView: NSTableView) -> Int {
-        configuration.routingRules.count
+        if tableView === rulesTableView {
+            return configuration.routingRules.count
+        } else if tableView === browsersTableView {
+            return configuration.browserOptions.count
+        }
+        return 0
     }
 
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        if tableView === browsersTableView {
+            guard row < configuration.browserOptions.count else {
+                return nil
+            }
+
+            let option = configuration.browserOptions[row]
+            let identifier = tableColumn?.identifier.rawValue ?? ""
+
+            if identifier == "visible" {
+                let checkbox = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleBrowserVisibility(_:)))
+                checkbox.state = option.isHidden ? .off : .on
+                checkbox.tag = row
+                checkbox.translatesAutoresizingMaskIntoConstraints = false
+                return checkbox
+            }
+
+            if identifier == "name" {
+                let nameStr = option.appName ?? option.name
+                let text = "\(nameStr)\(option.profileDirectory != nil ? " - " + option.profileDirectory! : "")\n\(option.bundleIdentifier)"
+                let cell = NSTextField(labelWithString: text)
+                cell.lineBreakMode = .byWordWrapping
+                cell.maximumNumberOfLines = 2
+                cell.textColor = option.isHidden ? .tertiaryLabelColor : .labelColor
+                return cell
+            }
+            return nil
+        }
+
         guard row < configuration.routingRules.count else {
             return nil
         }
@@ -439,5 +472,44 @@ extension SettingsWindowController {
     func hostKeyword(_ host: String) -> String {
         let host = hostWithoutWWW(host)
         return host.split(separator: ".").first.map(String.init) ?? host
+    }
+
+    func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
+        if tableView === browsersTableView {
+            let item = NSPasteboardItem()
+            item.setString(String(row), forType: NSPasteboard.PasteboardType("local.browser-router.browser-row"))
+            return item
+        }
+        return nil
+    }
+
+    func tableView(_ tableView: NSTableView, validateDrop info: NSDraggingInfo, proposedRow row: Int, proposedDropOperation dropOperation: NSTableView.DropOperation) -> NSDragOperation {
+        guard tableView === browsersTableView else { return [] }
+        if dropOperation == .above {
+            return .move
+        }
+        return []
+    }
+
+    func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
+        guard tableView === browsersTableView else { return false }
+        guard let item = info.draggingPasteboard.pasteboardItems?.first,
+              let rowString = item.string(forType: NSPasteboard.PasteboardType("local.browser-router.browser-row")),
+              let sourceRow = Int(rowString) else {
+            return false
+        }
+
+        var destinationRow = row
+        if sourceRow < destinationRow {
+            destinationRow -= 1
+        }
+
+        let movedOption = configuration.browserOptions.remove(at: sourceRow)
+        configuration.browserOptions.insert(movedOption, at: destinationRow)
+
+        browsersTableView.reloadData()
+        _ = persistConfiguration(statusMessage: "Browser order updated automatically")
+        reloadControls()
+        return true
     }
 }

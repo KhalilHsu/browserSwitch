@@ -10,6 +10,7 @@ public struct BrowserOption: Codable, Hashable {
     public var appName: String?
     public var profileDirectory: String?
     public var extraArguments: [String]?
+    public var isHidden: Bool
 
     public init(
         id: String,
@@ -17,7 +18,8 @@ public struct BrowserOption: Codable, Hashable {
         bundleIdentifier: String,
         appName: String?,
         profileDirectory: String?,
-        extraArguments: [String]?
+        extraArguments: [String]?,
+        isHidden: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -25,6 +27,28 @@ public struct BrowserOption: Codable, Hashable {
         self.appName = appName
         self.profileDirectory = profileDirectory
         self.extraArguments = extraArguments
+        self.isHidden = isHidden
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case name
+        case bundleIdentifier
+        case appName
+        case profileDirectory
+        case extraArguments
+        case isHidden
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(String.self, forKey: .id)
+        name = try container.decode(String.self, forKey: .name)
+        bundleIdentifier = try container.decode(String.self, forKey: .bundleIdentifier)
+        appName = try container.decodeIfPresent(String.self, forKey: .appName)
+        profileDirectory = try container.decodeIfPresent(String.self, forKey: .profileDirectory)
+        extraArguments = try container.decodeIfPresent([String].self, forKey: .extraArguments)
+        isHidden = try container.decodeIfPresent(Bool.self, forKey: .isHidden) ?? false
     }
 }
 

@@ -56,16 +56,23 @@ enum BrowserInventory {
             mergedByID[option.id] = option
         }
 
+        for existing in configuration.browserOptions {
+            if var merged = mergedByID[existing.id] {
+                merged.isHidden = existing.isHidden
+                mergedByID[existing.id] = merged
+            }
+        }
+
         let originalIDs = configuration.browserOptions.map(\.id)
         let detectedIDs = detectedOptions.map(\.id)
-        let preservedProfileIDs = originalIDs.filter { id in
-            guard let option = mergedByID[id] else {
-                return false
-            }
-
-            return option.profileDirectory != nil && !detectedIDs.contains(id)
+        
+        let validOriginalIDs = originalIDs.filter { id in
+            guard let option = mergedByID[id] else { return false }
+            return detectedIDs.contains(id) || option.profileDirectory != nil
         }
-        let mergedIDs = detectedIDs + preservedProfileIDs
+        let newIDs = detectedIDs.filter { !originalIDs.contains($0) }
+        let mergedIDs = validOriginalIDs + newIDs
+        
         let mergedOptions = mergedIDs.compactMap { mergedByID[$0] }
 
         let availableIDs = Set(mergedOptions.map(\.id))
@@ -87,6 +94,7 @@ enum BrowserInventory {
                 showsDockIcon: configuration.showsDockIcon,
                 showsStatusItem: configuration.showsStatusItem,
                 hasCompletedOnboarding: configuration.hasCompletedOnboarding,
+                autoRestoreDefaultBrowserOnQuit: configuration.autoRestoreDefaultBrowserOnQuit,
                 previousDefaultBrowser: configuration.previousDefaultBrowser,
                 browserOptions: mergedOptions,
                 routingRules: configuration.routingRules

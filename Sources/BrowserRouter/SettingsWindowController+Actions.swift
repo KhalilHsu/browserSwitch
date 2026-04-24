@@ -15,11 +15,19 @@ extension SettingsWindowController {
         defaultBrowserPopup.removeAllItems()
         ruleBrowserPopup.removeAllItems()
 
+        let usedRuleOptionIDs = Set(configuration.routingRules.map(\.browserOptionID))
         for option in visibleBrowserOptions {
-            defaultBrowserPopup.addItem(withTitle: option.name)
-            defaultBrowserPopup.lastItem?.representedObject = option.id
-            ruleBrowserPopup.addItem(withTitle: option.name)
-            ruleBrowserPopup.lastItem?.representedObject = option.id
+            if !option.isHidden || option.id == configuration.defaultOptionID {
+                let title = option.isHidden ? "\(option.name) (Hidden)" : option.name
+                defaultBrowserPopup.addItem(withTitle: title)
+                defaultBrowserPopup.lastItem?.representedObject = option.id
+            }
+            
+            if !option.isHidden || usedRuleOptionIDs.contains(option.id) {
+                let title = option.isHidden ? "\(option.name) (Hidden)" : option.name
+                ruleBrowserPopup.addItem(withTitle: title)
+                ruleBrowserPopup.lastItem?.representedObject = option.id
+            }
         }
 
         let resolvedDefaultID = visibleBrowserOptions.contains(where: { $0.id == configuration.defaultOptionID })
@@ -154,6 +162,18 @@ extension SettingsWindowController {
 
     @objc func autoRestoreChanged() {
         _ = persistConfiguration(statusMessage: "Auto-restore setting saved")
+    }
+
+    @objc func toggleBrowserVisibility(_ sender: NSButton) {
+        let row = sender.tag
+        guard row >= 0, row < configuration.browserOptions.count else {
+            return
+        }
+
+        configuration.browserOptions[row].isHidden = sender.state == .off
+        browsersTableView.reloadData()
+        _ = persistConfiguration(statusMessage: configuration.browserOptions[row].isHidden ? "Browser hidden" : "Browser unhidden")
+        reloadControls()
     }
 
     @objc func ruleBrowserChanged() {

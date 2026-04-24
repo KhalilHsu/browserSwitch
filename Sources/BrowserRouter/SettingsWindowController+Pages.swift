@@ -187,6 +187,7 @@ extension SettingsWindowController {
     }
 
     func buildAdvancedPage(
+        browsersScrollView: NSScrollView,
         advancedHintLabel: NSTextField,
         refreshButton: NSButton,
         detectButton: NSButton,
@@ -232,11 +233,14 @@ extension SettingsWindowController {
         restoreButtons.spacing = 8
         restoreButtons.translatesAutoresizingMaskIntoConstraints = false
 
-        let inventorySection = NSStackView(views: [inventoryTitle, inventoryButtons])
+        let inventorySection = NSStackView(views: [inventoryTitle, browsersScrollView, inventoryButtons])
         inventorySection.orientation = .vertical
         inventorySection.alignment = .leading
         inventorySection.spacing = 8
         inventorySection.translatesAutoresizingMaskIntoConstraints = false
+        
+        browsersScrollView.heightAnchor.constraint(equalToConstant: 160).isActive = true
+        browsersScrollView.widthAnchor.constraint(equalToConstant: settingsTabContentWidth - 64).isActive = true
 
         let defaultBrowserSection = NSStackView(views: [defaultBrowserTitle, defaultBrowserHint, restoreButtons])
         defaultBrowserSection.orientation = .vertical

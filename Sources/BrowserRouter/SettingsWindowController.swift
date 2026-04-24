@@ -198,6 +198,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let modifierPopup = NSPopUpButton()
     let shortcutRecorderButton = ShortcutRecorderButton()
     let rulesTableView = NSTableView()
+    let browsersTableView = NSTableView()
     let ruleNameField = NSTextField()
     let ruleMatchTypePopup = NSPopUpButton()
     let ruleMatchValueField = NSTextField()

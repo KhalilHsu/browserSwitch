@@ -359,7 +359,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func showChooser(for url: URL) {
         NSApp.activate(ignoringOtherApps: true)
 
-        let options = availableBrowserOptions()
+        let options = availableBrowserOptions().filter { !$0.isHidden }
         guard !options.isEmpty else {
             showMessage(
                 title: "No Available Browsers",
