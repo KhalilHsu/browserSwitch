@@ -1,132 +1,134 @@
 import Foundation
-import Testing
+import XCTest
 @testable import BrowserRouterCore
 
-@Test func legacyConfigurationDecodesNewPresentationDefaults() throws {
-    let json = """
-    {
-      "defaultOptionID": "arc-default",
-      "chooserModifier": "command+shift",
-      "browserOptions": [],
-      "routingRules": []
+final class RouterConfigurationTests: XCTestCase {
+    func testLegacyConfigurationDecodesNewPresentationDefaults() throws {
+        let json = """
+        {
+          "defaultOptionID": "arc-default",
+          "chooserModifier": "command+shift",
+          "browserOptions": [],
+          "routingRules": []
+        }
+        """
+
+        let configuration = try JSONDecoder().decode(RouterConfiguration.self, from: Data(json.utf8))
+
+        XCTAssertFalse(configuration.showsDockIcon)
+        XCTAssertTrue(configuration.showsStatusItem)
+        XCTAssertTrue(configuration.hasCompletedOnboarding)
+        XCTAssertNil(configuration.previousDefaultBrowser)
     }
-    """
 
-    let configuration = try JSONDecoder().decode(RouterConfiguration.self, from: Data(json.utf8))
+    func testLegacyRoutingRuleDecodesEnabledByDefault() throws {
+        let json = """
+        {
+          "id": "legacy",
+          "name": "Legacy",
+          "browserOptionID": "chrome",
+          "hostSuffix": "example.com"
+        }
+        """
 
-    #expect(configuration.showsDockIcon == false)
-    #expect(configuration.showsStatusItem == true)
-    #expect(configuration.hasCompletedOnboarding == true)
-    #expect(configuration.previousDefaultBrowser == nil)
-}
+        let rule = try JSONDecoder().decode(RoutingRule.self, from: Data(json.utf8))
 
-@Test func legacyRoutingRuleDecodesEnabledByDefault() throws {
-    let json = """
-    {
-      "id": "legacy",
-      "name": "Legacy",
-      "browserOptionID": "chrome",
-      "hostSuffix": "example.com"
+        XCTAssertTrue(rule.isEnabled)
     }
-    """
 
-    let rule = try JSONDecoder().decode(RoutingRule.self, from: Data(json.utf8))
+    func testSampleConfigurationRequiresOnboarding() {
+        let configuration = RouterConfiguration.sample()
 
-    #expect(rule.isEnabled)
-}
+        XCTAssertFalse(configuration.hasCompletedOnboarding)
+    }
 
-@Test func sampleConfigurationRequiresOnboarding() {
-    let configuration = RouterConfiguration.sample()
+    func testBrowserSlugPreservesBundleIdentifierIDFormat() {
+        XCTAssertEqual(BrowserSlug.make("com.google.Chrome"), "com-google-chrome")
+        XCTAssertEqual(BrowserSlug.make("..."), "browser")
+    }
 
-    #expect(configuration.hasCompletedOnboarding == false)
-}
+    func testBrowserSlugPreservesChromiumProfileIDFormat() {
+        XCTAssertEqual(BrowserSlug.makeProfileIDComponent("Default"), "default")
+        XCTAssertEqual(BrowserSlug.makeProfileIDComponent("Profile 1"), "profile-1")
+    }
 
-@Test func browserSlugPreservesBundleIdentifierIDFormat() {
-    #expect(BrowserSlug.make("com.google.Chrome") == "com-google-chrome")
-    #expect(BrowserSlug.make("...") == "browser")
-}
+    func testAdoptingDefaultBrowserReusesExistingDefaultOptionForBundle() {
+        var configuration = RouterConfiguration.sample()
 
-@Test func browserSlugPreservesChromiumProfileIDFormat() {
-    #expect(BrowserSlug.makeProfileIDComponent("Default") == "default")
-    #expect(BrowserSlug.makeProfileIDComponent("Profile 1") == "profile-1")
-}
+        configuration.adoptDefaultBrowser(
+            bundleIdentifier: "com.google.Chrome",
+            displayName: "Google Chrome",
+            appName: "Google Chrome"
+        )
 
-@Test func adoptingDefaultBrowserReusesExistingDefaultOptionForBundle() {
-    var configuration = RouterConfiguration.sample()
+        XCTAssertEqual(configuration.defaultOptionID, "chrome-default")
+        XCTAssertEqual(configuration.browserOptions.filter { $0.bundleIdentifier == "com.google.Chrome" }.count, 2)
+        XCTAssertEqual(configuration.previousDefaultBrowser?.bundleIdentifier, "com.google.Chrome")
+        XCTAssertEqual(configuration.previousDefaultBrowser?.displayName, "Google Chrome")
+    }
 
-    configuration.adoptDefaultBrowser(
-        bundleIdentifier: "com.google.Chrome",
-        displayName: "Google Chrome",
-        appName: "Google Chrome"
-    )
+    func testAdoptingDefaultBrowserPrefersDefaultProfileOverGenericBundleOption() {
+        var configuration = RouterConfiguration(
+            defaultOptionID: "system-com-google-chrome",
+            chooserModifier: "command+shift",
+            browserOptions: [
+                BrowserOption(
+                    id: "system-com-google-chrome",
+                    name: "Google Chrome",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: nil,
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "chrome-default",
+                    name: "Chrome - Khalil",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: "Default",
+                    extraArguments: nil
+                )
+            ]
+        )
 
-    #expect(configuration.defaultOptionID == "chrome-default")
-    #expect(configuration.browserOptions.filter { $0.bundleIdentifier == "com.google.Chrome" }.count == 2)
-    #expect(configuration.previousDefaultBrowser?.bundleIdentifier == "com.google.Chrome")
-    #expect(configuration.previousDefaultBrowser?.displayName == "Google Chrome")
-}
+        configuration.adoptDefaultBrowser(
+            bundleIdentifier: "com.google.Chrome",
+            displayName: "Google Chrome",
+            appName: "Google Chrome"
+        )
 
-@Test func adoptingDefaultBrowserPrefersDefaultProfileOverGenericBundleOption() {
-    var configuration = RouterConfiguration(
-        defaultOptionID: "system-com-google-chrome",
-        chooserModifier: "command+shift",
-        browserOptions: [
-            BrowserOption(
-                id: "system-com-google-chrome",
-                name: "Google Chrome",
-                bundleIdentifier: "com.google.Chrome",
-                appName: "Google Chrome",
-                profileDirectory: nil,
-                extraArguments: nil
-            ),
-            BrowserOption(
-                id: "chrome-default",
-                name: "Chrome - Khalil",
-                bundleIdentifier: "com.google.Chrome",
-                appName: "Google Chrome",
-                profileDirectory: "Default",
-                extraArguments: nil
-            )
-        ]
-    )
+        XCTAssertEqual(configuration.defaultOptionID, "chrome-default")
+    }
 
-    configuration.adoptDefaultBrowser(
-        bundleIdentifier: "com.google.Chrome",
-        displayName: "Google Chrome",
-        appName: "Google Chrome"
-    )
+    func testAdoptingDefaultBrowserAddsUnknownBrowserOption() {
+        var configuration = RouterConfiguration.sample()
 
-    #expect(configuration.defaultOptionID == "chrome-default")
-}
+        configuration.adoptDefaultBrowser(
+            bundleIdentifier: "com.example.CustomBrowser",
+            displayName: "Custom Browser",
+            appName: "Custom Browser"
+        )
 
-@Test func adoptingDefaultBrowserAddsUnknownBrowserOption() {
-    var configuration = RouterConfiguration.sample()
+        XCTAssertEqual(configuration.defaultOptionID, "previous-default-com-example-custombrowser")
+        XCTAssertEqual(configuration.browserOptions.first?.id, "previous-default-com-example-custombrowser")
+        XCTAssertEqual(configuration.browserOptions.first?.name, "Custom Browser")
+        XCTAssertEqual(configuration.browserOptions.first?.bundleIdentifier, "com.example.CustomBrowser")
+        XCTAssertEqual(configuration.previousDefaultBrowser?.bundleIdentifier, "com.example.CustomBrowser")
+    }
 
-    configuration.adoptDefaultBrowser(
-        bundleIdentifier: "com.example.CustomBrowser",
-        displayName: "Custom Browser",
-        appName: "Custom Browser"
-    )
+    func testAdoptingDefaultBrowserEncodesPreviousDefaultBrowser() throws {
+        var configuration = RouterConfiguration.sample()
 
-    #expect(configuration.defaultOptionID == "previous-default-com-example-custombrowser")
-    #expect(configuration.browserOptions.first?.id == "previous-default-com-example-custombrowser")
-    #expect(configuration.browserOptions.first?.name == "Custom Browser")
-    #expect(configuration.browserOptions.first?.bundleIdentifier == "com.example.CustomBrowser")
-    #expect(configuration.previousDefaultBrowser?.bundleIdentifier == "com.example.CustomBrowser")
-}
+        configuration.adoptDefaultBrowser(
+            bundleIdentifier: "com.apple.Safari",
+            displayName: "Safari",
+            appName: "Safari"
+        )
 
-@Test func adoptingDefaultBrowserEncodesPreviousDefaultBrowser() throws {
-    var configuration = RouterConfiguration.sample()
+        let data = try JSONEncoder().encode(configuration)
+        let decoded = try JSONDecoder().decode(RouterConfiguration.self, from: data)
 
-    configuration.adoptDefaultBrowser(
-        bundleIdentifier: "com.apple.Safari",
-        displayName: "Safari",
-        appName: "Safari"
-    )
-
-    let data = try JSONEncoder().encode(configuration)
-    let decoded = try JSONDecoder().decode(RouterConfiguration.self, from: data)
-
-    #expect(decoded.previousDefaultBrowser?.bundleIdentifier == "com.apple.Safari")
-    #expect(decoded.previousDefaultBrowser?.displayName == "Safari")
+        XCTAssertEqual(decoded.previousDefaultBrowser?.bundleIdentifier, "com.apple.Safari")
+        XCTAssertEqual(decoded.previousDefaultBrowser?.displayName, "Safari")
+    }
 }

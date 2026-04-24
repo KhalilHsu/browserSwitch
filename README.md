@@ -14,7 +14,7 @@ simple.
 
 Current assumptions:
 
-- macOS 14 or newer.
+- macOS 12 or newer.
 - Local builds are ad-hoc signed.
 - BrowserRouter must be installed in `/Applications` before you set it as the
   default browser.

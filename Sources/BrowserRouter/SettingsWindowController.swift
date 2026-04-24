@@ -278,6 +278,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             return
         }
 
-        configureMosStylePreferences(in: contentView)
+        configureMacOSStylePreferences(in: contentView)
     }
 }

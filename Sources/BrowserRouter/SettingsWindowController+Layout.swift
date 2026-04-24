@@ -40,7 +40,7 @@ extension SettingsWindowController {
         return button
     }
 
-    func configureMosStylePreferences(in contentView: NSView) {
+    func configureMacOSStylePreferences(in contentView: NSView) {
         guard let window else {
             return
         }

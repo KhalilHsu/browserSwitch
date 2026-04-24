@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "BrowserRouter",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v12)
     ],
     products: [
         .library(name: "BrowserRouterCore", targets: ["BrowserRouterCore"]),
@@ -25,42 +25,12 @@ let package = Package(
         .testTarget(
             name: "BrowserRouterCoreTests",
             dependencies: ["BrowserRouterCore"],
-            path: "Tests/BrowserRouterCoreTests",
-            swiftSettings: [
-                .unsafeFlags([
-                    "-F", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks"
-                ])
-            ],
-            linkerSettings: [
-                .unsafeFlags([
-                    "-F", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
-                    "-L", "/Library/Developer/CommandLineTools/Library/Developer/usr/lib",
-                    "-Xlinker", "-rpath",
-                    "-Xlinker", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
-                    "-Xlinker", "-rpath",
-                    "-Xlinker", "/Library/Developer/CommandLineTools/Library/Developer/usr/lib"
-                ])
-            ]
+            path: "Tests/BrowserRouterCoreTests"
         ),
         .testTarget(
             name: "BrowserRouterTests",
             dependencies: ["BrowserRouter"],
-            path: "Tests/BrowserRouterTests",
-            swiftSettings: [
-                .unsafeFlags([
-                    "-F", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks"
-                ])
-            ],
-            linkerSettings: [
-                .unsafeFlags([
-                    "-F", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
-                    "-L", "/Library/Developer/CommandLineTools/Library/Developer/usr/lib",
-                    "-Xlinker", "-rpath",
-                    "-Xlinker", "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
-                    "-Xlinker", "-rpath",
-                    "-Xlinker", "/Library/Developer/CommandLineTools/Library/Developer/usr/lib"
-                ])
-            ]
+            path: "Tests/BrowserRouterTests"
         )
     ]
 )
