@@ -228,6 +228,52 @@ MVP scope:
 
 - [x] Firefox profiles from `profiles.ini`.
 
+#### Browser Option Management (Hide & Sort)
+
+Status: Planned.
+
+Allow users to hide and reorder detected browsers or profiles in the chooser and
+default dropdowns.
+
+Why it matters:
+
+- Some detected URL handlers are not useful browsers.
+- Virtualized browsers or helper apps can clutter the chooser.
+- Users want their most-used browsers at the top of the chooser list for faster
+  access.
+- Hiding is safer than deleting because inventory refresh can rediscover items.
+
+Acceptance criteria:
+
+- [ ] Browser/profile options can be hidden and unhidden in Settings.
+- [ ] Browser/profile options can be reordered in Settings.
+- [ ] The chooser respects the custom order and hidden state.
+- [ ] Rules targeting hidden options are handled explicitly, either still allowed or
+  marked as hidden.
+- [ ] Hidden state and custom order survive browser inventory refresh.
+
+#### Auto-restore Default Browser On Quit
+
+Status: Planned.
+
+Automatically restore the previous `http` and `https` default browser when
+BrowserRouter quits.
+
+Why it matters:
+
+- Ensures the system isn't left in a state where links don't open if the app is
+  closed.
+- Reduces the "stuck" risk for users.
+
+Acceptance criteria:
+
+- [ ] On app termination, check if BrowserRouter is the current default.
+- [ ] If yes, attempt to restore the captured previous default browser.
+- [ ] This behavior is togglable in Settings (some users might want to keep it as
+  default even when not running).
+- [ ] Graceful handling of edge cases where the previous browser is no longer
+  installed.
+
 ## P1: Daily Use Improvements
 
 These features are useful and reasonable, but they are less urgent than the P0
@@ -271,24 +317,6 @@ Acceptance criteria:
 - A rule with an unavailable target can be reassigned from the rule editor.
 - Refresh and profile detection flows explain what changed.
 
-#### Hide Browser Options
-
-Allow users to hide detected browsers or profiles from default dropdowns and the
-chooser without deleting them from the underlying inventory.
-
-Why it matters:
-
-- Some detected URL handlers are not useful browsers.
-- Virtualized browsers or helper apps can clutter the chooser.
-- Hiding is safer than deleting because inventory refresh can rediscover items.
-
-Acceptance criteria:
-
-- Browser/profile options can be hidden and unhidden in Settings.
-- Hidden options do not appear in the chooser.
-- Rules targeting hidden options are handled explicitly, either still allowed or
-  marked as hidden.
-- Hidden state survives browser inventory refresh.
 
 ## P2: Power User Features
 
