@@ -125,7 +125,18 @@ extension SettingsWindowController {
         compactBrowserRow.spacing = 12
         compactBrowserRow.translatesAutoresizingMaskIntoConstraints = false
 
-        let editorStack = NSStackView(views: [compactRuleNameRow, compactMatchRow, compactBrowserRow, ruleButtonStack])
+        let sourceAppLabel = NSTextField(labelWithString: "Source App")
+        sourceAppLabel.font = .systemFont(ofSize: 12)
+        sourceAppLabel.textColor = .secondaryLabelColor
+        sourceAppLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let compactSourceAppRow = NSStackView(views: [sourceAppLabel, ruleSourceAppPopup])
+        compactSourceAppRow.orientation = .horizontal
+        compactSourceAppRow.alignment = .centerY
+        compactSourceAppRow.spacing = 12
+        compactSourceAppRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let editorStack = NSStackView(views: [compactRuleNameRow, compactMatchRow, compactBrowserRow, compactSourceAppRow, ruleButtonStack])
         editorStack.orientation = .vertical
         editorStack.alignment = .leading
         editorStack.spacing = 10
@@ -146,6 +157,7 @@ extension SettingsWindowController {
         ruleNameLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
         matchLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
         browserLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        sourceAppLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
         ruleMatchTypePopup.widthAnchor.constraint(equalToConstant: 128).isActive = true
         ruleMatchValueField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         ruleMatchValueField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -177,6 +189,7 @@ extension SettingsWindowController {
             ruleNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
             ruleMatchValueField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160),
             ruleBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
+            ruleSourceAppPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
             testerRow.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
             ruleTesterResultLabel.widthAnchor.constraint(equalTo: pageStack.widthAnchor)
         ])

@@ -6,6 +6,28 @@ import BrowserRouterCore
 
 private let appDelegateLogger = Logger(subsystem: "local.browser-router", category: "app-delegate")
 
+/// Returns the parent PID for a given PID via sysctl, or 0 on failure.
+private func getppid_for(_ pid: pid_t) -> pid_t {
+    var info = kinfo_proc()
+    var size = MemoryLayout<kinfo_proc>.size
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+    guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return 0 }
+    return info.kp_eproc.e_ppid
+}
+
+/// Returns the process name for a given PID via sysctl, or nil on failure.
+private func getProcessName(_ pid: pid_t) -> String? {
+    var info = kinfo_proc()
+    var size = MemoryLayout<kinfo_proc>.size
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_PID, pid]
+    guard sysctl(&mib, 4, &info, &size, nil, 0) == 0, size > 0 else { return nil }
+    return withUnsafePointer(to: info.kp_proc.p_comm) { ptr in
+        ptr.withMemoryRebound(to: CChar.self, capacity: 17) {
+            String(cString: $0)
+        }
+    }
+}
+
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
@@ -105,8 +127,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        let sourceApp = detectSourceAppBundleID()
+        if let sourceApp {
+            appDelegateLogger.info("BrowserRouter detected source app: \(sourceApp, privacy: .public)")
+        }
+
         for url in urls where ["http", "https"].contains(url.scheme?.lowercased() ?? "") {
-            handle(url)
+            handle(url, sourceApp: sourceApp)
         }
     }
 
@@ -265,7 +292,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return !manager.isRoutingToSelf()
     }
 
-    private func handle(_ url: URL) {
+    private func handle(_ url: URL, sourceApp: String? = nil) {
         refreshConfigurationIfNeeded()
 
         if shouldShowChooser() {
@@ -273,7 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
 
-        if let option = routedOption(for: url) {
+        if let option = routedOption(for: url, sourceApp: sourceApp) {
             launcher.open(url, with: option)
             return
         }
@@ -323,13 +350,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func routedOption(for url: URL) -> BrowserOption? {
+    private func routedOption(for url: URL, sourceApp: String? = nil) -> BrowserOption? {
         let availableOptions = availableBrowserOptions()
         let availableOptionIDs = Set(availableOptions.map(\.id))
         let resolution = RouteResolver.resolve(
             url: url,
             configuration: configuration,
-            availableOptionIDs: availableOptionIDs
+            availableOptionIDs: availableOptionIDs,
+            sourceApp: sourceApp
         )
         let host = url.host?.lowercased() ?? "unknown"
 
@@ -354,6 +382,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func availableDefaultOrFallback(from availableOptions: [BrowserOption]) -> BrowserOption? {
         availableOptions.first
+    }
+
+    /// Extracts the bundle ID of the application that sent the current GURL Apple Event.
+    private func detectSourceAppBundleID() -> String? {
+        guard let event = NSAppleEventManager.shared().currentAppleEvent else {
+            appDelegateLogger.debug("Source Detection: [Link Source] No currentAppleEvent found (likely triggered via system internal path or 'open' command)")
+            return nil
+        }
+
+        let keyAddressAttr = AEKeyword(0x61646472) // 'addr'
+        guard let desc = event.attributeDescriptor(forKeyword: keyAddressAttr) else {
+            appDelegateLogger.debug("Source Detection: [Link Source] Event exists but 'addr' attribute (keyAddressAttr) is missing")
+            return nil
+        }
+        
+        // Check descriptor type. 1886613024 is 'psn '
+        guard desc.descriptorType == 1886613024 else {
+            let typeStr = String(format: "%c%c%c%c", 
+                               (desc.descriptorType >> 24) & 0xFF,
+                               (desc.descriptorType >> 16) & 0xFF,
+                               (desc.descriptorType >> 8) & 0xFF,
+                               desc.descriptorType & 0xFF)
+            appDelegateLogger.debug("Source Detection: [Link Source] Found address attribute but type is '\(typeStr)' not 'psn '")
+            return nil
+        }
+
+        guard desc.data.count == 8 else {
+            appDelegateLogger.debug("Source Detection: [Link Source] PSN data length mismatch (expected 8 bytes, got \(desc.data.count))")
+            return nil
+        }
+
+        var senderPID: pid_t = 0
+        desc.data.withUnsafeBytes { buf in
+            // PSN is two UInt32s. The PID is often in the low word on modern macOS, 
+            // but the reliable way is the little-endian low word mapping for ProcessSerialNumber.
+            senderPID = pid_t(buf.load(fromByteOffset: 4, as: UInt32.self).littleEndian)
+        }
+
+        guard senderPID > 1 else {
+            appDelegateLogger.debug("Source Detection: [Link Source] Resolved PID is invalid (\(senderPID))")
+            return nil
+        }
+
+        guard let app = NSRunningApplication(processIdentifier: senderPID) else {
+            appDelegateLogger.debug("Source Detection: [Link Source] No running application found for PID \(senderPID) (process may have exited)")
+            return nil
+        }
+
+        // CRITICAL: We only trust .regular (GUI) apps to avoid misattribution to shells, 
+        // launchers, or background daemons that just pass through the event.
+        guard app.activationPolicy == .regular else {
+            appDelegateLogger.debug("Source Detection: [Link Source] Rejected PID \(senderPID) (\(app.bundleIdentifier ?? "unknown")). Policy is \(app.activationPolicy.rawValue == 1 ? ".accessory" : ".prohibited"), not .regular")
+            return nil
+        }
+
+        guard let bundleID = app.bundleIdentifier else {
+            appDelegateLogger.debug("Source Detection: [Link Source] Application found but bundleIdentifier is nil for PID \(senderPID)")
+            return nil
+        }
+
+        appDelegateLogger.info("Source Detection: [Link Source] RESOLVED -> \(bundleID) (PID: \(senderPID))")
+        return bundleID
     }
 
     private func showChooser(for url: URL) {

@@ -61,6 +61,7 @@ public struct RoutingRule: Codable, Hashable {
     public var hostSuffix: String?
     public var pathPrefix: String?
     public var urlContains: String?
+    public var sourceAppBundleID: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -71,6 +72,7 @@ public struct RoutingRule: Codable, Hashable {
         case hostSuffix
         case pathPrefix
         case urlContains
+        case sourceAppBundleID
     }
 
     public init(
@@ -81,7 +83,8 @@ public struct RoutingRule: Codable, Hashable {
         hostContains: String?,
         hostSuffix: String?,
         pathPrefix: String?,
-        urlContains: String?
+        urlContains: String?,
+        sourceAppBundleID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -91,6 +94,7 @@ public struct RoutingRule: Codable, Hashable {
         self.hostSuffix = hostSuffix
         self.pathPrefix = pathPrefix
         self.urlContains = urlContains
+        self.sourceAppBundleID = sourceAppBundleID
     }
 
     public init(from decoder: Decoder) throws {
@@ -103,6 +107,7 @@ public struct RoutingRule: Codable, Hashable {
         hostSuffix = try container.decodeIfPresent(String.self, forKey: .hostSuffix)
         pathPrefix = try container.decodeIfPresent(String.self, forKey: .pathPrefix)
         urlContains = try container.decodeIfPresent(String.self, forKey: .urlContains)
+        sourceAppBundleID = try container.decodeIfPresent(String.self, forKey: .sourceAppBundleID)
     }
 }
 

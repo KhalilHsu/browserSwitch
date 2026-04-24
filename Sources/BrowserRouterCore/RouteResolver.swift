@@ -15,13 +15,14 @@ public enum RouteResolver {
         url: URL,
         configuration: RouterConfiguration,
         availableOptionIDs: Set<String>,
-        chooserOverride: Bool = false
+        chooserOverride: Bool = false,
+        sourceApp: String? = nil
     ) -> RouteResolution {
         if chooserOverride {
             return .chooserOverride
         }
 
-        for rule in configuration.routingRules where rule.isEnabled && RuleMatcher.matches(rule, url: url) {
+        for rule in configuration.routingRules where rule.isEnabled && RuleMatcher.matches(rule, url: url, sourceApp: sourceApp) {
             guard let option = configuration.browserOptions.first(where: { $0.id == rule.browserOptionID }) else {
                 return .unavailableRule(rule: rule, option: nil)
             }

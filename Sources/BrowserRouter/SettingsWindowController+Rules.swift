@@ -121,7 +121,8 @@ extension SettingsWindowController {
             hostContains: nil,
             hostSuffix: nil,
             pathPrefix: nil,
-            urlContains: nil
+            urlContains: nil,
+            sourceAppBundleID: selectedSourceAppBundleID()
         )
         draft.matchField.apply(draft.matchValue, to: &rule)
 
@@ -151,6 +152,7 @@ extension SettingsWindowController {
         let name = ruleNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         configuration.routingRules[row].name = name.isEmpty ? draft.matchValue : name
         configuration.routingRules[row].browserOptionID = draft.browserID
+        configuration.routingRules[row].sourceAppBundleID = selectedSourceAppBundleID()
         draft.matchField.apply(draft.matchValue, to: &configuration.routingRules[row])
         rulesTableView.reloadData()
         updateSummaryLabels()
@@ -182,6 +184,11 @@ extension SettingsWindowController {
         ruleMatchValueField.stringValue = matchField.value(from: rule) ?? ""
         updateRuleMatchPlaceholder()
         ruleBrowserPopup.selectItem(withRepresentedObject: rule.browserOptionID)
+        if let sourceApp = rule.sourceAppBundleID, !sourceApp.isEmpty {
+            ruleSourceAppPopup.selectItem(withRepresentedObject: sourceApp)
+        } else {
+            ruleSourceAppPopup.selectItem(at: 0) // "Any App"
+        }
         isPopulatingRuleForm = false
     }
 
@@ -194,6 +201,7 @@ extension SettingsWindowController {
         if !visibleBrowserOptions.isEmpty {
             ruleBrowserPopup.selectItem(at: 0)
         }
+        ruleSourceAppPopup.selectItem(at: 0) // "Any App"
         isPopulatingRuleForm = false
     }
 
@@ -201,10 +209,18 @@ extension SettingsWindowController {
         selectedRepresentedObject(ruleMatchTypePopup).flatMap(RuleMatchField.init(rawValue:))
     }
 
+    func selectedSourceAppBundleID() -> String? {
+        guard let value = selectedRepresentedObject(ruleSourceAppPopup), !value.isEmpty else {
+            return nil
+        }
+        return value
+    }
+
     func ruleDraftFromForm() -> (matchField: RuleMatchField, matchValue: String, browserID: String)? {
         let matchValue = ruleMatchValueField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let hasSourceApp = selectedSourceAppBundleID() != nil
         guard
-            !matchValue.isEmpty,
+            !matchValue.isEmpty || hasSourceApp,
             let matchField = selectedRuleMatchField(),
             let browserID = selectedRepresentedObject(ruleBrowserPopup)
         else {
@@ -298,6 +314,7 @@ extension SettingsWindowController {
         var updatedRule = currentRule
         updatedRule.name = updatedName
         updatedRule.browserOptionID = draft.browserID
+        updatedRule.sourceAppBundleID = selectedSourceAppBundleID()
         draft.matchField.apply(draft.matchValue, to: &updatedRule)
 
         guard currentRule != updatedRule else {
@@ -337,24 +354,27 @@ extension SettingsWindowController {
 
         let availableOptionIDs = Set(visibleBrowserOptions.map(\.id))
         let chooserModifier = ChooserModifier(rawValue: configuration.chooserModifier) ?? .commandShift
+        let testerSourceApp = selectedSourceAppBundleID()
         let resolution = RouteResolver.resolve(
             url: url,
             configuration: configuration,
             availableOptionIDs: availableOptionIDs,
-            chooserOverride: chooserModifier == .always
+            chooserOverride: chooserModifier == .always,
+            sourceApp: testerSourceApp
         )
 
         let chooserText = chooserModifier == .always
             ? "Chooser override: always on."
             : "Chooser override: hold \(chooserModifier.title)."
         let normalizedText = normalizedRuleTesterPrefix(rawValue: rawValue, url: url)
+        let sourceAppText = testerSourceApp.map { " (Source: \($0))" } ?? ""
 
         switch resolution {
         case .chooserOverride:
             ruleTesterResultLabel.stringValue = "\(normalizedText)\(chooserText) Routing rules will not run."
             ruleTesterResultLabel.textColor = .secondaryLabelColor
         case .matchedRule(let rule, let option):
-            ruleTesterResultLabel.stringValue = "\(normalizedText)Matched rule: \(rule.name). Target: \(option.name). \(chooserText)"
+            ruleTesterResultLabel.stringValue = "\(normalizedText)Matched rule: \(rule.name). Target: \(option.name). \(chooserText)\(sourceAppText)"
             ruleTesterResultLabel.textColor = .secondaryLabelColor
         case .unavailableRule(let rule, let option):
             let targetName = option?.name ?? rule.browserOptionID
@@ -363,7 +383,7 @@ extension SettingsWindowController {
         case .defaultRoute(let option):
             let diagnostic = ruleTesterDiagnostic(for: url)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
-                ?? "\(normalizedText)No enabled rule matched. Default target: \(option.name). \(chooserText)"
+                ?? "\(normalizedText)No enabled rule matched. Default target: \(option.name). \(chooserText)\(sourceAppText)"
             ruleTesterResultLabel.textColor = diagnostic == nil ? .secondaryLabelColor : .systemOrange
         case .unavailableDefault(let option):
             let targetName = option?.name ?? configuration.defaultOptionID

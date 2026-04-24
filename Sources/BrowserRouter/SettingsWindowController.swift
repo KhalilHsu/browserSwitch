@@ -203,6 +203,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let ruleMatchTypePopup = NSPopUpButton()
     let ruleMatchValueField = NSTextField()
     let ruleBrowserPopup = NSPopUpButton()
+    let ruleSourceAppPopup = NSPopUpButton()
     let ruleTesterURLField = NSTextField()
     let ruleTesterResultLabel = NSTextField(labelWithString: "")
     let autosaveStatusLabel = NSTextField(labelWithString: "Changes save automatically")

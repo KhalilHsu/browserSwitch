@@ -144,6 +144,10 @@ extension SettingsWindowController {
         ruleBrowserPopup.target = self
         ruleBrowserPopup.action = #selector(ruleBrowserChanged)
 
+        ruleSourceAppPopup.translatesAutoresizingMaskIntoConstraints = false
+        ruleSourceAppPopup.target = self
+        ruleSourceAppPopup.action = #selector(ruleSourceAppChanged)
+
         ruleTesterURLField.placeholderString = "Paste a URL or domain, e.g. www.baidu.com"
         ruleTesterURLField.translatesAutoresizingMaskIntoConstraints = false
         ruleTesterURLField.delegate = self

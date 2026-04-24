@@ -1,9 +1,16 @@
 import Foundation
 
 public enum RuleMatcher {
-    public static func matches(_ rule: RoutingRule, url: URL) -> Bool {
+    public static func matches(_ rule: RoutingRule, url: URL, sourceApp: String? = nil) -> Bool {
         guard rule.isEnabled else {
             return false
+        }
+
+        if let ruleSourceApp = rule.sourceAppBundleID, !ruleSourceApp.isEmpty {
+            guard let sourceApp = sourceApp,
+                  sourceApp.caseInsensitiveCompare(ruleSourceApp) == .orderedSame else {
+                return false
+            }
         }
 
         let absolute = url.absoluteString.removingPercentEncoding ?? url.absoluteString
@@ -34,5 +41,6 @@ public enum RuleMatcher {
             || rule.hostContains != nil
             || rule.hostSuffix != nil
             || rule.pathPrefix != nil
+            || (rule.sourceAppBundleID != nil && !rule.sourceAppBundleID!.isEmpty)
     }
 }

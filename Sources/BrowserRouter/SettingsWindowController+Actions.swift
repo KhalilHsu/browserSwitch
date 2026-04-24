@@ -55,6 +55,7 @@ extension SettingsWindowController {
         }
 
         rulesTableView.reloadData()
+        populateSourceAppPopup()
         updateSummaryLabels()
         updateRuleTesterResult()
         if !configuration.routingRules.isEmpty {
@@ -180,9 +181,53 @@ extension SettingsWindowController {
         _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
     }
 
+    @objc func ruleSourceAppChanged() {
+        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+    }
+
     @objc func ruleMatchTypeChanged() {
         updateRuleMatchPlaceholder()
         _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+    }
+
+    func populateSourceAppPopup() {
+        let previousSelection = selectedRepresentedObject(ruleSourceAppPopup)
+        ruleSourceAppPopup.removeAllItems()
+
+        // "Any App" means no source app filter
+        ruleSourceAppPopup.addItem(withTitle: "Any App")
+        ruleSourceAppPopup.lastItem?.representedObject = "" as String
+
+        // Collect bundle IDs already used in rules (to always show them)
+        let usedSourceApps = Set(configuration.routingRules.compactMap(\.sourceAppBundleID).filter { !$0.isEmpty })
+
+        // Running GUI apps
+        var seenBundleIDs = Set<String>()
+        let runningApps = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+
+        for app in runningApps {
+            guard let bundleID = app.bundleIdentifier, !seenBundleIDs.contains(bundleID) else { continue }
+            // Skip BrowserRouter itself
+            if bundleID == "local.browser-router" { continue }
+            seenBundleIDs.insert(bundleID)
+            let title = app.localizedName ?? bundleID
+            ruleSourceAppPopup.addItem(withTitle: title)
+            ruleSourceAppPopup.lastItem?.representedObject = bundleID as String
+        }
+
+        // Add any rule-referenced apps that aren't currently running
+        for bundleID in usedSourceApps where !seenBundleIDs.contains(bundleID) {
+            seenBundleIDs.insert(bundleID)
+            ruleSourceAppPopup.addItem(withTitle: "\(bundleID) (Not Running)")
+            ruleSourceAppPopup.lastItem?.representedObject = bundleID as String
+        }
+
+        // Restore previous selection
+        if let previousSelection, !previousSelection.isEmpty {
+            ruleSourceAppPopup.selectItem(withRepresentedObject: previousSelection)
+        }
     }
 
     func showMessage(_ title: String, _ message: String) {

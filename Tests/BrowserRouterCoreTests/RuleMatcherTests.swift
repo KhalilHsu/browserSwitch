@@ -56,12 +56,64 @@ final class RuleMatcherTests: XCTestCase {
         XCTAssertFalse(RuleMatcher.matches(rule, url: try makeURL("https://example.com")))
     }
 
+    // MARK: - Source App
+
+    func testSourceAppRuleMatchesWhenAppMatches() throws {
+        let rule = makeRule(hostSuffix: "example.com", sourceAppBundleID: "com.tinyspeck.slackmacgap")
+        let url = try makeURL("https://example.com")
+
+        XCTAssertTrue(RuleMatcher.matches(rule, url: url, sourceApp: "com.tinyspeck.slackmacgap"))
+    }
+
+    func testSourceAppRuleMatchesIsCaseInsensitive() throws {
+        let rule = makeRule(hostSuffix: "example.com", sourceAppBundleID: "com.tinyspeck.slackmacgap")
+        let url = try makeURL("https://example.com")
+
+        XCTAssertTrue(RuleMatcher.matches(rule, url: url, sourceApp: "COM.TINYSPECK.SLACKMACGAP"))
+    }
+
+    func testSourceAppRuleMismatchWhenWrongApp() throws {
+        let rule = makeRule(hostSuffix: "example.com", sourceAppBundleID: "com.tinyspeck.slackmacgap")
+        let url = try makeURL("https://example.com")
+
+        XCTAssertFalse(RuleMatcher.matches(rule, url: url, sourceApp: "ru.keepcoder.Telegram"))
+    }
+
+    func testSourceAppRuleDoesNotMatchWhenSourceAppIsNil() throws {
+        // If a rule requires a specific source app but the source is unknown, it must NOT match.
+        // This prevents misattribution when source-app detection fails.
+        let rule = makeRule(hostSuffix: "example.com", sourceAppBundleID: "com.tinyspeck.slackmacgap")
+        let url = try makeURL("https://example.com")
+
+        XCTAssertFalse(RuleMatcher.matches(rule, url: url, sourceApp: nil))
+    }
+
+    func testSourceAppOnlyRuleMatchesAnyURLFromThatApp() throws {
+        // A rule with only sourceAppBundleID set should match any URL from that app.
+        let rule = makeRule(sourceAppBundleID: "com.apple.Notes")
+        let url = try makeURL("https://anything.com/path?query=1")
+
+        XCTAssertTrue(RuleMatcher.matches(rule, url: url, sourceApp: "com.apple.Notes"))
+        XCTAssertFalse(RuleMatcher.matches(rule, url: url, sourceApp: "ru.keepcoder.Telegram"))
+        XCTAssertFalse(RuleMatcher.matches(rule, url: url, sourceApp: nil))
+    }
+
+    func testRuleWithoutSourceAppMatchesRegardlessOfSourceApp() throws {
+        // Rules with no sourceAppBundleID are not affected by the source app — backward compat.
+        let rule = makeRule(hostSuffix: "example.com")
+        let url = try makeURL("https://example.com")
+
+        XCTAssertTrue(RuleMatcher.matches(rule, url: url, sourceApp: "com.tinyspeck.slackmacgap"))
+        XCTAssertTrue(RuleMatcher.matches(rule, url: url, sourceApp: nil))
+    }
+
     private func makeRule(
         isEnabled: Bool = true,
         hostContains: String? = nil,
         hostSuffix: String? = nil,
         pathPrefix: String? = nil,
-        urlContains: String? = nil
+        urlContains: String? = nil,
+        sourceAppBundleID: String? = nil
     ) -> RoutingRule {
         RoutingRule(
             id: "test",
@@ -71,7 +123,8 @@ final class RuleMatcherTests: XCTestCase {
             hostContains: hostContains,
             hostSuffix: hostSuffix,
             pathPrefix: pathPrefix,
-            urlContains: urlContains
+            urlContains: urlContains,
+            sourceAppBundleID: sourceAppBundleID
         )
     }
 
