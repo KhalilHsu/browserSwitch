@@ -110,6 +110,7 @@ public struct RouterConfiguration: Codable {
     public var showsDockIcon: Bool
     public var showsStatusItem: Bool
     public var hasCompletedOnboarding: Bool
+    public var autoRestoreDefaultBrowserOnQuit: Bool
     public var previousDefaultBrowser: SavedDefaultBrowser?
     public var browserOptions: [BrowserOption]
     public var routingRules: [RoutingRule]
@@ -122,6 +123,7 @@ public struct RouterConfiguration: Codable {
         case showsDockIcon
         case showsStatusItem
         case hasCompletedOnboarding
+        case autoRestoreDefaultBrowserOnQuit
         case previousDefaultBrowser
         case browserOptions
         case routingRules
@@ -135,6 +137,7 @@ public struct RouterConfiguration: Codable {
         showsDockIcon: Bool = false,
         showsStatusItem: Bool = true,
         hasCompletedOnboarding: Bool = false,
+        autoRestoreDefaultBrowserOnQuit: Bool = true,
         previousDefaultBrowser: SavedDefaultBrowser? = nil,
         browserOptions: [BrowserOption],
         routingRules: [RoutingRule] = []
@@ -146,6 +149,7 @@ public struct RouterConfiguration: Codable {
         self.showsDockIcon = showsDockIcon
         self.showsStatusItem = showsStatusItem
         self.hasCompletedOnboarding = hasCompletedOnboarding
+        self.autoRestoreDefaultBrowserOnQuit = autoRestoreDefaultBrowserOnQuit
         self.previousDefaultBrowser = previousDefaultBrowser
         self.browserOptions = browserOptions
         self.routingRules = routingRules
@@ -160,6 +164,7 @@ public struct RouterConfiguration: Codable {
         showsDockIcon = try container.decodeIfPresent(Bool.self, forKey: .showsDockIcon) ?? false
         showsStatusItem = try container.decodeIfPresent(Bool.self, forKey: .showsStatusItem) ?? true
         hasCompletedOnboarding = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedOnboarding) ?? true
+        autoRestoreDefaultBrowserOnQuit = try container.decodeIfPresent(Bool.self, forKey: .autoRestoreDefaultBrowserOnQuit) ?? false
         previousDefaultBrowser = try container.decodeIfPresent(SavedDefaultBrowser.self, forKey: .previousDefaultBrowser)
         browserOptions = try container.decode([BrowserOption].self, forKey: .browserOptions)
         routingRules = try container.decodeIfPresent([RoutingRule].self, forKey: .routingRules) ?? []
@@ -273,6 +278,7 @@ public struct RouterConfiguration: Codable {
             chooserModifier: "command+shift",
             showsDockIcon: false,
             showsStatusItem: true,
+            autoRestoreDefaultBrowserOnQuit: true,
             browserOptions: [
                 BrowserOption(
                     id: "arc-default",

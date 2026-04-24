@@ -65,6 +65,10 @@ extension SettingsWindowController {
         showStatusItemCheckBox.action = #selector(presentationChanged)
         showStatusItemCheckBox.translatesAutoresizingMaskIntoConstraints = false
 
+        autoRestoreCheckBox.target = self
+        autoRestoreCheckBox.action = #selector(autoRestoreChanged)
+        autoRestoreCheckBox.translatesAutoresizingMaskIntoConstraints = false
+
         defaultBrowserLabel.translatesAutoresizingMaskIntoConstraints = false
         defaultBrowserPopup.translatesAutoresizingMaskIntoConstraints = false
         defaultBrowserPopup.target = self

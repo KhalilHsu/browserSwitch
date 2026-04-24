@@ -25,7 +25,9 @@ extension SettingsWindowController {
         chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
         chooserModifierLabel.widthAnchor.constraint(equalToConstant: 160).isActive = true
 
+        let emptyLabel = NSTextField(labelWithString: "")
         stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
+        stack.addArrangedSubview(formRow(label: emptyLabel, control: autoRestoreCheckBox))
         stack.addArrangedSubview(chooserRow)
         stack.addArrangedSubview(browserSummaryLabel)
 

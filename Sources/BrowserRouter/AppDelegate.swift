@@ -23,6 +23,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         installMainMenu()
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
+        
+        if configuration.hasCompletedOnboarding, configuration.autoRestoreDefaultBrowserOnQuit {
+            if let manager = defaultBrowserManager, !manager.isRoutingToSelf() {
+                Task { @MainActor in
+                    try? await manager.setAsDefaultBrowser()
+                }
+            }
+        }
+        
         rememberConfigModificationDate()
         applyPresentationSettings()
         if needsOnboarding(forceReload: true) {
@@ -30,6 +39,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             showSettingsIfPresentationHidden()
         }
+    }
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        if configuration.autoRestoreDefaultBrowserOnQuit,
+           let previous = restoreDefaultBrowserCandidate(),
+           let manager = currentDefaultBrowserManager(),
+           manager.isRoutingToSelf() {
+            
+            Task { @MainActor in
+                try? await manager.restoreDefaultBrowser(to: previous)
+                NSApp.reply(toApplicationShouldTerminate: true)
+            }
+            return .terminateLater
+        }
+        return .terminateNow
     }
 
     private func installMainMenu() {
@@ -228,6 +252,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func needsOnboarding(forceReload: Bool = false) -> Bool {
         if !configuration.hasCompletedOnboarding {
             return true
+        }
+
+        if configuration.autoRestoreDefaultBrowserOnQuit {
+            return false
         }
 
         guard let manager = currentDefaultBrowserManager(forceReload: forceReload) else {

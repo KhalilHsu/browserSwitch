@@ -11,6 +11,7 @@ extension SettingsWindowController {
         visibleBrowserOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
         showDockIconCheckBox.state = configuration.showsDockIcon ? .on : .off
         showStatusItemCheckBox.state = configuration.showsStatusItem ? .on : .off
+        autoRestoreCheckBox.state = configuration.autoRestoreDefaultBrowserOnQuit ? .on : .off
         defaultBrowserPopup.removeAllItems()
         ruleBrowserPopup.removeAllItems()
 
@@ -74,6 +75,7 @@ extension SettingsWindowController {
         do {
             configuration.showsDockIcon = showDockIconCheckBox.state == .on
             configuration.showsStatusItem = showStatusItemCheckBox.state == .on
+            configuration.autoRestoreDefaultBrowserOnQuit = autoRestoreCheckBox.state == .on
             configuration.defaultOptionID = selectedRepresentedObject(defaultBrowserPopup)
                 ?? configuration.defaultOptionID
             configuration.chooserModifier = selectedRepresentedObject(modifierPopup)
@@ -148,6 +150,10 @@ extension SettingsWindowController {
 
     @objc func presentationChanged() {
         _ = persistConfiguration(statusMessage: "Appearance saved")
+    }
+
+    @objc func autoRestoreChanged() {
+        _ = persistConfiguration(statusMessage: "Auto-restore setting saved")
     }
 
     @objc func ruleBrowserChanged() {

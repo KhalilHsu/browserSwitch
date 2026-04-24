@@ -191,6 +191,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
 
     let showDockIconCheckBox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
     let showStatusItemCheckBox = NSButton(checkboxWithTitle: "Show menu bar icon", target: nil, action: nil)
+    let autoRestoreCheckBox = NSButton(checkboxWithTitle: "Auto-restore previous default browser on quit", target: nil, action: nil)
     let defaultBrowserLabel = NSTextField(labelWithString: "Default browser/profile")
     let chooserModifierLabel = NSTextField(labelWithString: "Show chooser when")
     let defaultBrowserPopup = NSPopUpButton()
