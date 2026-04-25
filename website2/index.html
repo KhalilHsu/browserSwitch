@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BrowserRouter | Route links to the right browser</title>
+  <meta name="description" content="BrowserRouter is a native macOS utility that routes external links to the browser or profile you choose. Set it once and keep work, personal, testing, and client links separated.">
+  <meta name="theme-color" content="#0a0f17">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="noise"></div>
+  <div class="orb orb-left"></div>
+  <div class="orb orb-right"></div>
+
+  <header class="topbar">
+    <nav class="container nav">
+      <a class="brand" href="#top" aria-label="BrowserRouter home">
+        <span class="brand-mark">↗</span>
+        <span class="brand-text">BrowserRouter</span>
+      </a>
+      <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a class="nav-cta" href="https://github.com/KhalilHsu/browserSwitch/releases" target="_blank" rel="noreferrer">Download</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero container">
+      <div class="hero-copy reveal">
+        <p class="eyebrow">Native macOS link routing</p>
+        <h1>Route every link to the browser you actually want.</h1>
+        <p class="lede">
+          BrowserRouter is for people who juggle work, personal, testing, and client browsing across multiple browsers or profiles.
+          Set rules once, then let links open where they belong.
+        </p>
+
+        <div class="actions">
+          <a class="button button-primary" href="https://github.com/KhalilHsu/browserSwitch/releases" target="_blank" rel="noreferrer">
+            Download for macOS
+          </a>
+          <a class="button button-secondary" href="https://github.com/KhalilHsu/browserSwitch" target="_blank" rel="noreferrer">
+            View source
+          </a>
+        </div>
+
+        <div class="trust-row">
+          <span>macOS 12+</span>
+          <span>Local-only configuration</span>
+          <span>Chrome, Safari, Edge, Brave, Firefox</span>
+        </div>
+      </div>
+
+      <div class="hero-visual reveal">
+        <div class="screenshot-card">
+          <div class="window-bar">
+            <span></span><span></span><span></span>
+            <div class="window-title">BrowserRouter</div>
+          </div>
+          <img src="assets/hero.png" alt="BrowserRouter concept illustration" class="hero-image">
+        </div>
+        <div class="floating-chip chip-top">Default browser fallback</div>
+        <div class="floating-chip chip-bottom">Chooser shortcut</div>
+      </div>
+    </section>
+
+    <section class="stats container reveal">
+      <div class="stat">
+        <p class="stat-label">Rules</p>
+        <p class="stat-value">Host suffix, path prefix, URL contains</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Profiles</p>
+        <p class="stat-value">Chrome, Canary, Edge, Brave, Vivaldi, Firefox</p>
+      </div>
+      <div class="stat">
+        <p class="stat-label">Fallbacks</p>
+        <p class="stat-value">Default browser or another available option</p>
+      </div>
+    </section>
+
+    <section id="features" class="section container">
+      <div class="section-head reveal">
+        <p class="eyebrow">Built for real workflows</p>
+        <h2>Less switching, fewer wrong tabs, more flow.</h2>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature-card reveal">
+          <span class="icon">🎯</span>
+          <h3>Rule-based routing</h3>
+          <p>Send work domains, client sites, or test URLs to the browser profile that belongs to them.</p>
+        </article>
+
+        <article class="feature-card reveal">
+          <span class="icon">⚡</span>
+          <h3>Fast chooser</h3>
+          <p>Hold a shortcut and pick a browser at the moment a link opens. No hunting through menus.</p>
+        </article>
+
+        <article class="feature-card reveal">
+          <span class="icon">🛡️</span>
+          <h3>Local-only setup</h3>
+          <p>Your configuration stays on your Mac in a local JSON file. No account, no sync, no tracking.</p>
+        </article>
+
+        <article class="feature-card reveal">
+          <span class="icon">🧩</span>
+          <h3>Multiple browser profiles</h3>
+          <p>Keep personal, work, client, and testing logins separate without manually copying links around.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="how" class="section container split">
+      <div class="section-head reveal">
+        <p class="eyebrow">How it works</p>
+        <h2>Set the default browser once, then let BrowserRouter do the routing.</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step reveal">
+          <span class="step-index">1</span>
+          <div>
+            <h3>Install and open</h3>
+            <p>Install the app, open it once, and follow onboarding to make BrowserRouter the default browser on macOS.</p>
+          </div>
+        </div>
+        <div class="step reveal">
+          <span class="step-index">2</span>
+          <div>
+            <h3>Choose your targets</h3>
+            <p>Pick the browser or profile for your default fallback, then add rules for specific domains or paths.</p>
+          </div>
+        </div>
+        <div class="step reveal">
+          <span class="step-index">3</span>
+          <div>
+            <h3>Click links normally</h3>
+            <p>Open links from Mail, Slack, Notes, or anywhere else. BrowserRouter sends them to the right place.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta container reveal">
+      <div class="cta-card">
+        <div>
+          <p class="eyebrow">Ready when you are</p>
+          <h2>Turn link routing into something you never think about again.</h2>
+        </div>
+        <div class="cta-actions">
+          <a class="button button-primary" href="https://github.com/KhalilHsu/browserSwitch/releases" target="_blank" rel="noreferrer">
+            Download on GitHub
+          </a>
+          <a class="button button-secondary" href="https://github.com/KhalilHsu/browserSwitch" target="_blank" rel="noreferrer">
+            Read the repo
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <p>BrowserRouter is a native macOS utility for people who keep separate browsers and profiles for different kinds of work.</p>
+      <div class="footer-links">
+        <a href="https://github.com/KhalilHsu/browserSwitch" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://github.com/KhalilHsu/browserSwitch/releases" target="_blank" rel="noreferrer">Downloads</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
