@@ -9,3 +9,4 @@ DerivedData/
 *.swp
 *.tmp
 *.log
+.local/
