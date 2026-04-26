@@ -356,7 +356,7 @@ nav {
     border-radius: 12px;
     padding: 1.5rem;
     padding-right: 3.5rem;
-    margin: 0 auto 1.5rem auto;
+    margin: 0 auto 0.35rem auto;
     max-width: 750px;
     text-align: left;
     backdrop-filter: blur(10px);
@@ -404,6 +404,16 @@ nav {
     color: rgba(255, 255, 255, 0.82);
     font-size: 0.88rem;
     line-height: 1.45;
+}
+
+.cta-inner p.install-hint {
+    max-width: 750px;
+    margin: 0 auto 2rem auto;
+    text-align: left;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.55);
+    line-height: 1.45;
+    opacity: 1;
 }
 
 .copy-btn {
