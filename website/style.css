@@ -30,6 +30,11 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 100px;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background-color: var(--bg-dark);
@@ -195,12 +200,9 @@ nav {
 }
 
 .version-tag {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-dim);
-    background: var(--card-bg);
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
-    border: 1px solid var(--glass-border);
+    opacity: 0.8;
 }
 
 .hero-image img {
@@ -221,6 +223,61 @@ nav {
 }
 
 /* Features */
+.use-cases {
+    padding-top: 3rem;
+    padding-bottom: 5rem;
+}
+
+.section-kicker {
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.75rem;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.use-case-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.use-case-card {
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 1.5rem;
+    min-height: 230px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.use-case-card:hover {
+    background: var(--card-hover);
+    border-color: rgba(94, 92, 230, 0.5);
+    transform: translateY(-3px);
+}
+
+.use-case-label {
+    color: var(--primary);
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+.use-case-card h3 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    margin-bottom: 0.85rem;
+}
+
+.use-case-card p {
+    color: var(--text-dim);
+}
+
 .features {
     padding-top: 6rem;
     padding-bottom: 6rem;
@@ -234,17 +291,16 @@ nav {
 
 .feature-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
 }
 
 .feature-card {
     background: var(--card-bg);
-    padding: 2.5rem;
-    border-radius: 24px;
+    padding: 1.5rem;
+    border-radius: 18px;
     border: 1px solid var(--glass-border);
     transition: all 0.3s;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
 }
 
 .feature-card:hover {
@@ -254,13 +310,14 @@ nav {
 }
 
 .feature-icon {
-    font-size: 2.5rem;
-    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    margin-bottom: 1rem;
 }
 
 .feature-card h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    line-height: 1.25;
+    margin-bottom: 0.85rem;
 }
 
 .feature-card p {
@@ -314,6 +371,39 @@ nav {
     word-break: break-all;
     line-height: 1.6;
     display: block;
+}
+
+.install-notes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin: 0 auto 1.5rem auto;
+    max-width: 820px;
+    text-align: left;
+}
+
+.install-note {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.install-note strong,
+.install-note span {
+    display: block;
+}
+
+.install-note strong {
+    color: white;
+    font-size: 0.95rem;
+    margin-bottom: 0.35rem;
+}
+
+.install-note span {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.88rem;
+    line-height: 1.45;
 }
 
 .copy-btn {
@@ -396,6 +486,24 @@ footer {
     
     .feature-grid {
         grid-template-columns: 1fr;
+    }
+
+    .use-cases {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .use-case-grid,
+    .install-notes {
+        grid-template-columns: 1fr;
+    }
+
+    .use-case-card {
+        min-height: auto;
     }
     
     .hero-btns { 

@@ -3,12 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BrowserRouter - Intelligent Link Routing for macOS</title>
-    <meta name="description" content="Stop switching, start routing. BrowserRouter is a powerful macOS utility that automatically distributes links to different browsers based on your rules.">
-    <link rel="stylesheet" href="style.css?v=16">
+    <title>BrowserRouter - Route Every Link to the Right Browser on macOS</title>
+    <meta name="description" content="BrowserRouter is a local-first macOS link router that opens work, personal, OAuth, and testing links in the right browser or profile using custom rules.">
+    <meta name="application-name" content="BrowserRouter">
+    <meta name="apple-mobile-web-app-title" content="BrowserRouter">
+    <meta name="theme-color" content="#0a0a0c">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://khalilhsu.github.io/browserSwitch/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://khalilhsu.github.io/browserSwitch/">
+    <meta property="og:site_name" content="BrowserRouter">
+    <meta property="og:title" content="BrowserRouter - Route Every Link to the Right Browser on macOS">
+    <meta property="og:description" content="A local-first macOS utility for opening links in the right browser or profile based on your rules. Built for work, personal, testing, and account-separated workflows.">
+    <meta property="og:image" content="https://khalilhsu.github.io/browserSwitch/assets/hero.jpg">
+    <meta property="og:image:width" content="1024">
+    <meta property="og:image:height" content="1024">
+    <meta property="og:image:alt" content="BrowserRouter routes links to Safari, Chrome, Firefox, and Edge.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://khalilhsu.github.io/browserSwitch/">
+    <meta property="twitter:title" content="BrowserRouter - Route Every Link to the Right Browser on macOS">
+    <meta property="twitter:description" content="Open work, personal, OAuth, and testing links in the right macOS browser or profile with local custom rules.">
+    <meta property="twitter:image" content="https://khalilhsu.github.io/browserSwitch/assets/hero.jpg">
+    <meta property="twitter:image:alt" content="BrowserRouter routes links to Safari, Chrome, Firefox, and Edge.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/app-icon.png">
+    <link rel="apple-touch-icon" href="assets/app-icon.png">
+
+    <link rel="stylesheet" href="style.css?v=23">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "BrowserRouter",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "macOS 12 or newer",
+        "description": "A local-first macOS utility that routes links to the right browser or browser profile using custom rules.",
+        "url": "https://khalilhsu.github.io/browserSwitch/",
+        "codeRepository": "https://github.com/KhalilHsu/browserSwitch",
+        "license": "https://github.com/KhalilHsu/browserSwitch/blob/main/LICENSE",
+        "softwareVersion": "Beta"
+    }
+    </script>
 </head>
 <body>
     <header>
@@ -34,12 +77,34 @@
                 <h1><span data-i18n="hero-title">Stop Switching,</span> <span class="gradient-text" data-i18n="hero-title-gradient">Start Routing.</span></h1>
                 <p class="lead" data-i18n="hero-desc">The intelligent link dispatcher for macOS. Automatically open links in the right browser or profile based on powerful, custom rules.</p>
                 <div class="hero-btns">
-                    <a href="https://github.com/KhalilHsu/browserSwitch/releases" class="btn btn-primary" data-i18n="hero-cta">Download on GitHub</a>
-                    <span class="version-tag" data-i18n="hero-tag">Open Source</span>
+                    <a href="https://github.com/KhalilHsu/browserSwitch" class="btn btn-primary" data-i18n="hero-cta">Star on GitHub</a>
+                    <span class="version-tag" data-i18n="hero-tag">Open Source · Beta · macOS 12+ · Local only</span>
                 </div>
             </div>
             <div class="hero-image">
-                <img src="assets/hero.png" alt="BrowserRouter Concept Illustration" class="floating-img">
+                <img src="assets/hero.jpg" alt="BrowserRouter Concept Illustration" class="floating-img">
+            </div>
+        </section>
+
+        <section class="use-cases container" aria-labelledby="use-cases-title">
+            <div class="section-kicker" data-i18n="use-kicker">Built for messy everyday browsing</div>
+            <h2 id="use-cases-title" class="section-title"><span data-i18n="use-title">One Mac, many browser</span> <span class="gradient-text" data-i18n="use-title-gradient">contexts.</span></h2>
+            <div class="use-case-grid">
+                <div class="use-case-card">
+                    <span class="use-case-label" data-i18n="use1-label">Work links</span>
+                    <h3 data-i18n="use1-title">Keep team tools in your work profile</h3>
+                    <p data-i18n="use1-desc">Open Slack, email, docs, and dashboards in the browser profile where your work accounts are already signed in.</p>
+                </div>
+                <div class="use-case-card">
+                    <span class="use-case-label" data-i18n="use2-label">Personal browsing</span>
+                    <h3 data-i18n="use2-title">Separate private links from work sessions</h3>
+                    <p data-i18n="use2-desc">Send personal sites to Safari or another browser while keeping work cookies, history, and accounts isolated.</p>
+                </div>
+                <div class="use-case-card">
+                    <span class="use-case-label" data-i18n="use3-label">Testing and OAuth</span>
+                    <h3 data-i18n="use3-title">Pick the right account before a link opens</h3>
+                    <p data-i18n="use3-desc">Use the chooser shortcut for client accounts, test tenants, login flows, and links that need a deliberate destination.</p>
+                </div>
             </div>
         </section>
 
@@ -61,11 +126,6 @@
                     <h3 data-i18n="feat3-title">Privacy First</h3>
                     <p data-i18n="feat3-desc">100% open source. No tracking, no data collection. Your browsing habits stay on your machine.</p>
                 </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🧩</div>
-                    <h3 data-i18n="feat4-title">Browser Profiles</h3>
-                    <p data-i18n="feat4-desc">Full support for Chrome, Firefox, and Edge profiles. Open work accounts and personal accounts seamlessly.</p>
-                </div>
             </div>
         </section>
 
@@ -82,6 +142,20 @@ cd browserSwitch && \
 chmod +x scripts/install.sh && \
 ./scripts/install.sh</code>
                 </div>
+                <div class="install-notes">
+                    <div class="install-note">
+                        <strong data-i18n="install1-title">Source install</strong>
+                        <span data-i18n="install1-desc">Requires local Swift build tools and installs the app into /Applications.</span>
+                    </div>
+                    <div class="install-note">
+                        <strong data-i18n="install2-title">Local configuration</strong>
+                        <span data-i18n="install2-desc">Rules and browser preferences stay in Application Support on your Mac.</span>
+                    </div>
+                    <div class="install-note">
+                        <strong data-i18n="install3-title">No telemetry</strong>
+                        <span data-i18n="install3-desc">BrowserRouter does not upload URLs or collect browsing history.</span>
+                    </div>
+                </div>
                 <a href="https://github.com/KhalilHsu/browserSwitch" class="btn btn-secondary" style="margin-top: 1rem;" data-i18n="cta-btn">View on GitHub</a>
             </div>
         </section>
@@ -96,6 +170,6 @@ chmod +x scripts/install.sh && \
         </div>
     </footer>
 
-    <script src="script.js?v=19"></script>
+    <script src="script.js?v=23"></script>
 </body>
 </html>
