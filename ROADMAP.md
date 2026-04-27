@@ -94,6 +94,8 @@ Acceptance criteria:
 
 #### Source App Routing
 
+Status: Done.
+
 Allow routing rules to consider the app that initiated the link open request,
 not only the destination URL.
 
@@ -119,10 +121,11 @@ Implementation notes:
 
 Acceptance criteria:
 
-- Routing rules can optionally include a source application condition.
-- The rule tester can simulate or display the source app condition.
-- The feature degrades predictably when source app detection is unavailable.
-- Privacy documentation explains any required permissions.
+- [x] Routing rules can optionally include a source application condition.
+- [x] The rule tester can simulate or display the source app condition.
+- [x] The feature degrades predictably when source app detection is unavailable.
+- [x] Privacy documentation explains that source app detection is best-effort and
+  uses the macOS Apple Event sender when available.
 
 #### Local Install And Uninstall Scripts
 
@@ -230,7 +233,7 @@ MVP scope:
 
 #### Browser Option Management (Hide & Sort)
 
-Status: Planned.
+Status: Done.
 
 Allow users to hide and reorder detected browsers or profiles in the chooser and
 default dropdowns.
@@ -245,16 +248,16 @@ Why it matters:
 
 Acceptance criteria:
 
-- [ ] Browser/profile options can be hidden and unhidden in Settings.
-- [ ] Browser/profile options can be reordered in Settings.
-- [ ] The chooser respects the custom order and hidden state.
-- [ ] Rules targeting hidden options are handled explicitly, either still allowed or
+- [x] Browser/profile options can be hidden and unhidden in Settings.
+- [x] Browser/profile options can be reordered in Settings.
+- [x] The chooser respects the custom order and hidden state.
+- [x] Rules targeting hidden options are handled explicitly, either still allowed or
   marked as hidden.
-- [ ] Hidden state and custom order survive browser inventory refresh.
+- [x] Hidden state and custom order survive browser inventory refresh.
 
 #### Auto-restore Default Browser On Quit
 
-Status: Planned.
+Status: Done.
 
 Automatically restore the previous `http` and `https` default browser when
 BrowserRouter quits.
@@ -267,11 +270,11 @@ Why it matters:
 
 Acceptance criteria:
 
-- [ ] On app termination, check if BrowserRouter is the current default.
-- [ ] If yes, attempt to restore the captured previous default browser.
-- [ ] This behavior is togglable in Settings (some users might want to keep it as
+- [x] On app termination, check if BrowserRouter is the current default.
+- [x] If yes, attempt to restore the captured previous default browser.
+- [x] This behavior is togglable in Settings (some users might want to keep it as
   default even when not running).
-- [ ] Graceful handling of edge cases where the previous browser is no longer
+- [x] Graceful handling of edge cases where the previous browser is no longer
   installed.
 
 ## P1: Daily Use Improvements

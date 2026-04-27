@@ -32,11 +32,13 @@ Current assumptions:
   - `Control + Shift`
   - `Command + Option`
   - always show chooser
+  - custom shortcut recording
 - Routing rules for:
   - host suffix
   - host contains
   - path prefix
   - URL contains
+  - source application bundle ID
 - Chromium profile discovery for:
   - Google Chrome
   - Google Chrome Canary
@@ -45,9 +47,11 @@ Current assumptions:
   - Vivaldi
 - Firefox profile discovery from `profiles.ini`.
 - Native menu chooser for detected browsers or profiles.
+- Browser/profile visibility and ordering controls.
 - Browser inventory refresh for installed system URL handlers.
 - Settings window with Basic, Appearance, Rules, Advanced, and About sections.
 - Optional Dock icon and menu bar icon.
+- Restore previous default browser action and optional auto-restore on quit.
 - Headless helper mode when both icons are hidden.
 - Local-only configuration.
 
@@ -59,7 +63,8 @@ When another app opens a web link, macOS sends that URL to BrowserRouter.
 BrowserRouter then chooses where to forward the link:
 
 1. If the chooser shortcut is active, show the chooser.
-2. Otherwise, use the first matching routing rule.
+2. Otherwise, use the first matching routing rule. Rules can match the URL and,
+   when available, the source application that asked macOS to open the link.
 3. Otherwise, use the configured default browser/profile.
 4. If the configured target is unavailable, fall back to another detected
    browser option.
@@ -177,11 +182,13 @@ opening the app again when BrowserRouter is running without visible icons.
 
 Settings includes:
 
-- **Basic**: default browser/profile and chooser shortcut.
+- **Basic**: default browser/profile, auto-restore on quit, and chooser
+  shortcut.
 - **Appearance**: Dock icon and menu bar icon visibility.
 - **Rules**: add, update, enable, disable, remove, and test routing rules.
-- **Advanced**: refresh browser inventory, detect Chromium profiles, and reveal
-  the config file in Finder.
+- **Advanced**: hide/unhide or reorder browser/profile options, refresh browser
+  inventory, detect Chromium profiles, restore the previous default browser, and
+  reveal the config file in Finder.
 - **About**: version and project links.
 
 Settings changes are saved automatically when you:
@@ -189,8 +196,10 @@ Settings changes are saved automatically when you:
 - change the default browser/profile
 - change the chooser shortcut
 - change Dock or menu bar visibility
+- change auto-restore on quit
 - refresh browsers
 - detect Chromium profiles
+- hide, unhide, or reorder browser/profile options
 - add, update, or remove a rule
 - enable or disable a rule
 - finish editing an existing selected rule
@@ -218,7 +227,8 @@ Example browser option:
   "bundleIdentifier": "com.google.Chrome",
   "appName": "Google Chrome",
   "profileDirectory": "Default",
-  "extraArguments": null
+  "extraArguments": null,
+  "isHidden": false
 }
 ```
 
@@ -230,7 +240,8 @@ Example routing rule:
   "name": "Gmail Work",
   "isEnabled": true,
   "browserOptionID": "chrome-default",
-  "hostSuffix": "mail.google.com"
+  "hostSuffix": "mail.google.com",
+  "sourceAppBundleID": "com.tinyspeck.slackmacgap"
 }
 ```
 
@@ -253,9 +264,14 @@ Supported match fields:
   the domain.
 - `urlContains` / **Full URL Contains**: matches anywhere in the full URL after
   percent decoding.
+- `sourceAppBundleID` / **Source App**: optionally matches the bundle ID of the
+  GUI app that initiated the link open request, such as Slack or Feishu. Source
+  app detection is best-effort and only applies when macOS provides a trusted
+  Apple Event sender.
 
 When a rule has multiple match fields in JSON, all populated fields must match.
-The current settings UI edits one match field per rule.
+The current settings UI edits one URL match field per rule and one optional
+source app condition.
 
 The configured chooser shortcut always wins over rules and default routing.
 
@@ -306,7 +322,7 @@ selected browser.
 
 Default logs avoid full URL strings. Routing logs may include non-sensitive
 facts such as scheme, host, whether a path exists, query item count, matched
-rule id, and target browser/profile id.
+rule id, source app bundle id, and target browser/profile id.
 
 Please avoid adding telemetry or persistent URL history unless it is explicit,
 optional, and documented.
