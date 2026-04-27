@@ -1,4 +1,4 @@
-# Roadmap
+# Roadmap (Last updated: 2026-04-27)
 
 This document tracks product and open-source readiness work for BrowserRouter.
 It is intentionally practical: each item should make the app easier to trust,
