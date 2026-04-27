@@ -68,10 +68,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
            let previous = restoreDefaultBrowserCandidate(),
            let manager = currentDefaultBrowserManager(),
            manager.isRoutingToSelf() {
-            
+            let alert = NSAlert()
+            alert.messageText = "Quit BrowserRouter?"
+            alert.informativeText = "BrowserRouter is currently your macOS default browser. If you quit it, links will no longer route through BrowserRouter. Restore your previous default browser, \(previous.displayName), before quitting?"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "Restore \(previous.displayName) and Quit")
+            alert.addButton(withTitle: "Keep BrowserRouter Running")
+            alert.addButton(withTitle: "Quit Without Restoring")
+            NSApp.activate(ignoringOtherApps: true)
+
+            switch alert.runModal() {
+            case .alertFirstButtonReturn:
+                break
+            case .alertSecondButtonReturn:
+                return .terminateCancel
+            default:
+                return .terminateNow
+            }
+
             Task { @MainActor in
-                try? await manager.restoreDefaultBrowser(to: previous)
-                NSApp.reply(toApplicationShouldTerminate: true)
+                do {
+                    try await manager.restoreDefaultBrowser(to: previous)
+                    NSApp.reply(toApplicationShouldTerminate: true)
+                } catch {
+                    showMessage(
+                        title: "Could Not Restore Default Browser",
+                        message: "\(error.localizedDescription)\n\nBrowserRouter will keep running so your links continue to work."
+                    )
+                    NSApp.reply(toApplicationShouldTerminate: false)
+                }
             }
             return .terminateLater
         }
@@ -114,14 +139,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationShouldHandleReopen(_ application: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        guard !flag else {
-            return true
-        }
-
         if needsOnboarding(forceReload: true) {
             openOnboarding()
         } else {
-            showSettingsIfPresentationHidden()
+            openSettings()
         }
         return true
     }
@@ -558,6 +579,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     self?.applyPresentationSettings()
                     self?.settingsWindowController?.reload(with: newConfiguration)
                     self?.onboardingWindowController = nil
+                    self?.openSettings()
                 }
             )
         } else {

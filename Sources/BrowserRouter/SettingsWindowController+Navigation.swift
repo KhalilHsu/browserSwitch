@@ -131,12 +131,7 @@ extension SettingsWindowController {
     func updateAboutVersion() {
         let bundle = Bundle.main
         let version = bundle.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown"
-        let build = bundle.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-        if let build, !build.isEmpty {
-            aboutVersionLabel.stringValue = "v\(version) (\(build))"
-        } else {
-            aboutVersionLabel.stringValue = "v\(version)"
-        }
+        aboutVersionLabel.stringValue = "v\(version)"
     }
 
     @objc func selectTab(_ sender: NSButton) {

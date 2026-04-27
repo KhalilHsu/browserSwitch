@@ -42,6 +42,14 @@ final class RouterConfigurationTests: XCTestCase {
         XCTAssertFalse(configuration.hasCompletedOnboarding)
     }
 
+    func testSampleConfigurationStartsWithoutPresetBrowsersOrRules() {
+        let configuration = RouterConfiguration.sample()
+
+        XCTAssertEqual(configuration.defaultOptionID, "")
+        XCTAssertTrue(configuration.browserOptions.isEmpty)
+        XCTAssertTrue(configuration.routingRules.isEmpty)
+    }
+
     func testBrowserSlugPreservesBundleIdentifierIDFormat() {
         XCTAssertEqual(BrowserSlug.make("com.google.Chrome"), "com-google-chrome")
         XCTAssertEqual(BrowserSlug.make("..."), "browser")
@@ -53,7 +61,7 @@ final class RouterConfigurationTests: XCTestCase {
     }
 
     func testAdoptingDefaultBrowserReusesExistingDefaultOptionForBundle() {
-        var configuration = RouterConfiguration.sample()
+        var configuration = makeChromeConfiguration()
 
         configuration.adoptDefaultBrowser(
             bundleIdentifier: "com.google.Chrome",
@@ -130,5 +138,31 @@ final class RouterConfigurationTests: XCTestCase {
 
         XCTAssertEqual(decoded.previousDefaultBrowser?.bundleIdentifier, "com.apple.Safari")
         XCTAssertEqual(decoded.previousDefaultBrowser?.displayName, "Safari")
+    }
+
+    private func makeChromeConfiguration() -> RouterConfiguration {
+        RouterConfiguration(
+            defaultOptionID: "chrome-default",
+            chooserModifier: "command+shift",
+            browserOptions: [
+                BrowserOption(
+                    id: "chrome-default",
+                    name: "Chrome - Default",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: "Default",
+                    extraArguments: nil
+                ),
+                BrowserOption(
+                    id: "chrome-profile-1",
+                    name: "Chrome - Profile 1",
+                    bundleIdentifier: "com.google.Chrome",
+                    appName: "Google Chrome",
+                    profileDirectory: "Profile 1",
+                    extraArguments: nil
+                )
+            ],
+            routingRules: []
+        )
     }
 }

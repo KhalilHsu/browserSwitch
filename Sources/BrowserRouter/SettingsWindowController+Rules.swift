@@ -29,8 +29,7 @@ extension SettingsWindowController {
             }
 
             if identifier == "name" {
-                let nameStr = option.appName ?? option.name
-                let text = "\(nameStr)\(option.profileDirectory != nil ? " - " + option.profileDirectory! : "")\n\(option.bundleIdentifier)"
+                let text = "\(option.name)\n\(option.bundleIdentifier)"
                 let cell = NSTextField(labelWithString: text)
                 cell.lineBreakMode = .byWordWrapping
                 cell.maximumNumberOfLines = 2

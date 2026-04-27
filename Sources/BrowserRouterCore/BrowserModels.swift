@@ -303,82 +303,13 @@ public struct RouterConfiguration: Codable {
 
     public static func sample() -> RouterConfiguration {
         RouterConfiguration(
-            defaultOptionID: "arc-default",
+            defaultOptionID: "",
             chooserModifier: "command+shift",
             showsDockIcon: false,
             showsStatusItem: true,
             autoRestoreDefaultBrowserOnQuit: true,
-            browserOptions: [
-                BrowserOption(
-                    id: "arc-default",
-                    name: "Arc",
-                    bundleIdentifier: "company.thebrowser.Browser",
-                    appName: "Arc",
-                    profileDirectory: nil,
-                    extraArguments: nil
-                ),
-                BrowserOption(
-                    id: "chrome-default",
-                    name: "Chrome - Default",
-                    bundleIdentifier: "com.google.Chrome",
-                    appName: "Google Chrome",
-                    profileDirectory: "Default",
-                    extraArguments: nil
-                ),
-                BrowserOption(
-                    id: "chrome-profile-1",
-                    name: "Chrome - Profile 1",
-                    bundleIdentifier: "com.google.Chrome",
-                    appName: "Google Chrome",
-                    profileDirectory: "Profile 1",
-                    extraArguments: nil
-                ),
-                BrowserOption(
-                    id: "edge-default",
-                    name: "Edge - Default",
-                    bundleIdentifier: "com.microsoft.edgemac",
-                    appName: "Microsoft Edge",
-                    profileDirectory: "Default",
-                    extraArguments: nil
-                ),
-                BrowserOption(
-                    id: "safari",
-                    name: "Safari",
-                    bundleIdentifier: "com.apple.Safari",
-                    appName: "Safari",
-                    profileDirectory: nil,
-                    extraArguments: nil
-                )
-            ],
-            routingRules: [
-                RoutingRule(
-                    id: "gmail",
-                    name: "Gmail",
-                    browserOptionID: "chrome-default",
-                    hostContains: nil,
-                    hostSuffix: "mail.google.com",
-                    pathPrefix: nil,
-                    urlContains: nil
-                ),
-                RoutingRule(
-                    id: "outlook",
-                    name: "Outlook",
-                    browserOptionID: "edge-default",
-                    hostContains: nil,
-                    hostSuffix: "outlook.office.com",
-                    pathPrefix: nil,
-                    urlContains: nil
-                ),
-                RoutingRule(
-                    id: "chatgpt",
-                    name: "ChatGPT",
-                    browserOptionID: "chrome-profile-1",
-                    hostContains: nil,
-                    hostSuffix: "chatgpt.com",
-                    pathPrefix: nil,
-                    urlContains: nil
-                )
-            ]
+            browserOptions: [],
+            routingRules: []
         )
     }
 }
