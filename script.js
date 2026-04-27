@@ -4,7 +4,7 @@ const translations = {
         "hero-title": "Stop Switching,",
         "hero-title-gradient": "Start Routing.",
         "hero-desc": "The intelligent link dispatcher for macOS. Automatically open links in the right browser or profile based on powerful, custom rules.",
-        "hero-cta": "Star on GitHub",
+        "hero-cta": "Try Now",
         "hero-tag": "Beta · macOS 12+ · Local",
         "use-kicker": "Built for messy everyday browsing",
         "use-title": "One Mac, many browser",
@@ -30,7 +30,8 @@ const translations = {
         "feat4-desc": "Full support for Chrome, Firefox, and Edge profiles. Open work accounts and personal accounts seamlessly.",
         "cta-title": "Try BrowserRouter Beta",
         "cta-desc": "BrowserRouter is currently in beta. You can install it directly from the source using our installation script.",
-        "cta-btn": "View on GitHub",
+        "cta-btn": "Copy and run in Terminal",
+        "cta-copied": "Open Terminal and run it",
         "install1-title": "Source install",
         "install1-desc": "Requires local Swift build tools and installs the app into /Applications.",
         "install2-title": "Local configuration",
@@ -44,7 +45,7 @@ const translations = {
         "hero-title": "告别繁琐切换，<br>",
         "hero-title-gradient": "开启智能路由。",
         "hero-desc": "macOS 上的智能链接分发中心。基于强大的自定义规则，自动在正确的浏览器或配置文件夹中打开链接。",
-        "hero-cta": "Star on GitHub",
+        "hero-cta": "立即尝试",
         "hero-tag": "Beta · macOS 12+ · 本地运行",
         "use-kicker": "为日常混乱的浏览场景而生",
         "use-title": "一台 Mac，多个浏览器",
@@ -70,7 +71,8 @@ const translations = {
         "feat4-desc": "全面支持 Chrome、Firefox 和 Edge 的配置文件。无缝切换工作与个人账号。",
         "cta-title": "体验 BrowserRouter Beta 版",
         "cta-desc": "BrowserRouter 目前处于 Beta 测试阶段。您可以通过克隆源代码并使用内置脚本直接安装。",
-        "cta-btn": "在 GitHub 上查看",
+        "cta-btn": "复制并去终端运行",
+        "cta-copied": "请打开终端应用运行",
         "install1-title": "源码安装",
         "install1-desc": "需要本地 Swift 构建工具，并会把应用安装到 /Applications。",
         "install2-title": "本地配置",
@@ -155,20 +157,41 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Copy Code Logic ---
     const copyBtn = document.getElementById('copy-install-cmd');
     const installCmd = document.getElementById('install-cmd');
-    const showCopiedState = () => {
-        const originalHTML = copyBtn.innerHTML;
-        copyBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-        copyBtn.classList.add('copied');
+    const showCopiedState = (button = copyBtn) => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        button.classList.add('copied');
         setTimeout(() => {
-            copyBtn.innerHTML = originalHTML;
-            copyBtn.classList.remove('copied');
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
         }, 2000);
+    };
+
+    const showTextState = (button, text, restoreKey) => {
+        button.textContent = text;
+        button.classList.add('copied');
+        setTimeout(() => {
+            button.textContent = translations[currentLang][restoreKey];
+            button.classList.remove('copied');
+        }, 2000);
+    };
+
+    const selectInstallCommand = () => {
+        const range = document.createRange();
+        range.selectNodeContents(installCmd);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
     };
 
     const copyText = async (text) => {
         if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(text);
-            return;
+            try {
+                await navigator.clipboard.writeText(text);
+                return;
+            } catch {
+                // Fall back to the selection-based copy path below.
+            }
         }
 
         const textarea = document.createElement('textarea');
@@ -192,6 +215,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 showCopiedState();
             } catch {
                 copyBtn.title = 'Copy failed. Select the command manually.';
+            }
+        });
+    }
+
+    const copyTerminalBtn = document.getElementById('copy-terminal-btn');
+    if (copyTerminalBtn && installCmd) {
+        copyTerminalBtn.addEventListener('click', async () => {
+            try {
+                await copyText(installCmd.innerText);
+                showTextState(copyTerminalBtn, translations[currentLang]["cta-copied"], "cta-btn");
+            } catch {
+                selectInstallCommand();
+                showTextState(copyTerminalBtn, translations[currentLang]["cta-copied"], "cta-btn");
+                copyTerminalBtn.title = 'Copy failed. Select the command manually.';
             }
         });
     }
