@@ -38,7 +38,7 @@
     <link rel="icon" type="image/png" href="assets/app-icon.png">
     <link rel="apple-touch-icon" href="assets/app-icon.png">
 
-    <link rel="stylesheet" href="style.css?v=24">
+    <link rel="stylesheet" href="style.css?v=25">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700&display=swap"
@@ -101,8 +101,7 @@
                 <p class="lead" data-i18n="hero-desc">The intelligent link dispatcher for macOS. Automatically open
                     links in the right browser or profile based on powerful, custom rules.</p>
                 <div class="hero-btns">
-                    <a href="https://github.com/KhalilHsu/browserSwitch" class="btn btn-primary"
-                        data-i18n="hero-cta">Star on GitHub</a>
+                    <a href="#try-beta" class="btn btn-primary" data-i18n="hero-cta">Try Now</a>
                     <span class="version-tag" data-i18n="hero-tag">Open Source · Beta · macOS 12+ · Local only</span>
                 </div>
             </div>
@@ -163,7 +162,7 @@
             </div>
         </section>
 
-        <section class="cta-banner container">
+        <section id="try-beta" class="cta-banner container">
             <div class="cta-inner">
                 <h2 data-i18n="cta-title">Try BrowserRouter Beta</h2>
                 <p data-i18n="cta-desc">BrowserRouter is currently in beta. You can install it directly from the source
@@ -183,8 +182,8 @@ chmod +x scripts/install.sh && \
                 </div>
                 <p class="install-hint" data-i18n="install1-desc">Requires local Swift build tools and installs the app
                     into /Applications.</p>
-                <a href="https://github.com/KhalilHsu/browserSwitch" class="btn btn-secondary" style="margin-top: 1rem;"
-                    data-i18n="cta-btn">View on GitHub</a>
+                <button type="button" id="copy-terminal-btn" class="btn btn-secondary" style="margin-top: 1rem;"
+                    data-i18n="cta-btn">Copy and run in Terminal</button>
             </div>
         </section>
     </main>
@@ -198,7 +197,7 @@ chmod +x scripts/install.sh && \
         </div>
     </footer>
 
-    <script src="script.js?v=24"></script>
+    <script src="script.js?v=30"></script>
 </body>
 
 </html>

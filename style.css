@@ -143,6 +143,11 @@ nav {
     display: inline-block;
 }
 
+button.btn {
+    cursor: pointer;
+    font: inherit;
+}
+
 .btn-primary {
     background: var(--accent-gradient);
     color: white;
