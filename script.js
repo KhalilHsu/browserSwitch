@@ -38,7 +38,26 @@ const translations = {
         "install2-desc": "Rules and browser preferences stay in Application Support on your Mac.",
         "install3-title": "No telemetry",
         "install3-desc": "BrowserRouter does not upload URLs or collect browsing history.",
-        "footer-text": "&copy; " + new Date().getFullYear() + " BrowserRouter. Crafted with ❤️ for macOS."
+        "footer-text": "&copy; " + new Date().getFullYear() + " BrowserRouter. Crafted with ❤️ for macOS.",
+        "nav-home": "Home",
+        "nav-changelog": "Changelog",
+        "releases-title": "Releases",
+        "changelog-hero-title": "Release Notes",
+        "changelog-hero-desc": "The journey of BrowserRouter — from the first commit to the latest features.",
+        "badge-latest": "Latest",
+        "v120-title": "Experience & Precision",
+        "v120-f1": "<b>Source App Routing:</b> Route links based on the application that triggered them.",
+        "v120-f2": "<b>Browser Management:</b> Reorder or hide browser profiles in the chooser.",
+        "v120-f3": "<b>Auto-Restore:</b> Automatically switch back to your system browser on quit.",
+        "v120-f4": "<b>UI Polish:</b> Refined onboarding flow and settings layout.",
+        "v110-title": "Architecture & Stability",
+        "v110-f1": "Modularized code structure for better long-term maintainability.",
+        "v110-f2": "Migrated testing suite to XCTest for robust quality assurance.",
+        "v110-f3": "Improved shortcut detection reliability across different keyboard layouts.",
+        "v100-title": "The Beginning",
+        "v100-f1": "Initial release of the native macOS link router.",
+        "v100-f2": "Core browser and profile discovery for Chrome, Firefox, Edge, and more.",
+        "v100-f3": "Keyboard-triggered chooser for manual link routing."
     },
     cn: {
         "nav-features": "功能",
@@ -79,7 +98,26 @@ const translations = {
         "install2-desc": "规则和浏览器偏好会保存在这台 Mac 的 Application Support 中。",
         "install3-title": "无遥测",
         "install3-desc": "BrowserRouter 不上传 URL，也不收集浏览历史。",
-        "footer-text": "&copy; " + new Date().getFullYear() + " BrowserRouter. 为 macOS 用心打造 ❤️"
+        "footer-text": "&copy; " + new Date().getFullYear() + " BrowserRouter. 为 macOS 用心打造 ❤️",
+        "nav-home": "首页",
+        "nav-changelog": "更新日志",
+        "releases-title": "所有版本",
+        "changelog-hero-title": "更新日志",
+        "changelog-hero-desc": "BrowserRouter 的进化之路 — 从第一次 Commit 到最新的核心特性。",
+        "badge-latest": "最新",
+        "v120-title": "体验与精细化管理",
+        "v120-f1": "<b>来源 App 路由:</b> 根据发起链接的应用进行分发（如 Slack 链接走 Chrome）。",
+        "v120-f2": "<b>浏览器管理:</b> 在选择器中隐藏或重新排序不同的浏览器配置文件。",
+        "v120-f3": "<b>自动恢复:</b> 退出应用时自动切回之前的系统默认浏览器。",
+        "v120-f4": "<b>UI 细节:</b> 全新设计的初次运行引导与设置页布局。",
+        "v110-title": "架构与稳定性",
+        "v110-f1": "模块化重构代码，为后续功能迭代打下坚实基础。",
+        "v110-f2": "全面迁移至 XCTest 测试框架，核心逻辑 100% 覆盖。",
+        "v110-f3": "优化了快捷键监听机制，在不同键盘布局下更加稳定。",
+        "v100-title": "项目启动",
+        "v100-f1": "BrowserRouter 首个原生 macOS 版本发布。",
+        "v100-f2": "核心浏览器嗅探功能，支持 Chrome, Firefox, Edge 等多 Profile 识别。",
+        "v100-f3": "支持通过快捷键呼出原生菜单选择器。"
     }
 };
 
@@ -122,8 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-    // Determine initial theme: localStorage first, then system preference
-    let currentTheme = localStorage.getItem('theme') || (systemPrefersDark.matches ? 'dark' : 'light');
+    // Determine initial theme: now handled by blocking script in head
+    // but we need to update icons and currentTheme variable here
+    let currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
 
     const updateTheme = (theme, saveToStorage = true) => {
         document.documentElement.setAttribute('data-theme', theme);
@@ -139,8 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Initialize theme without forcing it into localStorage if it was auto-detected
-    updateTheme(currentTheme, !!localStorage.getItem('theme'));
+    // Initialize icon states
+    updateTheme(currentTheme, false);
 
     themeToggleBtn.addEventListener('click', () => {
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
