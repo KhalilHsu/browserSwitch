@@ -11,6 +11,26 @@ extension SettingsWindowController {
         return 0
     }
 
+    /// Wraps a subview in a container that vertically (and optionally horizontally) centers it within the table cell.
+    private func centeredCellView(_ subview: NSView, centerHorizontally: Bool = false) -> NSView {
+        subview.translatesAutoresizingMaskIntoConstraints = false
+        let container = NSView()
+        container.addSubview(subview)
+        var constraints = [
+            subview.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            subview.topAnchor.constraint(greaterThanOrEqualTo: container.topAnchor, constant: 2),
+            subview.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -2)
+        ]
+        if centerHorizontally {
+            constraints.append(subview.centerXAnchor.constraint(equalTo: container.centerXAnchor))
+        } else {
+            constraints.append(subview.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 2))
+            constraints.append(subview.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -2))
+        }
+        NSLayoutConstraint.activate(constraints)
+        return container
+    }
+
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         if tableView === browsersTableView {
             guard row < configuration.browserOptions.count else {
@@ -24,17 +44,15 @@ extension SettingsWindowController {
                 let checkbox = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleBrowserVisibility(_:)))
                 checkbox.state = option.isHidden ? .off : .on
                 checkbox.tag = row
-                checkbox.translatesAutoresizingMaskIntoConstraints = false
-                return checkbox
+                return centeredCellView(checkbox, centerHorizontally: true)
             }
 
             if identifier == "name" {
-                let text = "\(option.name)\n\(option.bundleIdentifier)"
-                let cell = NSTextField(labelWithString: text)
-                cell.lineBreakMode = .byWordWrapping
-                cell.maximumNumberOfLines = 2
+                let cell = NSTextField(labelWithString: option.name)
+                cell.lineBreakMode = .byTruncatingTail
+                cell.maximumNumberOfLines = 1
                 cell.textColor = option.isHidden ? .tertiaryLabelColor : .labelColor
-                return cell
+                return centeredCellView(cell)
             }
             return nil
         }
@@ -50,8 +68,7 @@ extension SettingsWindowController {
             let checkbox = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleRuleEnabled(_:)))
             checkbox.state = rule.isEnabled ? .on : .off
             checkbox.tag = row
-            checkbox.translatesAutoresizingMaskIntoConstraints = false
-            return checkbox
+            return centeredCellView(checkbox, centerHorizontally: true)
         }
 
         let text: String
@@ -73,10 +90,10 @@ extension SettingsWindowController {
         }
 
         let cell = NSTextField(labelWithString: text)
-        cell.lineBreakMode = .byWordWrapping
-        cell.maximumNumberOfLines = 2
+        cell.lineBreakMode = .byTruncatingTail
+        cell.maximumNumberOfLines = 1
         cell.textColor = rule.isEnabled ? .labelColor : .tertiaryLabelColor
-        return cell
+        return centeredCellView(cell)
     }
 
     @objc func selectRule() {
