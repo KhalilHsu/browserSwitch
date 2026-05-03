@@ -1,0 +1,25 @@
+{
+  "": {
+    "dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserRouterTests.d",
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserRouterTests.o",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/primary.swiftdeps"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterTests/AppDelegateTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/AppDelegateTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/AppDelegateTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/AppDelegateTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/AppDelegateTests.dia"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterTests/BrowserInventoryTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserInventoryTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserInventoryTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserInventoryTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/BrowserInventoryTests.dia"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterTests/KeyStateMonitorTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/KeyStateMonitorTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/KeyStateMonitorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/KeyStateMonitorTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterTests.build/KeyStateMonitorTests.dia"
+  }
+}

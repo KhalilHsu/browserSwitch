@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Changelog - BrowserRouter</title>
+    <meta name="description" content="Release notes and version history for BrowserRouter.">
+    <link rel="icon" type="image/png" href="assets/app-icon.png">
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = savedTheme || (systemPrefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+    <link rel="stylesheet" href="style.css?v=25">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@500;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body class="sub-page">
+    <header>
+        <nav class="container">
+            <div class="logo">
+                <img src="assets/app-icon.png" alt="BrowserRouter Icon" class="logo-img">
+                <span class="logo-text">BrowserRouter</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" data-i18n="nav-home">Home</a>
+                <button id="theme-toggle" class="control-btn" title="Toggle Theme">
+                    <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" style="display: none;">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+                <button id="lang-toggle" class="control-btn lang-btn" title="Toggle Language">中</button>
+                <a href="https://github.com/KhalilHsu/browserSwitch" class="btn btn-secondary">GitHub</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="changelog-hero container">
+            <h1 class="section-title" style="text-align: left; margin-bottom: 1rem;">
+                <span data-i18n="changelog-hero-title">Release Notes</span>
+            </h1>
+            <p class="lead" data-i18n="changelog-hero-desc">The journey of BrowserRouter — from the first commit to the latest features.</p>
+        </section>
+
+        <section class="changelog-layout container">
+            <aside class="changelog-sidebar">
+                <div class="sidebar-title" data-i18n="releases-title">RELEASES</div>
+                <nav class="sidebar-nav">
+                    <a href="#v1-2-0" class="sidebar-link">v1.2.0</a>
+                    <a href="#v1-1-0" class="sidebar-link">v1.1.0</a>
+                    <a href="#v1-0-0" class="sidebar-link">v1.0.0</a>
+                </nav>
+            </aside>
+
+            <div class="timeline">
+                <!-- v1.2.0 -->
+                <div id="v1-2-0" class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="version-header">
+                            <span class="version-number">v1.2.0</span>
+                            <span class="version-date">2026-04-27</span>
+                            <span class="badge-latest" data-i18n="badge-latest">Latest</span>
+                        </div>
+                        <h3 data-i18n="v120-title">Experience & Precision</h3>
+                        <ul class="change-list">
+                            <li data-i18n="v120-f1"><b>Source App Routing:</b> Route links based on the application that triggered them.</li>
+                            <li data-i18n="v120-f2"><b>Browser Management:</b> Reorder or hide browser profiles in the chooser.</li>
+                            <li data-i18n="v120-f3"><b>Auto-Restore:</b> Automatically switch back to your system browser on quit.</li>
+                            <li data-i18n="v120-f4"><b>UI Polish:</b> Refined onboarding and settings window layout.</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- v1.1.0 -->
+                <div id="v1-1-0" class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="version-header">
+                            <span class="version-number">v1.1.0</span>
+                            <span class="version-date">2026-04-22</span>
+                        </div>
+                        <h3 data-i18n="v110-title">Architecture & Stability</h3>
+                        <ul class="change-list">
+                            <li data-i18n="v110-f1">Modularized code structure for better long-term maintainability.</li>
+                            <li data-i18n="v110-f2">Migrated testing suite to XCTest for robust quality assurance.</li>
+                            <li data-i18n="v110-f3">Improved shortcut detection reliability across different keyboard layouts.</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- v1.0.0 -->
+                <div id="v1-0-0" class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="version-header">
+                            <span class="version-number">v1.0.0</span>
+                            <span class="version-date">2026-04-17</span>
+                        </div>
+                        <h3 data-i18n="v100-title">The Beginning</h3>
+                        <ul class="change-list">
+                            <li data-i18n="v100-f1">Initial release of the native macOS link router.</li>
+                            <li data-i18n="v100-f2">Core browser and profile discovery for Chrome, Firefox, Edge, and more.</li>
+                            <li data-i18n="v100-f3">Keyboard-triggered chooser for manual link routing.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <p data-i18n="footer-text">&copy; 2026 BrowserRouter. Crafted with ❤️ for macOS.</p>
+            <div class="social-links">
+                <a href="https://github.com/KhalilHsu/browserSwitch">GitHub</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=30"></script>
+</body>
+
+</html>

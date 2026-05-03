@@ -1,0 +1,9 @@
+[0/1] Planning build
+Building for production...
+[0/4] Write sources
+[2/4] Write swift-version--1AB21518FC5DEDBE.txt
+[4/5] Compiling BrowserRouterCore BrowserModels.swift
+[5/6] Compiling BrowserRouter AppDelegate.swift
+[5/7] Write Objects.LinkFileList
+[6/7] Linking BrowserRouter
+Build of product 'BrowserRouter' complete! (6.45s)

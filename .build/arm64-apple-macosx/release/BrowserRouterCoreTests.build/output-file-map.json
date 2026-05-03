@@ -1,0 +1,31 @@
+{
+  "": {
+    "dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/BrowserRouterCoreTests.d",
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/BrowserRouterCoreTests.o",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/primary.swiftdeps"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterCoreTests/RouteResolverTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouteResolverTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouteResolverTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouteResolverTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouteResolverTests.dia"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterCoreTests/RouterConfigurationTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouterConfigurationTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouterConfigurationTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouterConfigurationTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RouterConfigurationTests.dia"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterCoreTests/RuleMatcherTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RuleMatcherTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RuleMatcherTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RuleMatcherTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/RuleMatcherTests.dia"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/Tests/BrowserRouterCoreTests/URLLogSummaryTests.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/URLLogSummaryTests.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/URLLogSummaryTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/URLLogSummaryTests.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterCoreTests.build/URLLogSummaryTests.dia"
+  }
+}

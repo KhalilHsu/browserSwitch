@@ -1,0 +1,13 @@
+{
+  "": {
+    "dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/BrowserRouterPackageTests.d",
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/BrowserRouterPackageTests.o",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/primary.swiftdeps"
+  },
+  "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.derived/runner.swift": {
+    "object": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/khalil/Desktop/macOS 浏览器插件/.build/arm64-apple-macosx/release/BrowserRouterPackageTests.build/runner.dia"
+  }
+}
