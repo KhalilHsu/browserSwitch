@@ -43,6 +43,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         keyMonitor.start()
         installMainMenu()
+        NSApp.servicesProvider = self
+        NSUpdateDynamicServices()
         defaultBrowserManager = try? DefaultBrowserManager()
         configuration = cleanupGhostBrowsersIfNeeded()
         
@@ -251,6 +253,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             keyEquivalent: ","
         ))
         menu.addItem(.separator())
+        menu.addItem(clipboardMenuItem())
+        menu.addItem(.separator())
 
         let manager = currentDefaultBrowserManager()
         menu.addItem(statusHeaderItem("Routing"))
@@ -287,6 +291,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             removeStatusItem()
         }
+    }
+
+    @objc(openSelectedURL:userData:error:)
+    func openSelectedURL(
+        _ pasteboard: NSPasteboard,
+        userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString?>
+    ) {
+        guard let url = firstWebURL(from: pasteboard) else {
+            error.pointee = "BrowserRouter could not find an http or https URL in the selected text." as NSString
+            return
+        }
+
+        showChooser(for: url)
     }
 
     private func showSettingsIfPresentationHidden() {
@@ -498,6 +516,85 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         )
         chooserWindowController = controller
         controller.showNearMouse()
+    }
+
+    private func clipboardMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Open Clipboard URL", action: nil, keyEquivalent: "")
+        item.image = menuIcon(named: "doc.on.clipboard")
+
+        guard let url = firstWebURL(from: .general) else {
+            item.isEnabled = false
+            return item
+        }
+
+        item.submenu = browserOptionsSubmenu(for: url, title: "Open Clipboard URL")
+        return item
+    }
+
+    private func browserOptionsSubmenu(for url: URL, title: String) -> NSMenu {
+        let submenu = NSMenu(title: title)
+        submenu.autoenablesItems = false
+
+        let options = availableBrowserOptions().filter { !$0.isHidden }
+        guard !options.isEmpty else {
+            let emptyItem = NSMenuItem(title: "No Available Browsers", action: nil, keyEquivalent: "")
+            emptyItem.isEnabled = false
+            submenu.addItem(emptyItem)
+            return submenu
+        }
+
+        if let host = url.host, !host.isEmpty {
+            let hostItem = statusLineItem(title: host)
+            submenu.addItem(hostItem)
+            submenu.addItem(.separator())
+        }
+
+        for (index, option) in options.enumerated() {
+            let item = NSMenuItem(
+                title: option.name,
+                action: #selector(openURLFromMenu(_:)),
+                keyEquivalent: index < 9 ? "\(index + 1)" : ""
+            )
+            item.target = self
+            item.tag = index
+            item.keyEquivalentModifierMask = []
+            item.representedObject = url
+            item.state = option.id == configuration.defaultOptionID ? .on : .off
+            submenu.addItem(item)
+        }
+
+        return submenu
+    }
+
+    @objc private func openURLFromMenu(_ sender: NSMenuItem) {
+        guard let url = sender.representedObject as? URL else {
+            return
+        }
+
+        let options = availableBrowserOptions().filter { !$0.isHidden }
+        guard sender.tag >= 0, sender.tag < options.count else {
+            return
+        }
+
+        launcher.open(url, with: options[sender.tag])
+    }
+
+    private func firstWebURL(from pasteboard: NSPasteboard) -> URL? {
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL],
+           let url = urls.first(where: { ["http", "https"].contains($0.scheme?.lowercased() ?? "") }) {
+            return url
+        }
+
+        if let urlString = pasteboard.string(forType: .URL),
+           let url = URLTextExtractor.firstWebURL(in: urlString) {
+            return url
+        }
+
+        guard let string = pasteboard.string(forType: .string) else {
+            return nil
+        }
+
+        return URLTextExtractor.firstWebURL(in: string)
     }
 
     private func availableBrowserOptions() -> [BrowserOption] {

@@ -99,6 +99,33 @@
 			<string>Owner</string>
 		</dict>
 	</array>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Open with BrowserRouter</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>openSelectedURL</string>
+			<key>NSPortName</key>
+			<string>BrowserRouter</string>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSStringPboardType</string>
+				<string>public.utf8-plain-text</string>
+				<string>public.url</string>
+			</array>
+			<key>NSRequiredContext</key>
+			<dict>
+				<key>NSTextContent</key>
+				<string>URL</string>
+			</dict>
+			<key>NSRestricted</key>
+			<false/>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
