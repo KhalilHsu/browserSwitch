@@ -51,7 +51,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if configuration.hasCompletedOnboarding, configuration.autoRestoreDefaultBrowserOnQuit {
             if let manager = defaultBrowserManager, !manager.isRoutingToSelf() {
                 Task { @MainActor in
-                    try? await manager.setAsDefaultBrowser()
+                    try? await setAsDefaultBrowserAndCapturePreviousHandler(using: manager)
                 }
             }
         }
@@ -629,11 +629,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     return
                 }
 
-                let previousDefaultHandler = manager.currentExternalDefaultHandler()
-                try await manager.setAsDefaultBrowser()
-                if let previousDefaultHandler {
-                    adoptPreviousDefaultBrowser(previousDefaultHandler)
-                }
+                try await setAsDefaultBrowserAndCapturePreviousHandler(using: manager)
                 appDelegateLogger.info("BrowserRouter default handler set successfully:\n\(manager.statusSummary(), privacy: .public)")
                 if showAlert {
                     showMessage(
@@ -812,6 +808,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             settingsWindowController?.reload(with: configuration)
         } catch {
             appDelegateLogger.error("BrowserRouter failed to persist previous default browser \(handler.bundleIdentifier, privacy: .public): \(String(describing: error), privacy: .public)")
+        }
+    }
+
+    @MainActor
+    private func setAsDefaultBrowserAndCapturePreviousHandler(using manager: DefaultBrowserManager) async throws {
+        let previousDefaultHandler = manager.currentExternalDefaultHandler()
+        try await manager.setAsDefaultBrowser()
+        if let previousDefaultHandler {
+            adoptPreviousDefaultBrowser(previousDefaultHandler)
         }
     }
 
