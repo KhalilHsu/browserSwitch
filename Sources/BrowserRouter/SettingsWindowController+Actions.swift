@@ -18,13 +18,13 @@ extension SettingsWindowController {
         let usedRuleOptionIDs = Set(configuration.routingRules.map(\.browserOptionID))
         for option in visibleBrowserOptions {
             if !option.isHidden || option.id == configuration.defaultOptionID {
-                let title = option.isHidden ? "\(option.name) (Hidden)" : option.name
+                let title = option.isHidden ? L("%@ (Hidden)", option.name) : option.name
                 defaultBrowserPopup.addItem(withTitle: title)
                 defaultBrowserPopup.lastItem?.representedObject = option.id
             }
             
             if !option.isHidden || usedRuleOptionIDs.contains(option.id) {
-                let title = option.isHidden ? "\(option.name) (Hidden)" : option.name
+                let title = option.isHidden ? L("%@ (Hidden)", option.name) : option.name
                 ruleBrowserPopup.addItem(withTitle: title)
                 ruleBrowserPopup.lastItem?.representedObject = option.id
             }
@@ -70,7 +70,7 @@ extension SettingsWindowController {
         configuration = ChromiumProfileScanner.mergeDetectedOptions(into: configuration)
         configuration = FirefoxProfileScanner.mergeDetectedOptions(into: configuration)
         reloadControls()
-        _ = persistConfiguration(statusMessage: "Profiles detected and saved")
+        _ = persistConfiguration(statusMessage: L("Profiles detected and saved"))
     }
 
     @objc func refreshBrowsers() {
@@ -80,7 +80,7 @@ extension SettingsWindowController {
         _ = persistConfiguration(statusMessage: result.statusMessage)
     }
 
-    func persistConfiguration(statusMessage: String = "Saved automatically") -> Bool {
+    func persistConfiguration(statusMessage: String = L("Saved automatically")) -> Bool {
         do {
             configuration.showsDockIcon = showDockIconCheckBox.state == .on
             configuration.showsStatusItem = showStatusItemCheckBox.state == .on
@@ -95,9 +95,9 @@ extension SettingsWindowController {
             autosaveStatusLabel.textColor = .secondaryLabelColor
             return true
         } catch {
-            autosaveStatusLabel.stringValue = "Autosave failed"
+            autosaveStatusLabel.stringValue = L("Autosave failed")
             autosaveStatusLabel.textColor = .systemRed
-            showMessage("Could Not Save", "\(error)")
+            showMessage(L("Could Not Save"), "\(error)")
             return false
         }
     }
@@ -105,8 +105,8 @@ extension SettingsWindowController {
     func updateSummaryLabels() {
         let unavailableCount = configuration.browserOptions.count - visibleBrowserOptions.count
         let browserText = unavailableCount == 0
-            ? "\(visibleBrowserOptions.count) browser/profile option(s) available"
-            : "\(visibleBrowserOptions.count) available, \(unavailableCount) unavailable"
+            ? L("%d browser/profile option(s) available", visibleBrowserOptions.count)
+            : L("%d available, %d unavailable", visibleBrowserOptions.count, unavailableCount)
         browserSummaryLabel.stringValue = browserText
 
         let unresolvedRuleCount = configuration.routingRules.filter { rule in
@@ -114,12 +114,12 @@ extension SettingsWindowController {
             !visibleBrowserOptions.contains(where: { $0.id == rule.browserOptionID })
         }.count
         let disabledRuleCount = configuration.routingRules.filter { !$0.isEnabled }.count
-        var ruleParts = ["\(configuration.routingRules.count) rule(s)"]
+        var ruleParts = [L("%d rule(s)", configuration.routingRules.count)]
         if disabledRuleCount > 0 {
-            ruleParts.append("\(disabledRuleCount) disabled")
+            ruleParts.append(L("%d disabled", disabledRuleCount))
         }
         if unresolvedRuleCount > 0 {
-            ruleParts.append("\(unresolvedRuleCount) need attention")
+            ruleParts.append(L("%d need attention", unresolvedRuleCount))
         }
         ruleSummaryLabel.stringValue = ruleParts.joined(separator: ", ")
         ruleSummaryLabel.textColor = unresolvedRuleCount == 0 ? .secondaryLabelColor : .systemOrange
@@ -141,28 +141,28 @@ extension SettingsWindowController {
 
     @objc func defaultBrowserChanged() {
         updateRuleTesterResult()
-        _ = persistConfiguration(statusMessage: "Default browser saved")
+        _ = persistConfiguration(statusMessage: L("Default browser saved"))
     }
 
     @objc func modifierChanged() {
         let isCustom = selectedRepresentedObject(modifierPopup) == ChooserModifier.custom.rawValue
         shortcutRecorderButton.isHidden = !isCustom
         updateRuleTesterResult()
-        _ = persistConfiguration(statusMessage: "Chooser modifier saved")
+        _ = persistConfiguration(statusMessage: L("Chooser modifier saved"))
     }
 
     func shortcutRecorded(_ shortcut: RecordedShortcut) {
         configuration.customChooserFlags = shortcut.flags.rawValue
         configuration.customChooserKeyCode = shortcut.keyCode
-        _ = persistConfiguration(statusMessage: "Custom shortcut saved – \(shortcut.displayString)")
+        _ = persistConfiguration(statusMessage: L("Custom shortcut saved - %@", shortcut.displayString))
     }
 
     @objc func presentationChanged() {
-        _ = persistConfiguration(statusMessage: "Appearance saved")
+        _ = persistConfiguration(statusMessage: L("Appearance saved"))
     }
 
     @objc func autoRestoreChanged() {
-        _ = persistConfiguration(statusMessage: "Auto-restore setting saved")
+        _ = persistConfiguration(statusMessage: L("Auto-restore setting saved"))
     }
 
     @objc func toggleBrowserVisibility(_ sender: NSButton) {
@@ -173,29 +173,29 @@ extension SettingsWindowController {
 
         configuration.browserOptions[row].isHidden = sender.state == .off
         browsersTableView.reloadData()
-        _ = persistConfiguration(statusMessage: configuration.browserOptions[row].isHidden ? "Browser hidden" : "Browser unhidden")
+        _ = persistConfiguration(statusMessage: configuration.browserOptions[row].isHidden ? L("Browser hidden") : L("Browser unhidden"))
         reloadControls()
     }
 
     @objc func ruleBrowserChanged() {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
     }
 
     @objc func ruleSourceAppChanged() {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
     }
 
     @objc func ruleMatchTypeChanged() {
         updateRuleMatchPlaceholder()
-        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
     }
 
     func populateSourceAppPopup() {
         let previousSelection = selectedRepresentedObject(ruleSourceAppPopup)
         ruleSourceAppPopup.removeAllItems()
 
-        // "Any App" means no source app filter
-        ruleSourceAppPopup.addItem(withTitle: "Any App")
+        // Empty represented object means no source app filter.
+        ruleSourceAppPopup.addItem(withTitle: L("Any App"))
         ruleSourceAppPopup.lastItem?.representedObject = "" as String
 
         // Collect bundle IDs already used in rules (to always show them)
@@ -220,7 +220,7 @@ extension SettingsWindowController {
         // Add any rule-referenced apps that aren't currently running
         for bundleID in usedSourceApps where !seenBundleIDs.contains(bundleID) {
             seenBundleIDs.insert(bundleID)
-            ruleSourceAppPopup.addItem(withTitle: "\(bundleID) (Not Running)")
+            ruleSourceAppPopup.addItem(withTitle: L("%@ (Not Running)", bundleID))
             ruleSourceAppPopup.lastItem?.representedObject = bundleID as String
         }
 
@@ -234,7 +234,7 @@ extension SettingsWindowController {
         let alert = NSAlert()
         alert.messageText = title
         alert.informativeText = message
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("OK"))
         guard let window else {
             alert.runModal()
             return

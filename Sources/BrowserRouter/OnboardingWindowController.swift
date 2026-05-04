@@ -49,7 +49,7 @@ final class OnboardingWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Set Up BrowserRouter"
+        window.title = L("Set Up BrowserRouter")
         window.isReleasedWhenClosed = false
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .visible
@@ -208,50 +208,50 @@ final class OnboardingWindowController: NSWindowController {
 
         switch step {
         case .takeover:
-            stepLabel.stringValue = "Step 1 of 4"
-            titleLabel.stringValue = "Make BrowserRouter default"
-            bodyLabel.stringValue = "Set BrowserRouter as the macOS default so it can route links to the browser or profile you choose."
+            stepLabel.stringValue = L("Step 1 of 4")
+            titleLabel.stringValue = L("Make BrowserRouter default")
+            bodyLabel.stringValue = L("Set BrowserRouter as the macOS default so it can route links to the browser or profile you choose.")
             defaultBrowserPopup.isHidden = true
             modifierPopup.isHidden = true
             statusLabel.isHidden = statusLabel.stringValue.isEmpty
-            primaryButton.title = "Set as Default"
+            primaryButton.title = L("Set as Default")
             primaryButton.action = #selector(requestSetAsDefaultBrowser)
             primaryButton.isEnabled = true
         case .chooseDefault:
-            stepLabel.stringValue = "Step 2 of 4"
-            titleLabel.stringValue = "Choose your default route"
-            bodyLabel.stringValue = "When no rule matches, links open here."
+            stepLabel.stringValue = L("Step 2 of 4")
+            titleLabel.stringValue = L("Choose your default route")
+            bodyLabel.stringValue = L("When no rule matches, links open here.")
             defaultBrowserPopup.isHidden = false
             modifierPopup.isHidden = true
             statusLabel.isHidden = false
-            primaryButton.title = "Continue"
+            primaryButton.title = L("Continue")
             primaryButton.action = #selector(continueToModifier)
             primaryButton.isEnabled = !visibleBrowserOptions.isEmpty
             statusLabel.stringValue = visibleBrowserOptions.isEmpty
-                ? "No installed browsers were detected from the current configuration."
-                : "Default route: \(defaultBrowserPopup.titleOfSelectedItem ?? "Choose a browser")"
+                ? L("No installed browsers were detected from the current configuration.")
+                : L("Default route: %@", defaultBrowserPopup.titleOfSelectedItem ?? L("Choose a browser"))
         case .chooseModifier:
-            stepLabel.stringValue = "Step 3 of 4"
-            titleLabel.stringValue = "Choose your chooser shortcut"
-            bodyLabel.stringValue = "Hold this shortcut while opening a link to pick a browser/profile instead of using the default route."
+            stepLabel.stringValue = L("Step 3 of 4")
+            titleLabel.stringValue = L("Choose your chooser shortcut")
+            bodyLabel.stringValue = L("Hold this shortcut while opening a link to pick a browser/profile instead of using the default route.")
             defaultBrowserPopup.isHidden = true
             modifierPopup.isHidden = false
             statusLabel.isHidden = false
-            primaryButton.title = "Continue"
+            primaryButton.title = L("Continue")
             primaryButton.action = #selector(continueToFinish)
             primaryButton.isEnabled = true
-            statusLabel.stringValue = "Shortcut: \(modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)"
+            statusLabel.stringValue = L("Shortcut: %@", modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)
         case .finish:
-            stepLabel.stringValue = "Step 4 of 4"
-            titleLabel.stringValue = "You're ready to route links"
-            bodyLabel.stringValue = "Use Settings later to add site rules, refresh browser profiles, or change menu bar options."
+            stepLabel.stringValue = L("Step 4 of 4")
+            titleLabel.stringValue = L("You're ready to route links")
+            bodyLabel.stringValue = L("Use Settings later to add site rules, refresh browser profiles, or change menu bar options.")
             defaultBrowserPopup.isHidden = true
             modifierPopup.isHidden = true
             statusLabel.isHidden = false
-            primaryButton.title = "Finish"
+            primaryButton.title = L("Finish")
             primaryButton.action = #selector(finishSetup)
             primaryButton.isEnabled = true
-            statusLabel.stringValue = "Rules live in Settings > Rules."
+            statusLabel.stringValue = L("Rules live in Settings > Rules.")
         }
         resizeWindowForCurrentStep()
     }
@@ -259,7 +259,7 @@ final class OnboardingWindowController: NSWindowController {
     @objc private func requestSetAsDefaultBrowser() {
         primaryButton.isEnabled = false
         statusLabel.isHidden = false
-        statusLabel.stringValue = "Waiting for macOS to update the default browser..."
+        statusLabel.stringValue = L("Waiting for macOS to update the default browser...")
 
         onRequestSetAsDefaultBrowser { [weak self] success, configuration in
             guard let self else {
@@ -273,7 +273,7 @@ final class OnboardingWindowController: NSWindowController {
                 self.statusLabel.isHidden = true
             } else {
                 self.statusLabel.isHidden = false
-                self.statusLabel.stringValue = "BrowserRouter was not set as the default browser. Try again from this step."
+                self.statusLabel.stringValue = L("BrowserRouter was not set as the default browser. Try again from this step.")
             }
             self.reloadControls()
         }
@@ -282,7 +282,7 @@ final class OnboardingWindowController: NSWindowController {
     @objc private func continueToModifier() {
         guard let selectedID = selectedRepresentedObject(defaultBrowserPopup) else {
             statusLabel.isHidden = false
-            statusLabel.stringValue = "Choose a browser/profile before continuing."
+            statusLabel.stringValue = L("Choose a browser/profile before continuing.")
             return
         }
 
@@ -311,20 +311,20 @@ final class OnboardingWindowController: NSWindowController {
             close()
         } catch {
             statusLabel.isHidden = false
-            statusLabel.stringValue = "Could not save setup: \(error.localizedDescription)"
+            statusLabel.stringValue = L("Could not save setup: %@", error.localizedDescription)
         }
     }
 
     @objc private func defaultBrowserChanged() {
         statusLabel.isHidden = false
-        statusLabel.stringValue = "Default route: \(defaultBrowserPopup.titleOfSelectedItem ?? "Choose a browser")"
+        statusLabel.stringValue = L("Default route: %@", defaultBrowserPopup.titleOfSelectedItem ?? L("Choose a browser"))
     }
 
     @objc private func modifierChanged() {
         configuration.chooserModifier = selectedRepresentedObject(modifierPopup)
             ?? ChooserModifier.commandShift.rawValue
         statusLabel.isHidden = false
-        statusLabel.stringValue = "Shortcut: \(modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)"
+        statusLabel.stringValue = L("Shortcut: %@", modifierPopup.titleOfSelectedItem ?? ChooserModifier.commandShift.title)
     }
 
     private func selectedRepresentedObject(_ popup: NSPopUpButton) -> String? {

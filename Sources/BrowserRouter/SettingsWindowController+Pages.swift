@@ -10,7 +10,7 @@ extension SettingsWindowController {
         stack.translatesAutoresizingMaskIntoConstraints = false
         basicPageContentStack = stack
 
-        // Build the "Show chooser when" row manually so we can append the recorder button.
+        // Build the chooser row manually so we can append the recorder button.
         let chooserControlRow = NSStackView(views: [modifierPopup, shortcutRecorderButton])
         chooserControlRow.orientation = .horizontal
         chooserControlRow.alignment = .centerY
@@ -44,7 +44,7 @@ extension SettingsWindowController {
     }
 
     func buildAppearancePage() {
-        let introLabel = NSTextField(labelWithString: "Keep BrowserRouter light or show it in more places.")
+        let introLabel = NSTextField(labelWithString: L("Keep BrowserRouter light or show it in more places."))
         introLabel.font = .systemFont(ofSize: 13)
         introLabel.textColor = .secondaryLabelColor
         introLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -55,7 +55,7 @@ extension SettingsWindowController {
         togglesStack.spacing = 24
         togglesStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let noteLabel = NSTextField(labelWithString: "Skin options can grow here later without touching routing or rules.")
+        let noteLabel = NSTextField(labelWithString: L("Skin options can grow here later without touching routing or rules."))
         noteLabel.font = .systemFont(ofSize: 12)
         noteLabel.textColor = .secondaryLabelColor
         noteLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -77,7 +77,7 @@ extension SettingsWindowController {
     }
 
     func buildRulesPage(rulesScrollView: NSScrollView, ruleButtonStack: NSStackView) {
-        let headerLabel = NSTextField(labelWithString: "Rules decide where a link goes before it opens.")
+        let headerLabel = NSTextField(labelWithString: L("Rules decide where a link goes before it opens."))
         headerLabel.font = .systemFont(ofSize: 13)
         headerLabel.textColor = .secondaryLabelColor
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -88,22 +88,22 @@ extension SettingsWindowController {
         rulesHeaderStack.spacing = 12
         rulesHeaderStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let ruleNameLabel = NSTextField(labelWithString: "Rule name")
+        let ruleNameLabel = NSTextField(labelWithString: L("Rule name"))
         ruleNameLabel.font = .systemFont(ofSize: 12)
         ruleNameLabel.textColor = .secondaryLabelColor
         ruleNameLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let matchLabel = NSTextField(labelWithString: "Match")
+        let matchLabel = NSTextField(labelWithString: L("Match"))
         matchLabel.font = .systemFont(ofSize: 12)
         matchLabel.textColor = .secondaryLabelColor
         matchLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let browserLabel = NSTextField(labelWithString: "Browser/Profile")
+        let browserLabel = NSTextField(labelWithString: L("Browser/Profile"))
         browserLabel.font = .systemFont(ofSize: 12)
         browserLabel.textColor = .secondaryLabelColor
         browserLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let testerTitle = NSTextField(labelWithString: "Rule tester")
+        let testerTitle = NSTextField(labelWithString: L("Rule tester"))
         testerTitle.font = .systemFont(ofSize: 13, weight: .medium)
         testerTitle.translatesAutoresizingMaskIntoConstraints = false
 
@@ -125,7 +125,7 @@ extension SettingsWindowController {
         compactBrowserRow.spacing = 12
         compactBrowserRow.translatesAutoresizingMaskIntoConstraints = false
 
-        let sourceAppLabel = NSTextField(labelWithString: "Source App")
+        let sourceAppLabel = NSTextField(labelWithString: L("Source App"))
         sourceAppLabel.font = .systemFont(ofSize: 12)
         sourceAppLabel.textColor = .secondaryLabelColor
         sourceAppLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -207,15 +207,15 @@ extension SettingsWindowController {
         revealButton: NSButton,
         restoreButton: NSButton
     ) {
-        let inventoryTitle = NSTextField(labelWithString: "Browser inventory")
+        let inventoryTitle = NSTextField(labelWithString: L("Browser inventory"))
         inventoryTitle.font = .systemFont(ofSize: 15, weight: .semibold)
         inventoryTitle.translatesAutoresizingMaskIntoConstraints = false
 
-        let defaultBrowserTitle = NSTextField(labelWithString: "Default browser")
+        let defaultBrowserTitle = NSTextField(labelWithString: L("Default browser"))
         defaultBrowserTitle.font = .systemFont(ofSize: 15, weight: .semibold)
         defaultBrowserTitle.translatesAutoresizingMaskIntoConstraints = false
 
-        let defaultBrowserHint = NSTextField(labelWithString: "Restore the browser that handled http and https links before BrowserRouter setup.")
+        let defaultBrowserHint = NSTextField(labelWithString: L("Restore the browser that handled http and https links before BrowserRouter setup."))
         defaultBrowserHint.font = .systemFont(ofSize: 12)
         defaultBrowserHint.textColor = .secondaryLabelColor
         defaultBrowserHint.lineBreakMode = .byWordWrapping
@@ -224,7 +224,7 @@ extension SettingsWindowController {
         defaultBrowserHint.translatesAutoresizingMaskIntoConstraints = false
         defaultBrowserHint.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let configTitle = NSTextField(labelWithString: "Config file")
+        let configTitle = NSTextField(labelWithString: L("Config file"))
         configTitle.font = .systemFont(ofSize: 15, weight: .semibold)
         configTitle.translatesAutoresizingMaskIntoConstraints = false
 

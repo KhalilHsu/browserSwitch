@@ -54,14 +54,14 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
     }
 
     private func buildMenu() -> NSMenu {
-        let menu = NSMenu(title: "Open Link")
+        let menu = NSMenu(title: L("Open Link"))
         menu.delegate = self
         menu.autoenablesItems = false
 
-        let header = NSMenuItem(title: "Open this link with", action: nil, keyEquivalent: "")
+        let header = NSMenuItem(title: L("Open this link with"), action: nil, keyEquivalent: "")
         header.isEnabled = false
         header.attributedTitle = NSAttributedString(
-            string: "Open this link with",
+            string: L("Open this link with"),
             attributes: [
                 .font: NSFont.menuFont(ofSize: 13),
                 .foregroundColor: NSColor.secondaryLabelColor
@@ -87,7 +87,7 @@ final class BrowserChooserWindowController: NSWindowController, NSWindowDelegate
         menu.addItem(.separator())
 
         let settingsItem = NSMenuItem(
-            title: "Settings...",
+            title: L("Settings..."),
             action: #selector(openSettings),
             keyEquivalent: ","
         )

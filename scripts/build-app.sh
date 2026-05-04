@@ -43,6 +43,9 @@ mkdir -p "${CONTENTS_DIR}/Resources"
 cp "${BINARY_PATH}" "${MACOS_DIR}/${APP_NAME}"
 cp "Info.plist" "${CONTENTS_DIR}/Info.plist"
 cp "${GENERATED_ICON}" "${CONTENTS_DIR}/Resources/BrowserRouter.icns"
+if [ -d "Resources" ]; then
+  cp -R Resources/. "${CONTENTS_DIR}/Resources/"
+fi
 
 codesign --force --deep --sign - "${APP_DIR}" >/dev/null
 echo "${APP_DIR}"

@@ -95,13 +95,13 @@ extension SettingsWindowController {
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
-        rulesTableView.tableColumns[0].title = "On"
+        rulesTableView.tableColumns[0].title = L("On")
         rulesTableView.tableColumns[0].width = rulesEnabledColumnWidth
-        rulesTableView.tableColumns[1].title = "Rule"
+        rulesTableView.tableColumns[1].title = L("Rule")
         rulesTableView.tableColumns[1].width = rulesNameColumnWidth
-        rulesTableView.tableColumns[2].title = "Match"
+        rulesTableView.tableColumns[2].title = L("Match")
         rulesTableView.tableColumns[2].width = rulesMatchColumnWidth
-        rulesTableView.tableColumns[3].title = "Browser/Profile"
+        rulesTableView.tableColumns[3].title = L("Browser/Profile")
         rulesTableView.tableColumns[3].width = rulesBrowserColumnWidth
         rulesTableView.delegate = self
         rulesTableView.dataSource = self
@@ -114,9 +114,9 @@ extension SettingsWindowController {
 
         browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visible")))
         browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
-        browsersTableView.tableColumns[0].title = "Vis"
+        browsersTableView.tableColumns[0].title = L("Vis")
         browsersTableView.tableColumns[0].width = rulesEnabledColumnWidth
-        browsersTableView.tableColumns[1].title = "Browser/Profile"
+        browsersTableView.tableColumns[1].title = L("Browser/Profile")
         browsersTableView.tableColumns[1].width = rulesNameColumnWidth + rulesMatchColumnWidth + rulesBrowserColumnWidth
         browsersTableView.delegate = self
         browsersTableView.dataSource = self
@@ -126,7 +126,7 @@ extension SettingsWindowController {
         browsersTableView.intercellSpacing = rulesTableIntercellSpacing
         browsersTableView.registerForDraggedTypes([NSPasteboard.PasteboardType("local.browser-router.browser-row")])
 
-        ruleNameField.placeholderString = "Rule name"
+        ruleNameField.placeholderString = L("Rule name")
         ruleNameField.translatesAutoresizingMaskIntoConstraints = false
         ruleNameField.delegate = self
         ruleMatchTypePopup.translatesAutoresizingMaskIntoConstraints = false
@@ -148,7 +148,7 @@ extension SettingsWindowController {
         ruleSourceAppPopup.target = self
         ruleSourceAppPopup.action = #selector(ruleSourceAppChanged)
 
-        ruleTesterURLField.placeholderString = "Paste a URL or domain, e.g. www.baidu.com"
+        ruleTesterURLField.placeholderString = L("Paste a URL or domain, e.g. www.baidu.com")
         ruleTesterURLField.translatesAutoresizingMaskIntoConstraints = false
         ruleTesterURLField.delegate = self
         ruleTesterResultLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
@@ -178,7 +178,7 @@ extension SettingsWindowController {
         aboutGitHubButton.bezelStyle = .rounded
         aboutGitHubButton.translatesAutoresizingMaskIntoConstraints = false
 
-        aboutWebsiteButton.title = "Releases"
+        aboutWebsiteButton.title = L("Releases")
         aboutWebsiteButton.target = self
         aboutWebsiteButton.action = #selector(openReleases)
         aboutWebsiteButton.bezelStyle = .rounded
@@ -205,31 +205,31 @@ extension SettingsWindowController {
         settingsTabViewController.tabViewItems.forEach { settingsTabViewController.removeTabViewItem($0) }
 
         addTab(
-            title: "Basic",
+            title: L("Basic"),
             symbolName: "gearshape",
             view: basicPageView,
             size: preferredContentSize(for: .basic)
         )
         addTab(
-            title: "Appearance",
+            title: L("Appearance"),
             symbolName: "paintbrush",
             view: appearancePageView,
             size: preferredContentSize(for: .appearance)
         )
         addTab(
-            title: "Rules",
+            title: L("Rules"),
             symbolName: "list.bullet.rectangle",
             view: rulesPageView,
             size: preferredContentSize(for: .rules)
         )
         addTab(
-            title: "Advanced",
+            title: L("Advanced"),
             symbolName: "slider.horizontal.3",
             view: advancedPageView,
             size: preferredContentSize(for: .advanced)
         )
         addTab(
-            title: "About",
+            title: L("About"),
             symbolName: "info.circle",
             view: aboutPageView,
             size: preferredContentSize(for: .about)
@@ -287,9 +287,9 @@ extension SettingsWindowController {
     }
 
     func makeRuleButtonStack() -> NSStackView {
-        let addRuleButton = makeButton("Add Rule", action: #selector(addRule))
-        let updateRuleButton = makeButton("Update Selected", action: #selector(updateSelectedRule))
-        let removeRuleButton = makeButton("Remove Selected", action: #selector(removeSelectedRule))
+        let addRuleButton = makeButton(L("Add Rule"), action: #selector(addRule))
+        let updateRuleButton = makeButton(L("Update Selected"), action: #selector(updateSelectedRule))
+        let removeRuleButton = makeButton(L("Remove Selected"), action: #selector(removeSelectedRule))
         addRuleButton.keyEquivalent = "\r"
         let ruleButtonStack = NSStackView(views: [addRuleButton, updateRuleButton, removeRuleButton])
         ruleButtonStack.orientation = .horizontal
@@ -299,7 +299,7 @@ extension SettingsWindowController {
     }
 
     func makeAdvancedHintLabel() -> NSTextField {
-        let label = NSTextField(labelWithString: "Use this page for browser inventory and the config file.")
+        let label = NSTextField(labelWithString: L("Use this page for browser inventory and the config file."))
         label.font = .systemFont(ofSize: advancedHintFontSize)
         label.textColor = .secondaryLabelColor
         label.translatesAutoresizingMaskIntoConstraints = false
@@ -307,23 +307,23 @@ extension SettingsWindowController {
     }
 
     func makeRefreshButton() -> NSButton {
-        makeButton("Refresh Browsers", action: #selector(refreshBrowsers))
+        makeButton(L("Refresh Browsers"), action: #selector(refreshBrowsers))
     }
 
     func makeDetectButton() -> NSButton {
-        makeButton("Detect Profiles", action: #selector(detectProfiles))
+        makeButton(L("Detect Profiles"), action: #selector(detectProfiles))
     }
 
     func makeRevealButton() -> NSButton {
-        makeButton("Open Config", action: #selector(revealConfigFile))
+        makeButton(L("Open Config"), action: #selector(revealConfigFile))
     }
 
     func makeRestoreDefaultBrowserButton() -> NSButton {
-        makeButton("Restore Previous Default Browser", action: #selector(restorePreviousDefaultBrowser))
+        makeButton(L("Restore Previous Default Browser"), action: #selector(restorePreviousDefaultBrowser))
     }
 
     func makeAboutVersionLabel() -> NSTextField {
-        let label = NSTextField(labelWithString: "Version")
+        let label = NSTextField(labelWithString: L("Version"))
         label.font = .systemFont(ofSize: aboutVersionLabelFontSize, weight: .medium)
         label.textColor = .secondaryLabelColor
         label.translatesAutoresizingMaskIntoConstraints = false

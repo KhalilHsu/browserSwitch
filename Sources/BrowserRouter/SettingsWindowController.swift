@@ -11,39 +11,39 @@ enum RuleMatchField: String, CaseIterable {
     var title: String {
         switch self {
         case .hostSuffix:
-            return "Domain Suffix"
+            return L("Domain Suffix")
         case .hostContains:
-            return "Domain Contains"
+            return L("Domain Contains")
         case .pathPrefix:
-            return "Path Starts With"
+            return L("Path Starts With")
         case .urlContains:
-            return "Full URL Contains"
+            return L("Full URL Contains")
         }
     }
 
     var placeholder: String {
         switch self {
         case .hostSuffix:
-            return "e.g. baidu.com"
+            return L("e.g. baidu.com")
         case .hostContains:
-            return "e.g. baidu"
+            return L("e.g. baidu")
         case .pathPrefix:
-            return "e.g. /docs"
+            return L("e.g. /docs")
         case .urlContains:
-            return "e.g. ref=work"
+            return L("e.g. ref=work")
         }
     }
 
     var helpText: String {
         switch self {
         case .hostSuffix:
-            return "Domain Suffix matches a domain and its subdomains, like baidu.com and www.baidu.com."
+            return L("Domain Suffix matches a domain and its subdomains, like baidu.com and www.baidu.com.")
         case .hostContains:
-            return "Domain Contains matches text inside the domain, like baidu in www.baidu.com."
+            return L("Domain Contains matches text inside the domain, like baidu in www.baidu.com.")
         case .pathPrefix:
-            return "Path Starts With matches only the path after the domain, like /docs in example.com/docs."
+            return L("Path Starts With matches only the path after the domain, like /docs in example.com/docs.")
         case .urlContains:
-            return "Full URL Contains matches text anywhere in the full URL."
+            return L("Full URL Contains matches text anywhere in the full URL.")
         }
     }
 
@@ -94,7 +94,7 @@ enum RuleMatchField: String, CaseIterable {
                 return nil
             }
 
-            return "\(field.title): \(value)"
+            return L("%@: %@", field.title, value)
         }.joined(separator: ", ")
     }
 }
@@ -161,15 +161,15 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         var title: String {
             switch self {
             case .basic:
-                return "Basic"
+                return L("Basic")
             case .appearance:
-                return "Appearance"
+                return L("Appearance")
             case .rules:
-                return "Rules"
+                return L("Rules")
             case .advanced:
-                return "Advanced"
+                return L("Advanced")
             case .about:
-                return "About"
+                return L("About")
             }
         }
 
@@ -189,11 +189,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
     }
 
-    let showDockIconCheckBox = NSButton(checkboxWithTitle: "Show Dock icon", target: nil, action: nil)
-    let showStatusItemCheckBox = NSButton(checkboxWithTitle: "Show menu bar icon", target: nil, action: nil)
-    let autoRestoreCheckBox = NSButton(checkboxWithTitle: "Auto-restore previous default browser on quit", target: nil, action: nil)
-    let defaultBrowserLabel = NSTextField(labelWithString: "Default browser/profile")
-    let chooserModifierLabel = NSTextField(labelWithString: "Show chooser when")
+    let showDockIconCheckBox = NSButton(checkboxWithTitle: L("Show Dock icon"), target: nil, action: nil)
+    let showStatusItemCheckBox = NSButton(checkboxWithTitle: L("Show menu bar icon"), target: nil, action: nil)
+    let autoRestoreCheckBox = NSButton(checkboxWithTitle: L("Auto-restore previous default browser on quit"), target: nil, action: nil)
+    let defaultBrowserLabel = NSTextField(labelWithString: L("Default browser/profile"))
+    let chooserModifierLabel = NSTextField(labelWithString: L("Show chooser when"))
     let defaultBrowserPopup = NSPopUpButton()
     let modifierPopup = NSPopUpButton()
     let shortcutRecorderButton = ShortcutRecorderButton()
@@ -206,11 +206,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let ruleSourceAppPopup = NSPopUpButton()
     let ruleTesterURLField = NSTextField()
     let ruleTesterResultLabel = NSTextField(labelWithString: "")
-    let autosaveStatusLabel = NSTextField(labelWithString: "Changes save automatically")
+    let autosaveStatusLabel = NSTextField(labelWithString: L("Changes save automatically"))
     let browserSummaryLabel = NSTextField(labelWithString: "")
     let ruleSummaryLabel = NSTextField(labelWithString: "")
-    let headerTitleLabel = NSTextField(labelWithString: "BrowserRouter")
-    let headerSubtitleLabel = NSTextField(labelWithString: "Route external links to the browser or profile that fits the moment.")
+    let headerTitleLabel = NSTextField(labelWithString: L("BrowserRouter"))
+    let headerSubtitleLabel = NSTextField(labelWithString: L("Route external links to the browser or profile that fits the moment."))
     let tabStripView = NSStackView()
     let rootStackView = NSStackView()
     let backgroundEffectView = NSVisualEffectView()
@@ -222,11 +222,11 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let rulesPageView = NSView()
     let advancedPageView = NSView()
     let aboutPageView = NSView()
-    let aboutLogoLabel = NSTextField(labelWithString: "BrowserRouter")
-    let aboutDescriptionLabel = NSTextField(labelWithString: "A local macOS link router for opening each URL in the right browser or profile.")
+    let aboutLogoLabel = NSTextField(labelWithString: L("BrowserRouter"))
+    let aboutDescriptionLabel = NSTextField(labelWithString: L("A local macOS link router for opening each URL in the right browser or profile."))
     let aboutVersionLabel = NSTextField(labelWithString: "")
-    let aboutGitHubButton = NSButton(title: "GitHub", target: nil, action: nil)
-    let aboutWebsiteButton = NSButton(title: "Project", target: nil, action: nil)
+    let aboutGitHubButton = NSButton(title: L("GitHub"), target: nil, action: nil)
+    let aboutWebsiteButton = NSButton(title: L("Project"), target: nil, action: nil)
     let settingsTabViewController = SettingsTabViewController()
     var configuration: RouterConfiguration
     var visibleBrowserOptions: [BrowserOption] = []

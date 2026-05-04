@@ -25,15 +25,15 @@ struct BrowserRefreshResult {
     var statusMessage: String {
         var parts: [String] = []
         if !addedOptionNames.isEmpty {
-            parts.append("added \(addedOptionNames.count)")
+            parts.append(L("added %d", addedOptionNames.count))
         }
         if !removedUnavailableOptionNames.isEmpty {
-            parts.append("removed \(removedUnavailableOptionNames.count)")
+            parts.append(L("removed %d", removedUnavailableOptionNames.count))
         }
         if unresolvedRuleCount > 0 {
-            parts.append("\(unresolvedRuleCount) rule(s) still need attention")
+            parts.append(L("%d rule(s) still need attention", unresolvedRuleCount))
         }
-        return parts.isEmpty ? "Browsers already up to date" : "Browsers refreshed: " + parts.joined(separator: ", ")
+        return parts.isEmpty ? L("Browsers already up to date") : L("Browsers refreshed: %@", parts.joined(separator: ", "))
     }
 }
 

@@ -78,10 +78,10 @@ extension SettingsWindowController {
             text = rule.name
         case "match":
             let match = RuleMatchField.matchDescription(for: rule)
-            text = match.isEmpty ? "Any URL" : match
+            text = match.isEmpty ? L("Any URL") : match
         case "browser":
             if let option = configuration.browserOptions.first(where: { $0.id == rule.browserOptionID }) {
-                text = BrowserAvailability.isInstalled(option) ? option.name : "\(option.name) (Unavailable)"
+                text = BrowserAvailability.isInstalled(option) ? option.name : L("%@ (Unavailable)", option.name)
             } else {
                 text = rule.browserOptionID
             }
@@ -117,12 +117,12 @@ extension SettingsWindowController {
         updateSummaryLabels()
         updateRuleTesterResult()
         rulesTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        _ = persistConfiguration(statusMessage: configuration.routingRules[row].isEnabled ? "Rule enabled" : "Rule disabled")
+        _ = persistConfiguration(statusMessage: configuration.routingRules[row].isEnabled ? L("Rule enabled") : L("Rule disabled"))
     }
 
     @objc func addRule() {
         guard let draft = ruleDraftFromForm() else {
-            showMessage("Missing Rule Info", "Choose a match type, add a match value, and choose a browser/profile.")
+            showMessage(L("Missing Rule Info"), L("Choose a match type, add a match value, and choose a browser/profile."))
             return
         }
         guard validateRuleDraft(draft, showsAlert: true) else {
@@ -146,19 +146,19 @@ extension SettingsWindowController {
         rulesTableView.reloadData()
         updateSummaryLabels()
         rulesTableView.selectRowIndexes(IndexSet(integer: configuration.routingRules.count - 1), byExtendingSelection: false)
-        _ = persistConfiguration(statusMessage: "Rule added and saved")
+        _ = persistConfiguration(statusMessage: L("Rule added and saved"))
         updateRuleTesterResult()
     }
 
     @objc func updateSelectedRule() {
         let row = rulesTableView.selectedRow
         guard row >= 0, row < configuration.routingRules.count else {
-            showMessage("No Rule Selected", "Select a rule first.")
+            showMessage(L("No Rule Selected"), L("Select a rule first."))
             return
         }
 
         guard let draft = ruleDraftFromForm() else {
-            showMessage("Missing Rule Info", "Choose a match type, add a match value, and choose a browser/profile.")
+            showMessage(L("Missing Rule Info"), L("Choose a match type, add a match value, and choose a browser/profile."))
             return
         }
         guard validateRuleDraft(draft, showsAlert: true) else {
@@ -173,14 +173,14 @@ extension SettingsWindowController {
         rulesTableView.reloadData()
         updateSummaryLabels()
         rulesTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        _ = persistConfiguration(statusMessage: "Rule updated and saved")
+        _ = persistConfiguration(statusMessage: L("Rule updated and saved"))
         updateRuleTesterResult()
     }
 
     @objc func removeSelectedRule() {
         let row = rulesTableView.selectedRow
         guard row >= 0, row < configuration.routingRules.count else {
-            showMessage("No Rule Selected", "Select a rule first.")
+            showMessage(L("No Rule Selected"), L("Select a rule first."))
             return
         }
 
@@ -188,7 +188,7 @@ extension SettingsWindowController {
         rulesTableView.reloadData()
         updateSummaryLabels()
         clearRuleForm()
-        _ = persistConfiguration(statusMessage: "Rule removed and saved")
+        _ = persistConfiguration(statusMessage: L("Rule removed and saved"))
         updateRuleTesterResult()
     }
 
@@ -203,7 +203,7 @@ extension SettingsWindowController {
         if let sourceApp = rule.sourceAppBundleID, !sourceApp.isEmpty {
             ruleSourceAppPopup.selectItem(withRepresentedObject: sourceApp)
         } else {
-            ruleSourceAppPopup.selectItem(at: 0) // "Any App"
+            ruleSourceAppPopup.selectItem(at: 0)
         }
         isPopulatingRuleForm = false
     }
@@ -217,7 +217,7 @@ extension SettingsWindowController {
         if !visibleBrowserOptions.isEmpty {
             ruleBrowserPopup.selectItem(at: 0)
         }
-        ruleSourceAppPopup.selectItem(at: 0) // "Any App"
+        ruleSourceAppPopup.selectItem(at: 0)
         isPopulatingRuleForm = false
     }
 
@@ -255,8 +255,8 @@ extension SettingsWindowController {
         if draft.matchField == .pathPrefix, !draft.matchValue.hasPrefix("/") {
             if showsAlert {
                 showMessage(
-                    "Path Match Needs A Slash",
-                    "Path Starts With matches the URL path after the domain. Use a value like /docs. To match baidu.com, choose Domain Suffix and enter baidu.com."
+                    L("Path Match Needs A Slash"),
+                    L("Path Starts With matches the URL path after the domain. Use a value like /docs. To match baidu.com, choose Domain Suffix and enter baidu.com.")
                 )
             }
             return false
@@ -291,7 +291,7 @@ extension SettingsWindowController {
             return
         }
 
-        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
     }
 
     func controlTextDidChange(_ obj: Notification) {
@@ -303,7 +303,7 @@ extension SettingsWindowController {
     }
 
     func windowWillClose(_ notification: Notification) {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: "Selected rule updated automatically")
+        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
     }
 
     func autosaveSelectedRuleIfPossible(statusMessage: String) -> Bool {
@@ -357,13 +357,13 @@ extension SettingsWindowController {
 
         let rawValue = ruleTesterURLField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rawValue.isEmpty else {
-            ruleTesterResultLabel.stringValue = "Paste a URL to preview routing."
+            ruleTesterResultLabel.stringValue = L("Paste a URL to preview routing.")
             ruleTesterResultLabel.textColor = .secondaryLabelColor
             return
         }
 
         guard let url = normalizedRuleTesterURL(from: rawValue) else {
-            ruleTesterResultLabel.stringValue = "Enter a valid URL or domain, such as www.baidu.com."
+            ruleTesterResultLabel.stringValue = L("Enter a valid URL or domain, such as www.baidu.com.")
             ruleTesterResultLabel.textColor = .systemOrange
             return
         }
@@ -380,48 +380,48 @@ extension SettingsWindowController {
         )
 
         let chooserText = chooserModifier == .always
-            ? "Chooser override: always on."
-            : "Chooser override: hold \(chooserModifier.title)."
+            ? L("Chooser override: always on.")
+            : L("Chooser override: hold %@.", chooserModifier.title)
         let normalizedText = normalizedRuleTesterPrefix(rawValue: rawValue, url: url)
-        let sourceAppText = testerSourceApp.map { " (Source: \($0))" } ?? ""
+        let sourceAppText = testerSourceApp.map { L(" (Source: %@)", $0) } ?? ""
 
         switch resolution {
         case .chooserOverride:
-            ruleTesterResultLabel.stringValue = "\(normalizedText)\(chooserText) Routing rules will not run."
+            ruleTesterResultLabel.stringValue = L("%@%@ Routing rules will not run.", normalizedText, chooserText)
             ruleTesterResultLabel.textColor = .secondaryLabelColor
         case .matchedRule(let rule, let option):
-            ruleTesterResultLabel.stringValue = "\(normalizedText)Matched rule: \(rule.name). Target: \(option.name). \(chooserText)\(sourceAppText)"
+            ruleTesterResultLabel.stringValue = L("%@Matched rule: %@. Target: %@. %@%@", normalizedText, rule.name, option.name, chooserText, sourceAppText)
             ruleTesterResultLabel.textColor = .secondaryLabelColor
         case .unavailableRule(let rule, let option):
             let targetName = option?.name ?? rule.browserOptionID
-            ruleTesterResultLabel.stringValue = "\(normalizedText)Matched rule: \(rule.name). Target unavailable: \(targetName). BrowserRouter will use fallback/default routing."
+            ruleTesterResultLabel.stringValue = L("%@Matched rule: %@. Target unavailable: %@. BrowserRouter will use fallback/default routing.", normalizedText, rule.name, targetName)
             ruleTesterResultLabel.textColor = .systemOrange
         case .defaultRoute(let option):
             let diagnostic = ruleTesterDiagnostic(for: url)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
-                ?? "\(normalizedText)No enabled rule matched. Default target: \(option.name). \(chooserText)\(sourceAppText)"
+                ?? L("%@No enabled rule matched. Default target: %@. %@%@", normalizedText, option.name, chooserText, sourceAppText)
             ruleTesterResultLabel.textColor = diagnostic == nil ? .secondaryLabelColor : .systemOrange
         case .unavailableDefault(let option):
             let targetName = option?.name ?? configuration.defaultOptionID
             let diagnostic = ruleTesterDiagnostic(for: url)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
-                ?? "\(normalizedText)No enabled rule matched. Default target unavailable: \(targetName). BrowserRouter will use another available browser."
+                ?? L("%@No enabled rule matched. Default target unavailable: %@. BrowserRouter will use another available browser.", normalizedText, targetName)
             ruleTesterResultLabel.textColor = .systemOrange
         case .fallback(let option):
             let diagnostic = ruleTesterDiagnostic(for: url)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
-                ?? "\(normalizedText)No enabled rule matched. Configured default is missing, so BrowserRouter will use \(option.name)."
+                ?? L("%@No enabled rule matched. Configured default is missing, so BrowserRouter will use %@.", normalizedText, option.name)
             ruleTesterResultLabel.textColor = .systemOrange
         case .noOptions:
             let diagnostic = ruleTesterDiagnostic(for: url)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
-                ?? "\(normalizedText)No enabled rule matched and no default browser/profile is configured."
+                ?? L("%@No enabled rule matched and no default browser/profile is configured.", normalizedText)
             ruleTesterResultLabel.textColor = .systemRed
         }
     }
 
     func normalizedRuleTesterPrefix(rawValue: String, url: URL) -> String {
-        rawValue.contains("://") ? "" : "Testing as \(url.absoluteString). "
+        rawValue.contains("://") ? "" : L("Testing as %@. ", url.absoluteString)
     }
 
     func normalizedRuleTesterURL(from rawValue: String) -> URL? {
@@ -444,14 +444,14 @@ extension SettingsWindowController {
     func ruleTesterDiagnostic(for url: URL) -> String? {
         let enabledRules = configuration.routingRules.filter(\.isEnabled)
         guard !enabledRules.isEmpty else {
-            return "No enabled rules. Turn on a rule or add one to test routing."
+            return L("No enabled rules. Turn on a rule or add one to test routing.")
         }
 
         let host = url.host?.lowercased() ?? ""
 
         for rule in enabledRules {
             if let pathPrefix = rule.pathPrefix, !pathPrefix.hasPrefix("/") {
-                return "Rule \"\(rule.name)\" uses Path Starts With: \(pathPrefix), but path matches need a leading slash and only check the URL path. For \(host), use Domain Suffix: \(hostWithoutWWW(host)) or Domain Contains: \(hostKeyword(host))."
+                return L("Rule \"%@\" uses Path Starts With: %@, but path matches need a leading slash and only check the URL path. For %@, use Domain Suffix: %@ or Domain Contains: %@.", rule.name, pathPrefix, host, hostWithoutWWW(host), hostKeyword(host))
             }
         }
 
@@ -479,22 +479,22 @@ extension SettingsWindowController {
         if let hostSuffix = rule.hostSuffix?.lowercased() {
             let normalized = hostSuffix.hasPrefix(".") ? String(hostSuffix.dropFirst()) : hostSuffix
             if host != normalized && !host.hasSuffix(".\(normalized)") {
-                return "Rule \"\(rule.name)\" did not match: Domain Suffix is \(hostSuffix), but the tested domain is \(host)."
+                return L("Rule \"%@\" did not match: Domain Suffix is %@, but the tested domain is %@.", rule.name, hostSuffix, host)
             }
         }
 
         if let hostContains = rule.hostContains?.lowercased(), !host.contains(hostContains) {
-            return "Rule \"\(rule.name)\" did not match: Domain Contains is \(hostContains), but the tested domain is \(host)."
+            return L("Rule \"%@\" did not match: Domain Contains is %@, but the tested domain is %@.", rule.name, hostContains, host)
         }
 
         if let pathPrefix = rule.pathPrefix, !path.hasPrefix(pathPrefix) {
-            return "Rule \"\(rule.name)\" did not match: Path Starts With checks \(path), not the domain. To match \(host), use Domain Suffix: \(hostWithoutWWW(host)) or Domain Contains: \(hostKeyword(host))."
+            return L("Rule \"%@\" did not match: Path Starts With checks %@, not the domain. To match %@, use Domain Suffix: %@ or Domain Contains: %@.", rule.name, path, host, hostWithoutWWW(host), hostKeyword(host))
         }
 
         if let urlContains = rule.urlContains?.lowercased() {
             let absolute = url.absoluteString.removingPercentEncoding ?? url.absoluteString
             if !absolute.lowercased().contains(urlContains) {
-                return "Rule \"\(rule.name)\" did not match: Full URL Contains is \(urlContains), but that text is not in the tested URL."
+                return L("Rule \"%@\" did not match: Full URL Contains is %@, but that text is not in the tested URL.", rule.name, urlContains)
             }
         }
 
@@ -544,7 +544,7 @@ extension SettingsWindowController {
         configuration.browserOptions.insert(movedOption, at: destinationRow)
 
         browsersTableView.reloadData()
-        _ = persistConfiguration(statusMessage: "Browser order updated automatically")
+        _ = persistConfiguration(statusMessage: L("Browser order updated automatically"))
         reloadControls()
         return true
     }

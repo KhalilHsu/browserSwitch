@@ -45,7 +45,7 @@ struct RecordedShortcut {
         case 101: return "F9"; case 109: return "F10"; case 103: return "F11"; case 111: return "F12"
         // Special keys
         case 36: return "↩"; case 76: return "⌅"   // Return, Enter
-        case 48: return "⇥"; case 49: return "Space" // Tab, Space
+        case 48: return "⇥"; case 49: return L("Space") // Tab, Space
         case 51: return "⌫"; case 117: return "⌦"   // Delete, Forward Delete
         case 53: return "⎋"                           // Escape
         case 123: return "←"; case 124: return "→"; case 125: return "↓"; case 126: return "↑"
@@ -64,7 +64,7 @@ final class ShortcutRecorderButton: NSButton {
     var onRecorded: ((RecordedShortcut) -> Void)?
 
     var recordedShortcut: RecordedShortcut? {
-        didSet { title = recordedShortcut?.displayString ?? "Click to record" }
+        didSet { title = recordedShortcut?.displayString ?? L("Click to record") }
     }
 
     private var popover: NSPopover?
@@ -75,7 +75,7 @@ final class ShortcutRecorderButton: NSButton {
     private func setup() {
         bezelStyle = .rounded
         translatesAutoresizingMaskIntoConstraints = false
-        title = "Click to record"
+        title = L("Click to record")
         target = self
         action = #selector(openPopover)
     }
@@ -134,9 +134,9 @@ final class ShortcutCaptureViewController: NSViewController {
 
     private let captureView = ShortcutCaptureView()
     private let displayLabel = NSTextField(labelWithString: "–")
-    private let hintLabel    = NSTextField(labelWithString: "Press modifier keys, optionally add a letter/number key")
-    private let saveButton   = NSButton(title: "Save", target: nil, action: nil)
-    private let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
+    private let hintLabel    = NSTextField(labelWithString: L("Press modifier keys, optionally add a letter/number key"))
+    private let saveButton   = NSButton(title: L("Save"), target: nil, action: nil)
+    private let cancelButton = NSButton(title: L("Cancel"), target: nil, action: nil)
 
     private var pendingShortcut: RecordedShortcut?
 
@@ -163,7 +163,7 @@ final class ShortcutCaptureViewController: NSViewController {
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
 
         // Title
-        let titleLabel = NSTextField(labelWithString: "Record Shortcut")
+        let titleLabel = NSTextField(labelWithString: L("Record Shortcut"))
         titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
         titleLabel.alignment = .center
         titleLabel.translatesAutoresizingMaskIntoConstraints = false

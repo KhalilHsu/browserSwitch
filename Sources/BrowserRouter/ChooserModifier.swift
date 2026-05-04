@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 enum ChooserModifier: String, CaseIterable {
     case commandShift = "command+shift"
@@ -11,17 +12,17 @@ enum ChooserModifier: String, CaseIterable {
     var title: String {
         switch self {
         case .commandShift:
-            return "Command + Shift"
+            return L("Command + Shift")
         case .optionShift:
-            return "Option + Shift"
+            return L("Option + Shift")
         case .controlShift:
-            return "Control + Shift"
+            return L("Control + Shift")
         case .commandOption:
-            return "Command + Option"
+            return L("Command + Option")
         case .always:
-            return "Always show chooser"
+            return L("Always show chooser")
         case .custom:
-            return "Custom…"
+            return L("Custom...")
         }
     }
 

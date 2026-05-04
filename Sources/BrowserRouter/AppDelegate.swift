@@ -71,12 +71,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
            let manager = currentDefaultBrowserManager(),
            manager.isRoutingToSelf() {
             let alert = NSAlert()
-            alert.messageText = "Quit BrowserRouter?"
-            alert.informativeText = "BrowserRouter is currently your macOS default browser. If you quit it, links will no longer route through BrowserRouter. Restore your previous default browser, \(previous.displayName), before quitting?"
+            alert.messageText = L("Quit BrowserRouter?")
+            alert.informativeText = L("BrowserRouter is currently your macOS default browser. If you quit it, links will no longer route through BrowserRouter. Restore your previous default browser, %@, before quitting?", previous.displayName)
             alert.alertStyle = .warning
-            alert.addButton(withTitle: "Restore \(previous.displayName) and Quit")
-            alert.addButton(withTitle: "Keep BrowserRouter Running")
-            alert.addButton(withTitle: "Quit Without Restoring")
+            alert.addButton(withTitle: L("Restore %@ and Quit", previous.displayName))
+            alert.addButton(withTitle: L("Keep BrowserRouter Running"))
+            alert.addButton(withTitle: L("Quit Without Restoring"))
             NSApp.activate(ignoringOtherApps: true)
 
             switch alert.runModal() {
@@ -94,8 +94,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     NSApp.reply(toApplicationShouldTerminate: true)
                 } catch {
                     showMessage(
-                        title: "Could Not Restore Default Browser",
-                        message: "\(error.localizedDescription)\n\nBrowserRouter will keep running so your links continue to work."
+                        title: L("Could Not Restore Default Browser"),
+                        message: L("%@\n\nBrowserRouter will keep running so your links continue to work.", error.localizedDescription)
                     )
                     NSApp.reply(toApplicationShouldTerminate: false)
                 }
@@ -111,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let appItem = NSMenuItem()
         let appMenu = NSMenu(title: "BrowserRouter")
         let settingsItem = NSMenuItem(
-            title: "Settings...",
+            title: L("Settings..."),
             action: #selector(openSettings),
             keyEquivalent: ","
         )
@@ -119,7 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         appMenu.addItem(settingsItem)
         appMenu.addItem(.separator())
         let quitItem = NSMenuItem(
-            title: "Quit BrowserRouter",
+            title: L("Quit BrowserRouter"),
             action: #selector(quit),
             keyEquivalent: "q"
         )
@@ -129,11 +129,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         mainMenu.addItem(appItem)
 
         let editItem = NSMenuItem()
-        let editMenu = NSMenu(title: "Edit")
-        editMenu.addItem(NSMenuItem(title: "Cut", action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
-        editMenu.addItem(NSMenuItem(title: "Copy", action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
-        editMenu.addItem(NSMenuItem(title: "Paste", action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
-        editMenu.addItem(NSMenuItem(title: "Select All", action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
+        let editMenu = NSMenu(title: L("Edit"))
+        editMenu.addItem(NSMenuItem(title: L("Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x"))
+        editMenu.addItem(NSMenuItem(title: L("Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c"))
+        editMenu.addItem(NSMenuItem(title: L("Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v"))
+        editMenu.addItem(NSMenuItem(title: L("Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a"))
         editItem.submenu = editMenu
         mainMenu.addItem(editItem)
 
@@ -247,7 +247,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.removeAllItems()
 
         menu.addItem(actionMenuItem(
-            title: "Settings...",
+            title: L("Settings..."),
             systemImageName: "gearshape",
             action: #selector(openSettings),
             keyEquivalent: ","
@@ -257,14 +257,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(.separator())
 
         let manager = currentDefaultBrowserManager()
-        menu.addItem(statusHeaderItem("Routing"))
+        menu.addItem(statusHeaderItem(L("Routing")))
         for item in statusItems(for: manager) {
             menu.addItem(item)
         }
 
         menu.addItem(.separator())
         menu.addItem(actionMenuItem(
-            title: "Quit",
+            title: L("Quit"),
             systemImageName: "power",
             action: #selector(quit),
             keyEquivalent: "q"
@@ -300,7 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         error: AutoreleasingUnsafeMutablePointer<NSString?>
     ) {
         guard let url = firstWebURL(from: pasteboard) else {
-            error.pointee = "BrowserRouter could not find an http or https URL in the selected text." as NSString
+            error.pointee = L("BrowserRouter could not find an http or https URL in the selected text.") as NSString
             return
         }
 
@@ -491,8 +491,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let options = availableBrowserOptions().filter { !$0.isHidden }
         guard !options.isEmpty else {
             showMessage(
-                title: "No Available Browsers",
-                message: "BrowserRouter could not find any installed browsers from the current configuration. Open Settings and refresh the detected browsers."
+                title: L("No Available Browsers"),
+                message: L("BrowserRouter could not find any installed browsers from the current configuration. Open Settings and refresh the detected browsers.")
             )
             return
         }
@@ -519,7 +519,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func clipboardMenuItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Open Clipboard URL", action: nil, keyEquivalent: "")
+        let item = NSMenuItem(title: L("Open Clipboard URL"), action: nil, keyEquivalent: "")
         item.image = menuIcon(named: "doc.on.clipboard")
 
         guard let url = firstWebURL(from: .general) else {
@@ -527,7 +527,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return item
         }
 
-        item.submenu = browserOptionsSubmenu(for: url, title: "Open Clipboard URL")
+        item.submenu = browserOptionsSubmenu(for: url, title: L("Open Clipboard URL"))
         return item
     }
 
@@ -537,7 +537,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let options = availableBrowserOptions().filter { !$0.isHidden }
         guard !options.isEmpty else {
-            let emptyItem = NSMenuItem(title: "No Available Browsers", action: nil, keyEquivalent: "")
+            let emptyItem = NSMenuItem(title: L("No Available Browsers"), action: nil, keyEquivalent: "")
             emptyItem.isEnabled = false
             submenu.addItem(emptyItem)
             return submenu
@@ -610,8 +610,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 guard let manager = currentDefaultBrowserManager(forceReload: true) else {
                     if showAlert {
                         showMessage(
-                            title: "Could Not Set BrowserRouter As Default",
-                            message: "BrowserRouter could not initialize its default-handler manager."
+                            title: L("Could Not Set BrowserRouter As Default"),
+                            message: L("BrowserRouter could not initialize its default-handler manager.")
                         )
                     }
                     completion?(false, configuration)
@@ -621,8 +621,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 guard manager.isInstalledInApplications() else {
                     if showAlert {
                         showMessage(
-                            title: "Install BrowserRouter First",
-                            message: "Move BrowserRouter.app into /Applications before setting it as the default browser. The new scripts/install.sh command does this for you."
+                            title: L("Install BrowserRouter First"),
+                            message: L("Move BrowserRouter.app into /Applications before setting it as the default browser. The new scripts/install.sh command does this for you.")
                         )
                     }
                     completion?(false, configuration)
@@ -637,7 +637,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 appDelegateLogger.info("BrowserRouter default handler set successfully:\n\(manager.statusSummary(), privacy: .public)")
                 if showAlert {
                     showMessage(
-                        title: "BrowserRouter Is Now The Default",
+                        title: L("BrowserRouter Is Now The Default"),
                         message: manager.statusSummary()
                     )
                 }
@@ -648,8 +648,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 appDelegateLogger.error("BrowserRouter failed to become the default browser: \(String(describing: error), privacy: .public)")
                 if showAlert {
                     showMessage(
-                        title: "Could Not Set BrowserRouter As Default",
-                        message: "\(error.localizedDescription)\n\nCurrent handlers:\n\((currentDefaultBrowserManager()?.statusSummary()) ?? "Unavailable")"
+                        title: L("Could Not Set BrowserRouter As Default"),
+                        message: L("%@\n\nCurrent handlers:\n%@", error.localizedDescription, (currentDefaultBrowserManager()?.statusSummary()) ?? L("Unavailable"))
                     )
                 }
                 completion?(false, configuration)
@@ -752,26 +752,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         guard let target = restoreDefaultBrowserCandidate() else {
             showMessage(
-                title: "No Previous Default Browser",
-                message: "BrowserRouter does not have a saved previous default browser. Choose another default browser in macOS System Settings."
+                title: L("No Previous Default Browser"),
+                message: L("BrowserRouter does not have a saved previous default browser. Choose another default browser in macOS System Settings.")
             )
             return
         }
 
         guard let manager = currentDefaultBrowserManager(forceReload: true) else {
             showMessage(
-                title: "Could Not Restore Default Browser",
-                message: "BrowserRouter could not initialize its default-handler manager."
+                title: L("Could Not Restore Default Browser"),
+                message: L("BrowserRouter could not initialize its default-handler manager.")
             )
             return
         }
 
         let alert = NSAlert()
-        alert.messageText = "Restore Previous Default Browser?"
-        alert.informativeText = "This will set both http and https links to open with \(target.displayName) instead of BrowserRouter."
+        alert.messageText = L("Restore Previous Default Browser?")
+        alert.informativeText = L("This will set both http and https links to open with %@ instead of BrowserRouter.", target.displayName)
         alert.alertStyle = .warning
-        alert.addButton(withTitle: "Restore")
-        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: L("Restore"))
+        alert.addButton(withTitle: L("Cancel"))
         NSApp.activate(ignoringOtherApps: true)
         guard alert.runModal() == .alertFirstButtonReturn else {
             return
@@ -782,16 +782,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 try await manager.restoreDefaultBrowser(to: target)
                 appDelegateLogger.info("BrowserRouter restored default browser to \(target.bundleIdentifier, privacy: .public)")
                 showMessage(
-                    title: "Default Browser Restored",
-                    message: "\(target.displayName) now handles http and https links. BrowserRouter can still be opened from /Applications."
+                    title: L("Default Browser Restored"),
+                    message: L("%@ now handles http and https links. BrowserRouter can still be opened from /Applications.", target.displayName)
                 )
                 settingsWindowController?.reload(with: configuration)
                 onboardingWindowController?.reload(with: configuration, isRoutingToSelf: manager.isRoutingToSelf())
             } catch {
                 appDelegateLogger.error("BrowserRouter failed to restore default browser to \(target.bundleIdentifier, privacy: .public): \(String(describing: error), privacy: .public)")
                 showMessage(
-                    title: "Could Not Restore Default Browser",
-                    message: "\(error.localizedDescription)\n\nCurrent handlers:\n\(manager.statusSummary())"
+                    title: L("Could Not Restore Default Browser"),
+                    message: L("%@\n\nCurrent handlers:\n%@", error.localizedDescription, manager.statusSummary())
                 )
             }
         }
@@ -851,34 +851,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func selectedBrowserProfileName() -> String {
         configuration.browserOptions.first(where: { $0.id == configuration.defaultOptionID })?.name
-            ?? "Unknown browser/profile"
+            ?? L("Unknown browser/profile")
     }
 
     private func statusItems(for manager: DefaultBrowserManager?) -> [NSMenuItem] {
         guard let manager else {
             return [
-                statusLineItem(title: "Status unavailable", emphasized: true),
-                statusLineItem(title: "Open Settings to check your browser profile")
+                statusLineItem(title: L("Status unavailable"), emphasized: true),
+                statusLineItem(title: L("Open Settings to check your browser profile"))
             ]
         }
 
         if manager.isRoutingToSelf() {
             var items: [NSMenuItem] = [
-                statusLineItem(title: "Opening with \(selectedBrowserProfileName())", emphasized: true)
+                statusLineItem(title: L("Opening with %@", selectedBrowserProfileName()), emphasized: true)
             ]
 
             let modifier = ChooserModifier(rawValue: configuration.chooserModifier) ?? .commandShift
             if modifier == .always {
-                items.append(statusLineItem(title: "Chooser always on"))
+                items.append(statusLineItem(title: L("Chooser always on")))
             } else {
-                items.append(statusLineItem(title: "Hold \(modifier.title) for chooser"))
+                items.append(statusLineItem(title: L("Hold %@ for chooser", modifier.title)))
             }
 
             return items
         }
 
         return [
-            statusLineItem(title: "BrowserRouter is not the default browser", emphasized: true)
+            statusLineItem(title: L("BrowserRouter is not the default browser"), emphasized: true)
         ]
     }
 
@@ -894,7 +894,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.messageText = title
         alert.informativeText = message
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("OK"))
         alert.runModal()
     }
 
