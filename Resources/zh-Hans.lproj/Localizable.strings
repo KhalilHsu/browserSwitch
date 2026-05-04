@@ -67,13 +67,20 @@
 "Version" = "版本";
 
 "On" = "开";
+"Order" = "顺序";
 "Rule" = "规则";
 "Match" = "匹配";
+"Target" = "目标";
 "Browser/Profile" = "浏览器/Profile";
 "Vis" = "显示";
 "Rule name" = "规则名称";
 "Paste a URL or domain, e.g. www.baidu.com" = "粘贴 URL 或域名，例如 www.baidu.com";
+"New Rule" = "新建规则";
 "Add Rule" = "添加规则";
+"Save Rule" = "保存规则";
+"Remove Rule" = "删除规则";
+"Move Up" = "上移";
+"Move Down" = "下移";
 "Update Selected" = "更新所选";
 "Remove Selected" = "删除所选";
 "Use this page for browser inventory and the config file." = "在这里管理浏览器清单和配置文件。";
@@ -134,13 +141,19 @@
 "Auto-restore setting saved" = "自动恢复设置已保存";
 "Browser hidden" = "浏览器已隐藏";
 "Browser unhidden" = "浏览器已显示";
-"Selected rule updated automatically" = "所选规则已自动更新";
 "Any App" = "任意 App";
 "%@ (Hidden)" = "%@（隐藏）";
 "%@ (Not Running)" = "%@（未运行）";
 "%@ (Unavailable)" = "%@（不可用）";
 
 "Any URL" = "任意 URL";
+"Draft Rule" = "草稿规则";
+"From %@" = "来自 %@";
+"Rules run from top to bottom. The first match wins." = "规则会从上到下运行，第一条匹配的规则会生效。";
+"Rule is enabled" = "规则已启用";
+"Rule is disabled" = "规则已停用";
+"Editing rule %d. Changes are saved when you click Save Rule." = "正在编辑第 %d 条规则。点击“保存规则”后才会保存改动。";
+"New rule. Fill the fields, then click Add Rule." = "新规则。填写字段后，点击“添加规则”。";
 "Rule enabled" = "规则已启用";
 "Rule disabled" = "规则已停用";
 "Missing Rule Info" = "规则信息不完整";
@@ -150,6 +163,7 @@
 "Select a rule first." = "请先选择一条规则。";
 "Rule updated and saved" = "规则已更新并保存";
 "Rule removed and saved" = "规则已删除并保存";
+"Rule priority updated" = "规则优先级已更新";
 "Path Match Needs A Slash" = "路径匹配需要斜杠";
 "Path Starts With matches the URL path after the domain. Use a value like /docs. To match baidu.com, choose Domain Suffix and enter baidu.com." = "路径开头只匹配域名后的 URL 路径。请使用 /docs 这样的值。要匹配 baidu.com，请选择域名后缀并输入 baidu.com。";
 "Paste a URL to preview routing." = "粘贴一个 URL 来预览路由。";

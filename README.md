@@ -200,13 +200,12 @@ Settings changes are saved automatically when you:
 - refresh browsers
 - detect Chromium profiles
 - hide, unhide, or reorder browser/profile options
-- add, update, or remove a rule
+- add, save, reorder, or remove a rule
 - enable or disable a rule
-- finish editing an existing selected rule
 
-Rule text fields are not saved on every keystroke. They save when you finish
-editing a selected rule or explicitly commit the rule with `Add Rule`,
-`Update Selected`, or `Remove Selected`.
+Rule form edits are explicit: use `New Rule` to clear the editor, then
+`Add Rule` for a new rule or `Save Rule` for the selected rule. The tester
+previews the current editor draft before it is saved.
 
 ## Configuration
 
@@ -248,7 +247,8 @@ Example routing rule:
 ## Rule Matching
 
 Enabled rules are checked in the order they appear in `routingRules`. The first
-matching enabled rule wins when its browser/profile is available. If the matched
+matching enabled rule wins when its browser/profile is available. Use the Rules
+page `Move Up` and `Move Down` controls to change priority. If the matched
 target is unavailable, BrowserRouter falls back to the default or another
 available browser option. If no enabled rule matches, BrowserRouter uses the
 configured default option.

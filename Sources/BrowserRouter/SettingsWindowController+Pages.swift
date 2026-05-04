@@ -136,7 +136,7 @@ extension SettingsWindowController {
         compactSourceAppRow.spacing = 12
         compactSourceAppRow.translatesAutoresizingMaskIntoConstraints = false
 
-        let editorStack = NSStackView(views: [compactRuleNameRow, compactMatchRow, compactBrowserRow, compactSourceAppRow, ruleButtonStack])
+        let editorStack = NSStackView(views: [ruleEditorModeLabel, compactRuleNameRow, compactMatchRow, compactBrowserRow, compactSourceAppRow, ruleButtonStack])
         editorStack.orientation = .vertical
         editorStack.alignment = .leading
         editorStack.spacing = 10

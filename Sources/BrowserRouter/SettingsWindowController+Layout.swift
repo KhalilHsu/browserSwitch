@@ -4,10 +4,11 @@ private let formRowSpacing = CGFloat(12.0)
 private let formLabelWidth = CGFloat(160.0)
 private let settingsWindowMinimumSize = NSSize(width: 620, height: 240)
 private let settingsSummaryFontSize = CGFloat(12.0)
-private let rulesEnabledColumnWidth = CGFloat(44.0)
-private let rulesNameColumnWidth = CGFloat(108.0)
-private let rulesMatchColumnWidth = CGFloat(154.0)
-private let rulesBrowserColumnWidth = CGFloat(164.0)
+private let rulesOrderColumnWidth = CGFloat(36.0)
+private let rulesEnabledColumnWidth = CGFloat(40.0)
+private let rulesNameColumnWidth = CGFloat(100.0)
+private let rulesMatchColumnWidth = CGFloat(174.0)
+private let rulesBrowserColumnWidth = CGFloat(116.0)
 private let rulesTableRowHeight = CGFloat(28.0)
 private let rulesTableIntercellSpacing = NSSize(width: 8, height: 4)
 private let aboutLogoFontSize = CGFloat(34.0)
@@ -91,18 +92,21 @@ extension SettingsWindowController {
         ruleSummaryLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
         ruleSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
 
+        rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("order")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("enabled")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
-        rulesTableView.tableColumns[0].title = L("On")
-        rulesTableView.tableColumns[0].width = rulesEnabledColumnWidth
-        rulesTableView.tableColumns[1].title = L("Rule")
-        rulesTableView.tableColumns[1].width = rulesNameColumnWidth
-        rulesTableView.tableColumns[2].title = L("Match")
-        rulesTableView.tableColumns[2].width = rulesMatchColumnWidth
-        rulesTableView.tableColumns[3].title = L("Browser/Profile")
-        rulesTableView.tableColumns[3].width = rulesBrowserColumnWidth
+        rulesTableView.tableColumns[0].title = L("Order")
+        rulesTableView.tableColumns[0].width = rulesOrderColumnWidth
+        rulesTableView.tableColumns[1].title = L("On")
+        rulesTableView.tableColumns[1].width = rulesEnabledColumnWidth
+        rulesTableView.tableColumns[2].title = L("Rule")
+        rulesTableView.tableColumns[2].width = rulesNameColumnWidth
+        rulesTableView.tableColumns[3].title = L("Match")
+        rulesTableView.tableColumns[3].width = rulesMatchColumnWidth
+        rulesTableView.tableColumns[4].title = L("Target")
+        rulesTableView.tableColumns[4].width = rulesBrowserColumnWidth
         rulesTableView.delegate = self
         rulesTableView.dataSource = self
         rulesTableView.usesAlternatingRowBackgroundColors = true
@@ -156,6 +160,10 @@ extension SettingsWindowController {
         ruleTesterResultLabel.lineBreakMode = .byWordWrapping
         ruleTesterResultLabel.maximumNumberOfLines = 3
         ruleTesterResultLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        ruleEditorModeLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        ruleEditorModeLabel.textColor = .secondaryLabelColor
+        ruleEditorModeLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutLogoLabel.font = .systemFont(ofSize: aboutLogoFontSize, weight: .light)
         aboutLogoLabel.alignment = .left
@@ -287,15 +295,25 @@ extension SettingsWindowController {
     }
 
     func makeRuleButtonStack() -> NSStackView {
-        let addRuleButton = makeButton(L("Add Rule"), action: #selector(addRule))
-        let updateRuleButton = makeButton(L("Update Selected"), action: #selector(updateSelectedRule))
-        let removeRuleButton = makeButton(L("Remove Selected"), action: #selector(removeSelectedRule))
-        addRuleButton.keyEquivalent = "\r"
-        let ruleButtonStack = NSStackView(views: [addRuleButton, updateRuleButton, removeRuleButton])
+        configureButton(newRuleButton, title: L("New Rule"), action: #selector(startNewRule))
+        configureButton(saveRuleButton, title: L("Add Rule"), action: #selector(saveRuleForm))
+        configureButton(removeRuleButton, title: L("Remove Rule"), action: #selector(removeSelectedRule))
+        configureButton(moveRuleUpButton, title: L("Move Up"), action: #selector(moveSelectedRuleUp))
+        configureButton(moveRuleDownButton, title: L("Move Down"), action: #selector(moveSelectedRuleDown))
+        saveRuleButton.keyEquivalent = "\r"
+        let ruleButtonStack = NSStackView(views: [newRuleButton, saveRuleButton, removeRuleButton, moveRuleUpButton, moveRuleDownButton])
         ruleButtonStack.orientation = .horizontal
         ruleButtonStack.spacing = ruleButtonStackSpacing
         ruleButtonStack.translatesAutoresizingMaskIntoConstraints = false
         return ruleButtonStack
+    }
+
+    func configureButton(_ button: NSButton, title: String, action: Selector) {
+        button.title = title
+        button.target = self
+        button.action = action
+        button.bezelStyle = .rounded
+        button.translatesAutoresizingMaskIntoConstraints = false
     }
 
     func makeAdvancedHintLabel() -> NSTextField {

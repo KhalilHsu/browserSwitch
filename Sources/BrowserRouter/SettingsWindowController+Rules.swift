@@ -64,10 +64,19 @@ extension SettingsWindowController {
         let rule = configuration.routingRules[row]
         let identifier = tableColumn?.identifier.rawValue ?? ""
 
+        if identifier == "order" {
+            let cell = NSTextField(labelWithString: "\(row + 1)")
+            cell.alignment = .center
+            cell.textColor = rule.isEnabled ? .secondaryLabelColor : .tertiaryLabelColor
+            cell.toolTip = L("Rules run from top to bottom. The first match wins.")
+            return centeredCellView(cell, centerHorizontally: true)
+        }
+
         if identifier == "enabled" {
             let checkbox = NSButton(checkboxWithTitle: "", target: self, action: #selector(toggleRuleEnabled(_:)))
             checkbox.state = rule.isEnabled ? .on : .off
             checkbox.tag = row
+            checkbox.toolTip = rule.isEnabled ? L("Rule is enabled") : L("Rule is disabled")
             return centeredCellView(checkbox, centerHorizontally: true)
         }
 
@@ -77,7 +86,7 @@ extension SettingsWindowController {
         case "name":
             text = rule.name
         case "match":
-            let match = RuleMatchField.matchDescription(for: rule)
+            let match = ruleConditionDescription(for: rule)
             text = match.isEmpty ? L("Any URL") : match
         case "browser":
             if let option = configuration.browserOptions.first(where: { $0.id == rule.browserOptionID }) {
@@ -93,6 +102,7 @@ extension SettingsWindowController {
         cell.lineBreakMode = .byTruncatingTail
         cell.maximumNumberOfLines = 1
         cell.textColor = rule.isEnabled ? .labelColor : .tertiaryLabelColor
+        cell.toolTip = text
         return centeredCellView(cell)
     }
 
@@ -100,10 +110,12 @@ extension SettingsWindowController {
         let row = rulesTableView.selectedRow
         guard row >= 0, row < configuration.routingRules.count else {
             clearRuleForm()
+            updateRuleEditorState()
             return
         }
 
         populateRuleForm(from: configuration.routingRules[row])
+        updateRuleEditorState()
     }
 
     @objc func toggleRuleEnabled(_ sender: NSButton) {
@@ -118,6 +130,23 @@ extension SettingsWindowController {
         updateRuleTesterResult()
         rulesTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
         _ = persistConfiguration(statusMessage: configuration.routingRules[row].isEnabled ? L("Rule enabled") : L("Rule disabled"))
+        updateRuleEditorState()
+    }
+
+    @objc func startNewRule() {
+        rulesTableView.deselectAll(nil)
+        clearRuleForm()
+        updateRuleEditorState()
+        updateRuleTesterResult()
+    }
+
+    @objc func saveRuleForm() {
+        let row = rulesTableView.selectedRow
+        if row >= 0, row < configuration.routingRules.count {
+            updateSelectedRule()
+        } else {
+            addRule()
+        }
     }
 
     @objc func addRule() {
@@ -129,10 +158,10 @@ extension SettingsWindowController {
             return
         }
 
-        let name = ruleNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = ruleDisplayName(for: draft)
         var rule = RoutingRule(
-            id: uniqueRuleID(from: name.isEmpty ? draft.matchValue : name),
-            name: name.isEmpty ? draft.matchValue : name,
+            id: uniqueRuleID(from: name),
+            name: name,
             browserOptionID: draft.browserID,
             hostContains: nil,
             hostSuffix: nil,
@@ -140,13 +169,15 @@ extension SettingsWindowController {
             urlContains: nil,
             sourceAppBundleID: selectedSourceAppBundleID()
         )
-        draft.matchField.apply(draft.matchValue, to: &rule)
+        applyRuleDraft(draft, to: &rule)
 
         configuration.routingRules.append(rule)
         rulesTableView.reloadData()
         updateSummaryLabels()
         rulesTableView.selectRowIndexes(IndexSet(integer: configuration.routingRules.count - 1), byExtendingSelection: false)
         _ = persistConfiguration(statusMessage: L("Rule added and saved"))
+        populateRuleForm(from: rule)
+        updateRuleEditorState()
         updateRuleTesterResult()
     }
 
@@ -165,15 +196,15 @@ extension SettingsWindowController {
             return
         }
 
-        let name = ruleNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        configuration.routingRules[row].name = name.isEmpty ? draft.matchValue : name
+        configuration.routingRules[row].name = ruleDisplayName(for: draft)
         configuration.routingRules[row].browserOptionID = draft.browserID
         configuration.routingRules[row].sourceAppBundleID = selectedSourceAppBundleID()
-        draft.matchField.apply(draft.matchValue, to: &configuration.routingRules[row])
+        applyRuleDraft(draft, to: &configuration.routingRules[row])
         rulesTableView.reloadData()
         updateSummaryLabels()
         rulesTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
         _ = persistConfiguration(statusMessage: L("Rule updated and saved"))
+        updateRuleEditorState()
         updateRuleTesterResult()
     }
 
@@ -189,6 +220,36 @@ extension SettingsWindowController {
         updateSummaryLabels()
         clearRuleForm()
         _ = persistConfiguration(statusMessage: L("Rule removed and saved"))
+        updateRuleEditorState()
+        updateRuleTesterResult()
+    }
+
+    @objc func moveSelectedRuleUp() {
+        moveSelectedRule(by: -1)
+    }
+
+    @objc func moveSelectedRuleDown() {
+        moveSelectedRule(by: 1)
+    }
+
+    func moveSelectedRule(by offset: Int) {
+        let row = rulesTableView.selectedRow
+        let destination = row + offset
+        guard row >= 0,
+              row < configuration.routingRules.count,
+              destination >= 0,
+              destination < configuration.routingRules.count
+        else {
+            return
+        }
+
+        configuration.routingRules.swapAt(row, destination)
+        rulesTableView.reloadData()
+        rulesTableView.selectRowIndexes(IndexSet(integer: destination), byExtendingSelection: false)
+        populateRuleForm(from: configuration.routingRules[destination])
+        updateSummaryLabels()
+        _ = persistConfiguration(statusMessage: L("Rule priority updated"))
+        updateRuleEditorState()
         updateRuleTesterResult()
     }
 
@@ -206,6 +267,8 @@ extension SettingsWindowController {
             ruleSourceAppPopup.selectItem(at: 0)
         }
         isPopulatingRuleForm = false
+        updateRuleEditorState()
+        updateRuleTesterResult()
     }
 
     func clearRuleForm() {
@@ -219,6 +282,42 @@ extension SettingsWindowController {
         }
         ruleSourceAppPopup.selectItem(at: 0)
         isPopulatingRuleForm = false
+        updateRuleEditorState()
+    }
+
+    func updateRuleEditorState() {
+        let row = rulesTableView.selectedRow
+        let hasSelection = row >= 0 && row < configuration.routingRules.count
+        if hasSelection {
+            ruleEditorModeLabel.stringValue = L("Editing rule %d. Changes are saved when you click Save Rule.", row + 1)
+            saveRuleButton.title = L("Save Rule")
+        } else {
+            ruleEditorModeLabel.stringValue = L("New rule. Fill the fields, then click Add Rule.")
+            saveRuleButton.title = L("Add Rule")
+        }
+        newRuleButton.isEnabled = hasSelection || !ruleNameField.stringValue.isEmpty || !ruleMatchValueField.stringValue.isEmpty || selectedSourceAppBundleID() != nil
+        removeRuleButton.isEnabled = hasSelection
+        moveRuleUpButton.isEnabled = hasSelection && row > 0
+        moveRuleDownButton.isEnabled = hasSelection && row < configuration.routingRules.count - 1
+    }
+
+    func ruleConditionDescription(for rule: RoutingRule) -> String {
+        var parts: [String] = []
+        if let sourceApp = rule.sourceAppBundleID, !sourceApp.isEmpty {
+            parts.append(L("From %@", displayNameForSourceApp(sourceApp)))
+        }
+        let match = RuleMatchField.matchDescription(for: rule)
+        if !match.isEmpty {
+            parts.append(match)
+        }
+        return parts.joined(separator: " + ")
+    }
+
+    func displayNameForSourceApp(_ bundleID: String) -> String {
+        if let item = ruleSourceAppPopup.itemArray.first(where: { ($0.representedObject as? String) == bundleID }) {
+            return item.title
+        }
+        return bundleID
     }
 
     func selectedRuleMatchField() -> RuleMatchField? {
@@ -246,13 +345,27 @@ extension SettingsWindowController {
         return (matchField, matchValue, browserID)
     }
 
+    func ruleDisplayName(for draft: (matchField: RuleMatchField, matchValue: String, browserID: String)) -> String {
+        let name = ruleNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !name.isEmpty {
+            return name
+        }
+        if !draft.matchValue.isEmpty {
+            return draft.matchValue
+        }
+        if let sourceApp = selectedSourceAppBundleID() {
+            return L("From %@", displayNameForSourceApp(sourceApp))
+        }
+        return L("Draft Rule")
+    }
+
     func updateRuleMatchPlaceholder() {
         ruleMatchValueField.placeholderString = selectedRuleMatchField()?.placeholder ?? RuleMatchField.hostSuffix.placeholder
         updateRuleTesterResult()
     }
 
     func validateRuleDraft(_ draft: (matchField: RuleMatchField, matchValue: String, browserID: String), showsAlert: Bool) -> Bool {
-        if draft.matchField == .pathPrefix, !draft.matchValue.hasPrefix("/") {
+        if !draft.matchValue.isEmpty, draft.matchField == .pathPrefix, !draft.matchValue.hasPrefix("/") {
             if showsAlert {
                 showMessage(
                     L("Path Match Needs A Slash"),
@@ -263,6 +376,16 @@ extension SettingsWindowController {
         }
 
         return true
+    }
+
+    func applyRuleDraft(_ draft: (matchField: RuleMatchField, matchValue: String, browserID: String), to rule: inout RoutingRule) {
+        rule.hostContains = nil
+        rule.hostSuffix = nil
+        rule.pathPrefix = nil
+        rule.urlContains = nil
+        if !draft.matchValue.isEmpty {
+            draft.matchField.apply(draft.matchValue, to: &rule)
+        }
     }
 
     func uniqueRuleID(from value: String) -> String {
@@ -291,59 +414,21 @@ extension SettingsWindowController {
             return
         }
 
-        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
+        updateRuleEditorState()
     }
 
     func controlTextDidChange(_ obj: Notification) {
-        guard let field = obj.object as? NSTextField, field === ruleTesterURLField else {
+        guard let field = obj.object as? NSTextField else {
             return
         }
 
-        updateRuleTesterResult()
+        if field === ruleTesterURLField || field === ruleMatchValueField || field === ruleNameField {
+            updateRuleEditorState()
+            updateRuleTesterResult()
+        }
     }
 
-    func windowWillClose(_ notification: Notification) {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
-    }
-
-    func autosaveSelectedRuleIfPossible(statusMessage: String) -> Bool {
-        guard !isPopulatingRuleForm else {
-            return false
-        }
-
-        let row = rulesTableView.selectedRow
-        guard row >= 0, row < configuration.routingRules.count else {
-            return false
-        }
-
-        guard let draft = ruleDraftFromForm() else {
-            return false
-        }
-        guard validateRuleDraft(draft, showsAlert: false) else {
-            return false
-        }
-
-        let name = ruleNameField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        let updatedName = name.isEmpty ? draft.matchValue : name
-
-        let currentRule = configuration.routingRules[row]
-        var updatedRule = currentRule
-        updatedRule.name = updatedName
-        updatedRule.browserOptionID = draft.browserID
-        updatedRule.sourceAppBundleID = selectedSourceAppBundleID()
-        draft.matchField.apply(draft.matchValue, to: &updatedRule)
-
-        guard currentRule != updatedRule else {
-            return false
-        }
-
-        configuration.routingRules[row] = updatedRule
-        rulesTableView.reloadData()
-        updateSummaryLabels()
-        updateRuleTesterResult()
-        rulesTableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
-        return persistConfiguration(statusMessage: statusMessage)
-    }
+    func windowWillClose(_ notification: Notification) {}
 
     func updateRuleTesterResult() {
         guard !isUpdatingRuleTester else {
@@ -371,9 +456,10 @@ extension SettingsWindowController {
         let availableOptionIDs = Set(visibleBrowserOptions.map(\.id))
         let chooserModifier = ChooserModifier(rawValue: configuration.chooserModifier) ?? .commandShift
         let testerSourceApp = selectedSourceAppBundleID()
+        let previewConfiguration = ruleTesterPreviewConfiguration()
         let resolution = RouteResolver.resolve(
             url: url,
-            configuration: configuration,
+            configuration: previewConfiguration,
             availableOptionIDs: availableOptionIDs,
             chooserOverride: chooserModifier == .always,
             sourceApp: testerSourceApp
@@ -397,27 +483,61 @@ extension SettingsWindowController {
             ruleTesterResultLabel.stringValue = L("%@Matched rule: %@. Target unavailable: %@. BrowserRouter will use fallback/default routing.", normalizedText, rule.name, targetName)
             ruleTesterResultLabel.textColor = .systemOrange
         case .defaultRoute(let option):
-            let diagnostic = ruleTesterDiagnostic(for: url)
+            let diagnostic = ruleTesterDiagnostic(for: url, configuration: previewConfiguration)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
                 ?? L("%@No enabled rule matched. Default target: %@. %@%@", normalizedText, option.name, chooserText, sourceAppText)
             ruleTesterResultLabel.textColor = diagnostic == nil ? .secondaryLabelColor : .systemOrange
         case .unavailableDefault(let option):
             let targetName = option?.name ?? configuration.defaultOptionID
-            let diagnostic = ruleTesterDiagnostic(for: url)
+            let diagnostic = ruleTesterDiagnostic(for: url, configuration: previewConfiguration)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
                 ?? L("%@No enabled rule matched. Default target unavailable: %@. BrowserRouter will use another available browser.", normalizedText, targetName)
             ruleTesterResultLabel.textColor = .systemOrange
         case .fallback(let option):
-            let diagnostic = ruleTesterDiagnostic(for: url)
+            let diagnostic = ruleTesterDiagnostic(for: url, configuration: previewConfiguration)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
                 ?? L("%@No enabled rule matched. Configured default is missing, so BrowserRouter will use %@.", normalizedText, option.name)
             ruleTesterResultLabel.textColor = .systemOrange
         case .noOptions:
-            let diagnostic = ruleTesterDiagnostic(for: url)
+            let diagnostic = ruleTesterDiagnostic(for: url, configuration: previewConfiguration)
             ruleTesterResultLabel.stringValue = diagnostic.map { normalizedText + $0 }
                 ?? L("%@No enabled rule matched and no default browser/profile is configured.", normalizedText)
             ruleTesterResultLabel.textColor = .systemRed
         }
+    }
+
+    func ruleTesterPreviewConfiguration() -> RouterConfiguration {
+        guard let draft = ruleDraftFromForm(),
+              validateRuleDraft(draft, showsAlert: false)
+        else {
+            return configuration
+        }
+
+        var preview = configuration
+        let displayName = ruleDisplayName(for: draft)
+        let row = rulesTableView.selectedRow
+
+        if row >= 0, row < preview.routingRules.count {
+            preview.routingRules[row].name = displayName
+            preview.routingRules[row].browserOptionID = draft.browserID
+            preview.routingRules[row].sourceAppBundleID = selectedSourceAppBundleID()
+            applyRuleDraft(draft, to: &preview.routingRules[row])
+        } else {
+            var draftRule = RoutingRule(
+                id: "__draft-rule__",
+                name: displayName,
+                browserOptionID: draft.browserID,
+                hostContains: nil,
+                hostSuffix: nil,
+                pathPrefix: nil,
+                urlContains: nil,
+                sourceAppBundleID: selectedSourceAppBundleID()
+            )
+            applyRuleDraft(draft, to: &draftRule)
+            preview.routingRules.append(draftRule)
+        }
+
+        return preview
     }
 
     func normalizedRuleTesterPrefix(rawValue: String, url: URL) -> String {
@@ -441,7 +561,7 @@ extension SettingsWindowController {
         return url
     }
 
-    func ruleTesterDiagnostic(for url: URL) -> String? {
+    func ruleTesterDiagnostic(for url: URL, configuration: RouterConfiguration) -> String? {
         let enabledRules = configuration.routingRules.filter(\.isEnabled)
         guard !enabledRules.isEmpty else {
             return L("No enabled rules. Turn on a rule or add one to test routing.")
@@ -455,14 +575,14 @@ extension SettingsWindowController {
             }
         }
 
-        if let selectedRule = selectedRuleForTesterDiagnostic() {
+        if let selectedRule = selectedRuleForTesterDiagnostic(configuration: configuration) {
             return mismatchDescription(for: selectedRule, url: url)
         }
 
         return nil
     }
 
-    func selectedRuleForTesterDiagnostic() -> RoutingRule? {
+    func selectedRuleForTesterDiagnostic(configuration: RouterConfiguration) -> RoutingRule? {
         let row = rulesTableView.selectedRow
         guard row >= 0, row < configuration.routingRules.count else {
             return configuration.routingRules.first(where: \.isEnabled)

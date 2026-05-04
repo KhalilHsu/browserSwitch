@@ -64,6 +64,7 @@ extension SettingsWindowController {
         } else {
             clearRuleForm()
         }
+        updateRuleEditorState()
     }
 
     @objc func detectProfiles() {
@@ -178,16 +179,18 @@ extension SettingsWindowController {
     }
 
     @objc func ruleBrowserChanged() {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
+        updateRuleEditorState()
+        updateRuleTesterResult()
     }
 
     @objc func ruleSourceAppChanged() {
-        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
+        updateRuleEditorState()
+        updateRuleTesterResult()
     }
 
     @objc func ruleMatchTypeChanged() {
         updateRuleMatchPlaceholder()
-        _ = autosaveSelectedRuleIfPossible(statusMessage: L("Selected rule updated automatically"))
+        updateRuleEditorState()
     }
 
     func populateSourceAppPopup() {

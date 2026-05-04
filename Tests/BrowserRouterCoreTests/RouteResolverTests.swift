@@ -63,6 +63,27 @@ final class RouteResolverTests: XCTestCase {
         XCTAssertEqual(resolution, .matchedRule(rule: rule, option: chrome))
     }
 
+    func testRouteResolverUsesFirstMatchingRuleForPriority() throws {
+        let chrome = makeOption(id: "chrome", name: "Chrome")
+        let safari = makeOption(id: "safari", name: "Safari")
+        let broadRule = makeRule(id: "broad", browserOptionID: safari.id, hostSuffix: "example.com")
+        let specificRule = makeRule(id: "specific", browserOptionID: chrome.id, hostSuffix: "mail.example.com")
+        let configuration = RouterConfiguration(
+            defaultOptionID: safari.id,
+            chooserModifier: "command+shift",
+            browserOptions: [chrome, safari],
+            routingRules: [broadRule, specificRule]
+        )
+
+        let resolution = RouteResolver.resolve(
+            url: try makeURL("https://mail.example.com/inbox"),
+            configuration: configuration,
+            availableOptionIDs: [chrome.id, safari.id]
+        )
+
+        XCTAssertEqual(resolution, .matchedRule(rule: broadRule, option: safari))
+    }
+
     func testRouteResolverCanReportChooserOverride() throws {
         let chrome = makeOption(id: "chrome", name: "Chrome")
         let configuration = RouterConfiguration(

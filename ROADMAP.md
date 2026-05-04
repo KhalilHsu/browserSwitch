@@ -284,6 +284,8 @@ trust, release, and daily-driver items.
 
 #### Rule Ordering
 
+Status: Done.
+
 Allow users to control routing rule priority.
 
 Why it matters:
@@ -294,10 +296,10 @@ Why it matters:
 
 Acceptance criteria:
 
-- Rules can be moved up and down in Settings.
-- The saved `routingRules` order matches the displayed order.
-- The UI makes first-match behavior clear.
-- Tests cover overlapping rules and priority.
+- [x] Rules can be moved up and down in Settings.
+- [x] The saved `routingRules` order matches the displayed order.
+- [x] The UI makes first-match behavior clear.
+- [x] Tests cover overlapping rules and priority.
 
 #### Import And Export Configuration
 
