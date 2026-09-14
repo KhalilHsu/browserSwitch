@@ -6,6 +6,8 @@ links to the browser or Chromium profile you choose.
 It is built for people who keep separate browsers or profiles for work,
 personal browsing, testing, client accounts, OAuth flows, and app-launched links.
 
+![BrowserRouter Settings](assets/settings.png)
+
 ## Status
 
 BrowserRouter is beta-quality software. The core link routing flow works, but
