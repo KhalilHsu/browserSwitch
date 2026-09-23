@@ -17,7 +17,8 @@ simple.
 Current assumptions:
 
 - macOS 12 or newer.
-- Local builds are ad-hoc signed.
+- Release DMGs are Developer ID signed and notarized; local source builds are
+  ad-hoc signed.
 - BrowserRouter must be installed in `/Applications` before you set it as the
   default browser.
 - Configuration is local JSON in Application Support.
@@ -79,6 +80,15 @@ Chromium profiles are opened with:
 
 Safari and non-Chromium browsers are opened through `NSWorkspace` without a
 profile argument.
+
+## Download
+
+Download the latest `BrowserRouter-<version>.dmg` from
+[GitHub Releases](https://github.com/KhalilHsu/browserSwitch/releases/latest),
+open it, and drag **BrowserRouter** into **Applications**. The app is signed
+with a Developer ID certificate and notarized by Apple, and each release lists
+a SHA-256 checksum. Launch it from `/Applications` before setting it as the
+default browser.
 
 ## Build
 
@@ -300,19 +310,22 @@ pushes and pull requests.
 
 ## Distribution Notes
 
-BrowserRouter is distributed only as source-based local install:
+Official releases are universal (arm64 + x86_64) DMGs on GitHub Releases.
+Maintainers produce them with:
 
 ```bash
-scripts/install.sh
+scripts/release.sh
 ```
 
-Public binary releases are not part of the current release path. If that ever
-changes, they will still need:
+The script builds the committed `HEAD`, re-signs it with the Developer ID
+certificate of the Apple ID signed in to Xcode, submits it for notarization,
+staples the ticket, and writes `dist/BrowserRouter-<version>.dmg` plus a
+SHA-256 file. Source installs through `scripts/install.sh` remain supported.
 
-- Add notarized release builds if distributing outside source builds.
-- Add a documented release process and changelog.
-- Consider automatic update support after the first public release.
-- Add screenshots or a short demo GIF to this README.
+Still open:
+
+- Add a changelog.
+- Consider automatic update support.
 
 ## Privacy
 

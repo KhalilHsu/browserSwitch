@@ -12,10 +12,21 @@ CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 BINARY_PATH="${BUILD_DIR}/${APP_NAME}"
 
+# UNIVERSAL=1 builds an arm64 + x86_64 binary for release packaging.
+SWIFT_BUILD_ARGS=(-c release --product "${APP_NAME}")
+if [ "${UNIVERSAL:-0}" = "1" ]; then
+  SWIFT_BUILD_ARGS+=(--arch arm64 --arch x86_64)
+fi
+
 mkdir -p "${BUILD_DIR}" "${FALLBACK_DIR}"
 rm -f "${GENERATED_ICON}"
 swift scripts/generate-icon.swift "${GENERATED_ICON}"
-if ! swift build -c release --product "${APP_NAME}" >"${SWIFTPM_LOG}" 2>&1; then
+if swift build "${SWIFT_BUILD_ARGS[@]}" >"${SWIFTPM_LOG}" 2>&1; then
+  BINARY_PATH="$(swift build "${SWIFT_BUILD_ARGS[@]}" --show-bin-path)/${APP_NAME}"
+elif [ "${UNIVERSAL:-0}" = "1" ]; then
+  echo "Universal SwiftPM build failed. Details: ${SWIFTPM_LOG}" >&2
+  exit 1
+else
   echo "SwiftPM build failed; falling back to direct swiftc build. Details: ${SWIFTPM_LOG}" >&2
   rm -rf "${DIRECT_BUILD_DIR}"
   mkdir -p "${DIRECT_BUILD_DIR}"
