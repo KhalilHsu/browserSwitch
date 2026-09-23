@@ -3,7 +3,7 @@ import Foundation
 import OSLog
 import BrowserRouterCore
 
-private let browserLauncherLogger = Logger(subsystem: "local.browser-router", category: "browser-launcher")
+private let browserLauncherLogger = Logger(subsystem: "com.khalil.browserrouter", category: "browser-launcher")
 
 final class BrowserLauncher {
     func isInstalled(_ option: BrowserOption) -> Bool {

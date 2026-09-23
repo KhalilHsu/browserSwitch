@@ -213,7 +213,7 @@ extension SettingsWindowController {
         for app in runningApps {
             guard let bundleID = app.bundleIdentifier, !seenBundleIDs.contains(bundleID) else { continue }
             // Skip BrowserRouter itself
-            if bundleID == "local.browser-router" { continue }
+            if bundleID == "com.khalil.browserrouter" { continue }
             seenBundleIDs.insert(bundleID)
             let title = app.localizedName ?? bundleID
             ruleSourceAppPopup.addItem(withTitle: title)

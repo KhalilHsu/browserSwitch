@@ -633,7 +633,7 @@ extension SettingsWindowController {
     func tableView(_ tableView: NSTableView, pasteboardWriterForRow row: Int) -> NSPasteboardWriting? {
         if tableView === browsersTableView {
             let item = NSPasteboardItem()
-            item.setString(String(row), forType: NSPasteboard.PasteboardType("local.browser-router.browser-row"))
+            item.setString(String(row), forType: NSPasteboard.PasteboardType("com.khalil.browserrouter.browser-row"))
             return item
         }
         return nil
@@ -650,7 +650,7 @@ extension SettingsWindowController {
     func tableView(_ tableView: NSTableView, acceptDrop info: NSDraggingInfo, row: Int, dropOperation: NSTableView.DropOperation) -> Bool {
         guard tableView === browsersTableView else { return false }
         guard let item = info.draggingPasteboard.pasteboardItems?.first,
-              let rowString = item.string(forType: NSPasteboard.PasteboardType("local.browser-router.browser-row")),
+              let rowString = item.string(forType: NSPasteboard.PasteboardType("com.khalil.browserrouter.browser-row")),
               let sourceRow = Int(rowString) else {
             return false
         }

@@ -4,7 +4,7 @@ set -euo pipefail
 APP_NAME="BrowserRouter"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_APP="/Applications/${APP_NAME}.app"
-BUNDLE_ID="local.browser-router"
+BUNDLE_ID="com.khalil.browserrouter"
 USER_HOME="${HOME}"
 if [ "${SUDO_USER:-}" != "" ] && [ "${SUDO_USER}" != "root" ]; then
   USER_HOME="$(eval echo "~${SUDO_USER}")"

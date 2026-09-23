@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-private let configurationLogger = Logger(subsystem: "local.browser-router", category: "configuration")
+private let configurationLogger = Logger(subsystem: "com.khalil.browserrouter", category: "configuration")
 
 public struct BrowserOption: Codable, Hashable {
     public var id: String

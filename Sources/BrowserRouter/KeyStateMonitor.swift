@@ -2,7 +2,7 @@ import AppKit
 import CoreGraphics
 import OSLog
 
-private let keyMonitorLogger = Logger(subsystem: "local.browser-router", category: "key-monitor")
+private let keyMonitorLogger = Logger(subsystem: "com.khalil.browserrouter", category: "key-monitor")
 
 /// Maintains a real-time cache of global keyboard state.
 ///

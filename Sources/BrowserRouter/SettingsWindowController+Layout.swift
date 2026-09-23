@@ -128,7 +128,7 @@ extension SettingsWindowController {
         browsersTableView.allowsMultipleSelection = false
         browsersTableView.rowHeight = rulesTableRowHeight
         browsersTableView.intercellSpacing = rulesTableIntercellSpacing
-        browsersTableView.registerForDraggedTypes([NSPasteboard.PasteboardType("local.browser-router.browser-row")])
+        browsersTableView.registerForDraggedTypes([NSPasteboard.PasteboardType("com.khalil.browserrouter.browser-row")])
 
         ruleNameField.placeholderString = L("Rule name")
         ruleNameField.translatesAutoresizingMaskIntoConstraints = false

@@ -4,7 +4,7 @@ import Foundation
 import OSLog
 import BrowserRouterCore
 
-private let appDelegateLogger = Logger(subsystem: "local.browser-router", category: "app-delegate")
+private let appDelegateLogger = Logger(subsystem: "com.khalil.browserrouter", category: "app-delegate")
 
 /// Returns the parent PID for a given PID via sysctl, or 0 on failure.
 private func getppid_for(_ pid: pid_t) -> pid_t {

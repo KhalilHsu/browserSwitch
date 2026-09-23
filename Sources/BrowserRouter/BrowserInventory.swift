@@ -108,7 +108,7 @@ enum BrowserInventory {
     private static func detectedSystemHandlerOptions(existingOptions: [BrowserOption]) -> [BrowserOption] {
         let routerBundleIdentifiers = Set([
             Bundle.main.bundleIdentifier,
-            "local.browser-router"
+            "com.khalil.browserrouter"
         ].compactMap { $0 })
         let handlerBundleIdentifiers = allURLHandlerBundleIdentifiers()
         var seenDisplayNames = Set<String>()
