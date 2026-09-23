@@ -32,8 +32,10 @@ fi
 
 # The archive must carry a certificate-based signature with the hardened
 # runtime before Xcode re-signs it with Developer ID. Select by SHA-1 because
-# Xcode can leave several certificates with the same name.
-IDENTITY_LINE=$(security find-identity -v -p codesigning | grep -m1 '"Apple Development' || true)
+# Xcode can leave several certificates with the same name, and skip revoked
+# ones: find-identity -v still lists them, and Xcode treats a revoked
+# signature as ad hoc and drops the app's entitlements during export.
+IDENTITY_LINE=$(security find-identity -v -p codesigning | grep '"Apple Development' | grep -v REVOKED | head -1 || true)
 PRESIGN_IDENTITY="${PRESIGN_IDENTITY:-$(echo "$IDENTITY_LINE" | awk '{ print $2 }')}"
 PRESIGN_NAME=$(echo "$IDENTITY_LINE" | awk -F'"' '{ print $2 }')
 if [ -z "$PRESIGN_IDENTITY" ]; then
@@ -131,6 +133,14 @@ done
 NOTARIZED_APP="${NOTARIZED_DIR}/${APP_NAME}.app"
 xcrun stapler validate "$NOTARIZED_APP"
 spctl --assess --type exec --verbose=2 "$NOTARIZED_APP"
+if [ -n "${ENTITLEMENTS:-}" ]; then
+  for key in $(/usr/libexec/PlistBuddy -c "Print" "${SRC_DIR}/${ENTITLEMENTS}" | awk -F' = ' '/ = /{ gsub(/ /, "", $1); print $1 }'); do
+    if ! codesign -d --entitlements - "$NOTARIZED_APP" 2>/dev/null | grep -q "$key"; then
+      echo "Error: the notarized app lost the ${key} entitlement."
+      exit 1
+    fi
+  done
+fi
 
 # 5. Package the stapled app with an /Applications shortcut.
 STAGING="${WORK_DIR}/dmg"
