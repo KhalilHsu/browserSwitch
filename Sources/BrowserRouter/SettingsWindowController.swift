@@ -184,11 +184,13 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         }
     }
 
-    let showDockIconCheckBox = NSButton(checkboxWithTitle: L("Show Dock icon"), target: nil, action: nil)
-    let showStatusItemCheckBox = NSButton(checkboxWithTitle: L("Show menu bar icon"), target: nil, action: nil)
-    let autoRestoreCheckBox = NSButton(checkboxWithTitle: L("Auto-restore previous default browser on quit"), target: nil, action: nil)
-    let defaultBrowserLabel = NSTextField(labelWithString: L("Default browser/profile"))
-    let chooserModifierLabel = NSTextField(labelWithString: L("Show chooser when"))
+    let showDockIconCheckBox = NSButton(checkboxWithTitle: L("Dock"), target: nil, action: nil)
+    let showStatusItemCheckBox = NSButton(checkboxWithTitle: L("Menu bar"), target: nil, action: nil)
+    let autoRestoreCheckBox = NSButton(checkboxWithTitle: L("Restore previous default on quit"), target: nil, action: nil)
+    let defaultBrowserLabel = NSTextField(labelWithString: L("Default browser"))
+    let chooserModifierLabel = NSTextField(labelWithString: L("Chooser shortcut"))
+    let languageLabel = NSTextField(labelWithString: L("Language"))
+    let languagePopup = NSPopUpButton()
     let defaultBrowserPopup = NSPopUpButton()
     let modifierPopup = NSPopUpButton()
     let shortcutRecorderButton = ShortcutRecorderButton()
@@ -200,7 +202,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let ruleBrowserPopup = NSPopUpButton()
     let ruleSourceAppPopup = NSPopUpButton()
     let ruleTesterURLField = NSTextField()
-    let ruleTesterResultLabel = NSTextField(labelWithString: "")
+    let ruleTesterResultLabel = NSTextField(wrappingLabelWithString: "")
     let ruleEditorTitleLabel = NSTextField(labelWithString: "")
     let ruleEditorHintLabel = NSTextField(wrappingLabelWithString: "")
     let ruleEditorConfirmButton = NSButton(title: L("Add Rule"), target: nil, action: nil)
@@ -250,15 +252,18 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     var aboutPageContentStack: NSStackView?
     let onSave: (RouterConfiguration) -> Void
     let onRestoreDefaultBrowser: () -> Void
+    let onLanguageChange: () -> Void
 
     init(
         configuration: RouterConfiguration,
         onSave: @escaping (RouterConfiguration) -> Void,
-        onRestoreDefaultBrowser: @escaping () -> Void
+        onRestoreDefaultBrowser: @escaping () -> Void,
+        onLanguageChange: @escaping () -> Void
     ) {
         self.configuration = configuration
         self.onSave = onSave
         self.onRestoreDefaultBrowser = onRestoreDefaultBrowser
+        self.onLanguageChange = onLanguageChange
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 820, height: 680),
@@ -277,7 +282,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         window.delegate = self
         buildUI()
         reloadControls()
-        updateProfileAccessNote()
     }
 
     required init?(coder: NSCoder) {

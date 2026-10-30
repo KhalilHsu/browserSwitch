@@ -704,6 +704,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 },
                 onRestoreDefaultBrowser: { [weak self] in
                     self?.confirmAndRestorePreviousDefaultBrowser()
+                },
+                onLanguageChange: { [weak self] in
+                    self?.reloadInterfaceForLanguageChange()
                 }
             )
         } else {
@@ -713,6 +716,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         settingsWindowController?.showWindow(nil)
         settingsWindowController?.window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// UI text is set when windows and menus are built, so rebuild them in the new language.
+    private func reloadInterfaceForLanguageChange() {
+        let frame = settingsWindowController?.window?.frame
+        settingsWindowController?.window?.orderOut(nil)
+        settingsWindowController = nil
+        installMainMenu()
+        openSettings()
+        if let frame {
+            settingsWindowController?.window?.setFrameTopLeftPoint(NSPoint(x: frame.minX, y: frame.maxY))
+        }
     }
 
     @objc private func quit() {

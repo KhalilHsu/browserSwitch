@@ -58,5 +58,7 @@ if [ -d "Resources" ]; then
   cp -R Resources/. "${CONTENTS_DIR}/Resources/"
 fi
 
+# Folders synced by iCloud/File Provider (e.g. ~/Desktop) add Finder xattrs that codesign rejects.
+xattr -cr "${APP_DIR}"
 codesign --force --deep --sign - "${APP_DIR}" >/dev/null
 echo "${APP_DIR}"

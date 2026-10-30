@@ -3,20 +3,18 @@ import AppKit
 private let formRowSpacing = CGFloat(12.0)
 private let formLabelWidth = CGFloat(160.0)
 private let settingsWindowMinimumSize = NSSize(width: 620, height: 240)
-private let settingsSummaryFontSize = CGFloat(12.0)
-private let rulesOrderColumnWidth = CGFloat(36.0)
+private let rulesOrderColumnWidth = CGFloat(24.0)
 private let rulesEnabledColumnWidth = CGFloat(40.0)
-private let rulesNameColumnWidth = CGFloat(100.0)
-private let rulesMatchColumnWidth = CGFloat(174.0)
-private let rulesBrowserColumnWidth = CGFloat(116.0)
+private let rulesNameColumnWidth = CGFloat(96.0)
+private let rulesMatchColumnWidth = CGFloat(150.0)
+private let rulesBrowserColumnWidth = CGFloat(96.0)
 private let rulesTableRowHeight = CGFloat(28.0)
 private let rulesTableIntercellSpacing = NSSize(width: 8, height: 4)
 private let aboutLogoFontSize = CGFloat(34.0)
-private let aboutDescriptionFontSize = CGFloat(14.0)
+private let aboutDescriptionFontSize = CGFloat(13.0)
 private let aboutDescriptionWidthInset = CGFloat(64.0)
 private let aboutVersionFontSize = CGFloat(13.0)
 private let ruleButtonStackSpacing = CGFloat(8.0)
-private let advancedHintFontSize = CGFloat(12.0)
 private let aboutVersionLabelFontSize = CGFloat(12.0)
 
 extension SettingsWindowController {
@@ -76,6 +74,16 @@ extension SettingsWindowController {
         defaultBrowserPopup.action = #selector(defaultBrowserChanged)
 
         chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
+        languageLabel.translatesAutoresizingMaskIntoConstraints = false
+        languagePopup.translatesAutoresizingMaskIntoConstraints = false
+        languagePopup.target = self
+        languagePopup.action = #selector(languageChanged)
+        languagePopup.removeAllItems()
+        for language in AppLanguage.allCases {
+            languagePopup.addItem(withTitle: language.title)
+            languagePopup.lastItem?.representedObject = language.rawValue
+        }
+        languagePopup.selectItem(withRepresentedObject: AppLanguage.current.rawValue)
         modifierPopup.translatesAutoresizingMaskIntoConstraints = false
         modifierPopup.target = self
         modifierPopup.action = #selector(modifierChanged)
@@ -86,10 +94,10 @@ extension SettingsWindowController {
         }
 
         browserSummaryLabel.textColor = .secondaryLabelColor
-        browserSummaryLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        browserSummaryLabel.font = SettingsStyle.hintFont
         browserSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
         ruleSummaryLabel.textColor = .secondaryLabelColor
-        ruleSummaryLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        ruleSummaryLabel.font = SettingsStyle.hintFont
         ruleSummaryLabel.translatesAutoresizingMaskIntoConstraints = false
 
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("order")))
@@ -97,16 +105,18 @@ extension SettingsWindowController {
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         rulesTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("browser")))
-        rulesTableView.tableColumns[0].title = L("Order")
+        rulesTableView.tableColumns[0].title = "#"
         rulesTableView.tableColumns[0].width = rulesOrderColumnWidth
         rulesTableView.tableColumns[1].title = L("On")
         rulesTableView.tableColumns[1].width = rulesEnabledColumnWidth
-        rulesTableView.tableColumns[2].title = L("Rule")
+        rulesTableView.tableColumns[2].title = L("Name")
         rulesTableView.tableColumns[2].width = rulesNameColumnWidth
-        rulesTableView.tableColumns[3].title = L("Match")
+        rulesTableView.tableColumns[3].title = L("Condition")
         rulesTableView.tableColumns[3].width = rulesMatchColumnWidth
-        rulesTableView.tableColumns[4].title = L("Target")
+        rulesTableView.tableColumns[4].title = L("Opens in")
         rulesTableView.tableColumns[4].width = rulesBrowserColumnWidth
+        // Columns plus spacing fit the page width; the last column absorbs any leftover space.
+        rulesTableView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
         rulesTableView.delegate = self
         rulesTableView.dataSource = self
         rulesTableView.usesAlternatingRowBackgroundColors = true
@@ -119,7 +129,7 @@ extension SettingsWindowController {
 
         browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visible")))
         browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("name")))
-        browsersTableView.tableColumns[0].title = L("Vis")
+        browsersTableView.tableColumns[0].title = L("Show")
         browsersTableView.tableColumns[0].width = rulesEnabledColumnWidth
         browsersTableView.tableColumns[1].title = L("Browser/Profile")
         browsersTableView.tableColumns[1].width = rulesNameColumnWidth + rulesMatchColumnWidth + rulesBrowserColumnWidth
@@ -156,15 +166,12 @@ extension SettingsWindowController {
         ruleTesterURLField.placeholderString = L("Paste a URL or domain, e.g. www.baidu.com")
         ruleTesterURLField.translatesAutoresizingMaskIntoConstraints = false
         ruleTesterURLField.delegate = self
-        ruleTesterResultLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
-        ruleTesterResultLabel.textColor = .secondaryLabelColor
-        ruleTesterResultLabel.lineBreakMode = .byWordWrapping
+        SettingsStyle.styleHint(ruleTesterResultLabel)
         ruleTesterResultLabel.maximumNumberOfLines = 3
-        ruleTesterResultLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        ruleEditorTitleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        ruleEditorTitleLabel.font = SettingsStyle.sectionTitleFont
         ruleEditorTitleLabel.translatesAutoresizingMaskIntoConstraints = false
-        ruleEditorHintLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        ruleEditorHintLabel.font = SettingsStyle.hintFont
         ruleEditorHintLabel.textColor = .secondaryLabelColor
         ruleEditorHintLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -202,9 +209,7 @@ extension SettingsWindowController {
         )
         buildAdvancedPage(
             browsersScrollView: makeBrowsersScrollView(),
-            advancedHintLabel: makeAdvancedHintLabel(),
             refreshButton: makeRefreshButton(),
-            detectButton: makeDetectButton(),
             revealButton: makeRevealButton(),
             restoreButton: makeRestoreDefaultBrowserButton()
         )
@@ -301,7 +306,7 @@ extension SettingsWindowController {
         moveRuleDownButton.toolTip = L("Move Down")
 
         let hintLabel = NSTextField(labelWithString: L("Double-click a rule to edit it."))
-        hintLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        hintLabel.font = SettingsStyle.hintFont
         hintLabel.textColor = .tertiaryLabelColor
         hintLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -326,28 +331,17 @@ extension SettingsWindowController {
         button.translatesAutoresizingMaskIntoConstraints = false
     }
 
-    func makeAdvancedHintLabel() -> NSTextField {
-        let label = NSTextField(labelWithString: L("Use this page for browser inventory and the config file."))
-        label.font = .systemFont(ofSize: advancedHintFontSize)
-        label.textColor = .secondaryLabelColor
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }
-
+    /// Rescans installed browsers and their profiles in one pass.
     func makeRefreshButton() -> NSButton {
-        makeButton(L("Refresh Browsers"), action: #selector(refreshBrowsers))
-    }
-
-    func makeDetectButton() -> NSButton {
-        makeButton(L("Detect Profiles"), action: #selector(detectProfiles))
+        makeButton(L("Rescan"), action: #selector(refreshBrowsers))
     }
 
     func makeRevealButton() -> NSButton {
-        makeButton(L("Open Config"), action: #selector(revealConfigFile))
+        makeButton(L("Show in Finder"), action: #selector(revealConfigFile))
     }
 
     func makeRestoreDefaultBrowserButton() -> NSButton {
-        makeButton(L("Restore Previous Default Browser"), action: #selector(restorePreviousDefaultBrowser))
+        makeButton(L("Restore Original Default"), action: #selector(restorePreviousDefaultBrowser))
     }
 
     func makeAboutVersionLabel() -> NSTextField {

@@ -61,14 +61,6 @@ extension SettingsWindowController {
         updateRuleEditorState()
     }
 
-    @objc func detectProfiles() {
-        configuration = ChromiumProfileScanner.mergeDetectedOptions(into: configuration)
-        configuration = FirefoxProfileScanner.mergeDetectedOptions(into: configuration)
-        reloadControls()
-        updateProfileAccessNote()
-        _ = persistConfiguration(statusMessage: L("Profiles detected and saved"))
-    }
-
     @objc func refreshBrowsers() {
         let result = BrowserInventory.refreshConfiguration(configuration)
         configuration = result.configuration
@@ -156,6 +148,21 @@ extension SettingsWindowController {
     @objc func defaultBrowserChanged() {
         updateRuleTesterResult()
         _ = persistConfiguration(statusMessage: L("Default browser saved"))
+    }
+
+    @objc func languageChanged() {
+        guard let rawValue = selectedRepresentedObject(languagePopup),
+              let language = AppLanguage(rawValue: rawValue),
+              language != AppLanguage.current
+        else {
+            return
+        }
+
+        AppLanguage.current = language
+        // The window is rebuilt by its owner, so let this action finish first.
+        DispatchQueue.main.async { [onLanguageChange] in
+            onLanguageChange()
+        }
     }
 
     @objc func modifierChanged() {

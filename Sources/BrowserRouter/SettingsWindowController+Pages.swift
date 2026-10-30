@@ -31,13 +31,20 @@ extension SettingsWindowController {
         iconTogglesStack.spacing = 24
         iconTogglesStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let iconsLabel = NSTextField(labelWithString: L("Icons"))
-        let emptyLabel = NSTextField(labelWithString: "")
+        // Hints sit under their control, so they only get the width right of the label column.
+        let indentedHintWidth = SettingsStyle.contentWidth - 172
+        let chooserHint = SettingsStyle.hint(L("Hold this shortcut while opening a link to pick a browser for it."))
+        chooserHint.preferredMaxLayoutWidth = indentedHintWidth
+
         stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
-        stack.addArrangedSubview(formRow(label: emptyLabel, control: autoRestoreCheckBox))
+        stack.addArrangedSubview(formRow(label: NSTextField(labelWithString: ""), control: autoRestoreCheckBox))
         stack.addArrangedSubview(chooserRow)
-        stack.addArrangedSubview(formRow(label: iconsLabel, control: iconTogglesStack))
+        stack.addArrangedSubview(formRow(label: NSTextField(labelWithString: ""), control: chooserHint))
+        stack.addArrangedSubview(formRow(label: NSTextField(labelWithString: L("Show icon in")), control: iconTogglesStack))
+        stack.addArrangedSubview(formRow(label: languageLabel, control: languagePopup))
         stack.addArrangedSubview(browserSummaryLabel)
+        stack.setCustomSpacing(4, after: chooserRow)
+        stack.setCustomSpacing(20, after: languagePopup.superview ?? languagePopup)
 
         basicPageView.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -46,15 +53,17 @@ extension SettingsWindowController {
             stack.trailingAnchor.constraint(lessThanOrEqualTo: basicPageView.trailingAnchor, constant: -32),
             stack.bottomAnchor.constraint(lessThanOrEqualTo: basicPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
-            // Make the modifier popup the same width as the default browser popup
-            modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor)
+            // Keep every popup in the control column the same width.
+            modifierPopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor),
+            languagePopup.widthAnchor.constraint(equalTo: defaultBrowserPopup.widthAnchor)
         ])
     }
 
     func buildRulesPage(rulesScrollView: NSScrollView, ruleActionBar: NSStackView) {
-        let headerLabel = NSTextField(labelWithString: L("Rules decide where a link goes before it opens."))
-        headerLabel.font = .systemFont(ofSize: 13)
+        let headerLabel = NSTextField(wrappingLabelWithString: L("Rules are checked from top to bottom. The first match wins."))
         headerLabel.textColor = .secondaryLabelColor
+        headerLabel.preferredMaxLayoutWidth = SettingsStyle.contentWidth - 140
+        headerLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
 
         configureButton(newRuleButton, title: L("New Rule"), action: #selector(startNewRule))
@@ -77,9 +86,7 @@ extension SettingsWindowController {
         rulesHeaderStack.spacing = 12
         rulesHeaderStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let testerTitle = NSTextField(labelWithString: L("Rule tester"))
-        testerTitle.font = .systemFont(ofSize: 13, weight: .medium)
-        testerTitle.translatesAutoresizingMaskIntoConstraints = false
+        let testerTitle = SettingsStyle.sectionTitle(L("Test a link"))
 
         let testerStack = NSStackView(views: [testerTitle, ruleTesterURLField, ruleTesterResultLabel])
         testerStack.orientation = .vertical
@@ -119,60 +126,16 @@ extension SettingsWindowController {
 
     func buildAdvancedPage(
         browsersScrollView: NSScrollView,
-        advancedHintLabel: NSTextField,
         refreshButton: NSButton,
-        detectButton: NSButton,
         revealButton: NSButton,
         restoreButton: NSButton
     ) {
-        let inventoryTitle = NSTextField(labelWithString: L("Browser inventory"))
-        inventoryTitle.font = .systemFont(ofSize: 15, weight: .semibold)
-        inventoryTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let defaultBrowserTitle = NSTextField(labelWithString: L("Default browser"))
-        defaultBrowserTitle.font = .systemFont(ofSize: 15, weight: .semibold)
-        defaultBrowserTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let defaultBrowserHint = NSTextField(labelWithString: L("Restore the browser that handled http and https links before BrowserRouter setup."))
-        defaultBrowserHint.font = .systemFont(ofSize: 12)
-        defaultBrowserHint.textColor = .secondaryLabelColor
-        defaultBrowserHint.lineBreakMode = .byWordWrapping
-        defaultBrowserHint.maximumNumberOfLines = 2
-        defaultBrowserHint.preferredMaxLayoutWidth = settingsTabContentWidth - 64
-        defaultBrowserHint.translatesAutoresizingMaskIntoConstraints = false
-        defaultBrowserHint.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        let configTitle = NSTextField(labelWithString: L("Config file"))
-        configTitle.font = .systemFont(ofSize: 15, weight: .semibold)
-        configTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let inventoryButtons = NSStackView(views: [refreshButton, detectButton])
-        inventoryButtons.orientation = .horizontal
-        inventoryButtons.alignment = .centerY
-        inventoryButtons.spacing = 8
-        inventoryButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        let configButtons = NSStackView(views: [revealButton])
-        configButtons.orientation = .horizontal
-        configButtons.alignment = .centerY
-        configButtons.spacing = 8
-        configButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        let restoreButtons = NSStackView(views: [restoreButton])
-        restoreButtons.orientation = .horizontal
-        restoreButtons.alignment = .centerY
-        restoreButtons.spacing = 8
-        restoreButtons.translatesAutoresizingMaskIntoConstraints = false
-
-        profileAccessNoteLabel.font = .systemFont(ofSize: 11)
-        profileAccessNoteLabel.textColor = .secondaryLabelColor
-        profileAccessNoteLabel.preferredMaxLayoutWidth = settingsTabContentWidth - 64
-        profileAccessNoteLabel.translatesAutoresizingMaskIntoConstraints = false
+        SettingsStyle.styleHint(profileAccessNoteLabel)
         profileAccessSettingsButton.target = self
         profileAccessSettingsButton.action = #selector(openFullDiskAccessSettings)
         profileAccessSettingsButton.isBordered = false
         profileAccessSettingsButton.contentTintColor = .linkColor
-        profileAccessSettingsButton.font = .systemFont(ofSize: 11)
+        profileAccessSettingsButton.font = SettingsStyle.hintFont
         profileAccessSettingsButton.translatesAutoresizingMaskIntoConstraints = false
 
         let profileAccessNote = NSStackView(views: [profileAccessNoteLabel, profileAccessSettingsButton])
@@ -181,36 +144,32 @@ extension SettingsWindowController {
         profileAccessNote.spacing = 2
         profileAccessNote.translatesAutoresizingMaskIntoConstraints = false
 
-        let inventorySection = NSStackView(views: [inventoryTitle, browsersScrollView, inventoryButtons, profileAccessNote])
-        inventorySection.orientation = .vertical
-        inventorySection.alignment = .leading
-        inventorySection.spacing = 8
-        inventorySection.translatesAutoresizingMaskIntoConstraints = false
-        
-        browsersScrollView.heightAnchor.constraint(equalToConstant: 160).isActive = true
-        browsersScrollView.widthAnchor.constraint(equalToConstant: settingsTabContentWidth - 64).isActive = true
+        let inventorySection = advancedSection(
+            title: L("Browsers & Profiles"),
+            hint: L("Uncheck to hide from menus. Drag to reorder."),
+            content: [browsersScrollView, refreshButton, profileAccessNote]
+        )
+        browsersScrollView.heightAnchor.constraint(equalToConstant: 236).isActive = true
+        browsersScrollView.widthAnchor.constraint(equalToConstant: SettingsStyle.contentWidth).isActive = true
 
-        let defaultBrowserSection = NSStackView(views: [defaultBrowserTitle, defaultBrowserHint, restoreButtons])
-        defaultBrowserSection.orientation = .vertical
-        defaultBrowserSection.alignment = .leading
-        defaultBrowserSection.spacing = 7
-        defaultBrowserSection.translatesAutoresizingMaskIntoConstraints = false
+        let defaultBrowserSection = advancedSection(
+            title: L("System Default Browser"),
+            hint: L("Hand links back to the browser that was the default before BrowserRouter."),
+            content: [restoreButton]
+        )
 
-        let configSection = NSStackView(views: [configTitle, configButtons])
-        configSection.orientation = .vertical
-        configSection.alignment = .leading
-        configSection.spacing = 8
-        configSection.translatesAutoresizingMaskIntoConstraints = false
+        let configSection = advancedSection(
+            title: L("Configuration"),
+            hint: L("Settings and rules are stored in a local JSON file."),
+            content: [revealButton]
+        )
 
-        let stack = NSStackView(views: [
-            advancedHintLabel,
-            inventorySection,
-            defaultBrowserSection,
-            configSection
-        ])
+        updateProfileAccessNote()
+
+        let stack = NSStackView(views: [inventorySection, defaultBrowserSection, configSection])
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 18
+        stack.spacing = 22
         stack.translatesAutoresizingMaskIntoConstraints = false
         advancedPageContentStack = stack
 
@@ -219,9 +178,23 @@ extension SettingsWindowController {
             stack.topAnchor.constraint(equalTo: advancedPageView.topAnchor, constant: settingsPageTopPadding),
             stack.leadingAnchor.constraint(equalTo: advancedPageView.leadingAnchor, constant: 32),
             stack.trailingAnchor.constraint(equalTo: advancedPageView.trailingAnchor, constant: -32),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
-            defaultBrowserHint.widthAnchor.constraint(lessThanOrEqualTo: stack.widthAnchor)
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: advancedPageView.bottomAnchor, constant: -settingsPageVerticalPadding)
         ])
+    }
+
+    /// A titled block on the Advanced page: section title, one hint line, then its controls.
+    private func advancedSection(title: String, hint: String, content: [NSView]) -> NSStackView {
+        let header = NSStackView(views: [SettingsStyle.sectionTitle(title), SettingsStyle.hint(hint)])
+        header.orientation = .vertical
+        header.alignment = .leading
+        header.spacing = 2
+
+        let section = NSStackView(views: [header] + content)
+        section.orientation = .vertical
+        section.alignment = .leading
+        section.spacing = 8
+        section.translatesAutoresizingMaskIntoConstraints = false
+        return section
     }
 
     func buildAboutPage(versionStaticLabel: NSTextField) {

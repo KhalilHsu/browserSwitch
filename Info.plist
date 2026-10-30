@@ -4,27 +4,8 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
-	<key>CFBundleLocalizations</key>
-	<array>
-		<string>en</string>
-		<string>zh-Hans</string>
-	</array>
-	<key>CFBundleExecutable</key>
-	<string>BrowserRouter</string>
-	<key>CFBundleIdentifier</key>
-	<string>com.khalil.browserrouter</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
 	<key>CFBundleDisplayName</key>
 	<string>BrowserRouter</string>
-	<key>CFBundleIconFile</key>
-	<string>BrowserRouter</string>
-	<key>CFBundleName</key>
-	<string>BrowserRouter</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.3.1</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -77,13 +58,32 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleExecutable</key>
+	<string>BrowserRouter</string>
+	<key>CFBundleIconFile</key>
+	<string>BrowserRouter</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.khalil.browserrouter</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>zh-Hans</string>
+	</array>
+	<key>CFBundleName</key>
+	<string>BrowserRouter</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.4.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleURLName</key>
-			<string>HTTP URL</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>HTTP URL</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>http</string>
@@ -92,10 +92,10 @@
 			<string>Owner</string>
 		</dict>
 		<dict>
-			<key>CFBundleURLName</key>
-			<string>HTTPS URL</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
+			<key>CFBundleURLName</key>
+			<string>HTTPS URL</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>https</string>
@@ -104,6 +104,14 @@
 			<string>Owner</string>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>4</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>12.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
 	<key>NSServices</key>
 	<array>
 		<dict>
@@ -116,12 +124,6 @@
 			<string>openSelectedURL</string>
 			<key>NSPortName</key>
 			<string>BrowserRouter</string>
-			<key>NSSendTypes</key>
-			<array>
-				<string>NSStringPboardType</string>
-				<string>public.utf8-plain-text</string>
-				<string>public.url</string>
-			</array>
 			<key>NSRequiredContext</key>
 			<dict>
 				<key>NSTextContent</key>
@@ -129,15 +131,13 @@
 			</dict>
 			<key>NSRestricted</key>
 			<false/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>NSStringPboardType</string>
+				<string>public.utf8-plain-text</string>
+				<string>public.url</string>
+			</array>
 		</dict>
 	</array>
-	<key>CFBundleVersion</key>
-	<string>3</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>12.0</string>
-	<key>LSUIElement</key>
-	<true/>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
 </dict>
 </plist>

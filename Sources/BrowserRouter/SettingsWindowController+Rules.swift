@@ -422,7 +422,7 @@ extension SettingsWindowController {
 
         let rawValue = ruleTesterURLField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !rawValue.isEmpty else {
-            ruleTesterResultLabel.stringValue = L("Paste a URL to preview routing.")
+            ruleTesterResultLabel.stringValue = L("Enter a link to see which browser opens it.")
             ruleTesterResultLabel.textColor = .secondaryLabelColor
             return
         }

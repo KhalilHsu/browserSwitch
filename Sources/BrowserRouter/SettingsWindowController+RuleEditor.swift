@@ -48,8 +48,8 @@ extension SettingsWindowController {
         matchRow.translatesAutoresizingMaskIntoConstraints = false
 
         let grid = NSGridView(views: [
-            [ruleEditorFormLabel(L("Rule name")), ruleNameField],
-            [ruleEditorFormLabel(L("Match")), matchRow],
+            [ruleEditorFormLabel(L("Name")), ruleNameField],
+            [ruleEditorFormLabel(L("Condition")), matchRow],
             [NSGridCell.emptyContentView, ruleEditorHintLabel],
             [ruleEditorFormLabel(L("Open with")), ruleBrowserPopup],
             [ruleEditorFormLabel(L("Source App")), ruleSourceAppPopup]

@@ -66,7 +66,7 @@
 "Releases" = "版本发布";
 "Version" = "版本";
 
-"On" = "开";
+"On" = "启用";
 "Order" = "顺序";
 "Rule" = "规则";
 "Match" = "匹配";
@@ -233,3 +233,27 @@
 "%@ (Not Installed)" = "%@（未安装）";
 "Choose" = "选择";
 "Choose the app that opens links for this rule." = "选择会打开这类链接的 App。";
+"Dock" = "程序坞";
+"Menu bar" = "菜单栏";
+"Restore previous default on quit" = "退出时恢复原来的默认浏览器";
+"Chooser shortcut" = "选择器快捷键";
+"Hold this shortcut while opening a link to pick a browser for it." = "打开链接时按住这组快捷键，可临时选择用哪个浏览器打开。";
+"Show icon in" = "显示图标";
+"Language" = "语言";
+"System Default" = "跟随系统";
+"Rules are checked from top to bottom. The first match wins." = "规则从上到下依次匹配，第一条命中的规则生效。";
+"Name" = "名称";
+"Condition" = "条件";
+"Opens in" = "打开方式";
+"Show" = "显示";
+"Test a link" = "测试链接";
+"Enter a link to see which browser opens it." = "输入链接，查看它会用哪个浏览器打开。";
+"Rescan" = "重新扫描";
+"Show in Finder" = "在访达中显示";
+"Restore Original Default" = "恢复原默认浏览器";
+"Browsers & Profiles" = "浏览器与 Profile";
+"Uncheck to hide from menus. Drag to reorder." = "取消勾选可在菜单中隐藏，拖动可调整顺序。";
+"System Default Browser" = "系统默认浏览器";
+"Hand links back to the browser that was the default before BrowserRouter." = "把链接交还给使用 BrowserRouter 之前的默认浏览器。";
+"Configuration" = "配置";
+"Settings and rules are stored in a local JSON file." = "设置和规则保存在本地的 JSON 文件中。";
