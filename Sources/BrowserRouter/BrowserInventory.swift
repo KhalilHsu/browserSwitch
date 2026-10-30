@@ -41,7 +41,9 @@ enum BrowserInventory {
     static func refreshConfiguration(_ configuration: RouterConfiguration) -> BrowserRefreshResult {
         let unavailableOptions = configuration.browserOptions.filter { !BrowserAvailability.isInstalled($0) }
         let installedExistingOptions = BrowserAvailability.installedOptions(from: configuration.browserOptions)
-        let profileOptions = ChromiumProfileScanner.detectedOptions() + FirefoxProfileScanner.detectedOptions()
+        let profileScan = ChromiumProfileScanner.scan(existingOptions: configuration.browserOptions)
+            + FirefoxProfileScanner.scan(existingOptions: configuration.browserOptions)
+        let profileOptions = profileScan.options
         let profileBundleIdentifiers = Set(profileOptions.map(\.bundleIdentifier))
         let systemOptions = detectedSystemHandlerOptions(existingOptions: installedExistingOptions).filter { option in
             !profileBundleIdentifiers.contains(option.bundleIdentifier)
@@ -87,18 +89,12 @@ enum BrowserInventory {
 
         let addedOptionNames = detectedIDs.compactMap { mergedByID[$0]?.name }
 
+        var refreshedConfiguration = configuration
+        refreshedConfiguration.defaultOptionID = resolvedDefaultID
+        refreshedConfiguration.browserOptions = mergedOptions
+
         return BrowserRefreshResult(
-            configuration: RouterConfiguration(
-                defaultOptionID: resolvedDefaultID,
-                chooserModifier: configuration.chooserModifier,
-                showsDockIcon: configuration.showsDockIcon,
-                showsStatusItem: configuration.showsStatusItem,
-                hasCompletedOnboarding: configuration.hasCompletedOnboarding,
-                autoRestoreDefaultBrowserOnQuit: configuration.autoRestoreDefaultBrowserOnQuit,
-                previousDefaultBrowser: configuration.previousDefaultBrowser,
-                browserOptions: mergedOptions,
-                routingRules: configuration.routingRules
-            ),
+            configuration: refreshedConfiguration,
             removedUnavailableOptionNames: unavailableOptions.map(\.name),
             addedOptionNames: addedOptionNames,
             unresolvedRuleCount: unresolvedRuleCount
@@ -119,7 +115,9 @@ enum BrowserInventory {
                 continue
             }
 
-            guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) else {
+            guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier),
+                  !isToolingBundle(appURL)
+            else {
                 continue
             }
 
@@ -166,6 +164,14 @@ enum BrowserInventory {
         }
 
         return bundleIdentifiers
+    }
+
+    /// Browsers that dev tools download for automation (e.g. Chrome for Testing under node_modules
+    /// or a hidden cache folder) register as URL handlers but are not real browsing choices.
+    static func isToolingBundle(_ appURL: URL) -> Bool {
+        appURL.pathComponents.contains { component in
+            component == "node_modules" || (component.hasPrefix(".") && component.count > 1)
+        }
     }
 
     private static func existingAppOptionID(for bundleIdentifier: String, in options: [BrowserOption]) -> String? {

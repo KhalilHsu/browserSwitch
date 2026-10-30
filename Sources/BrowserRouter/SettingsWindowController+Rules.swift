@@ -257,6 +257,7 @@ extension SettingsWindowController {
         } else {
             ruleSourceAppPopup.selectItem(at: 0)
         }
+        lastSourceAppSelection = selectedRepresentedObject(ruleSourceAppPopup) ?? ""
         isPopulatingRuleForm = false
     }
 
@@ -270,6 +271,7 @@ extension SettingsWindowController {
             ruleBrowserPopup.selectItem(at: 0)
         }
         ruleSourceAppPopup.selectItem(at: 0)
+        lastSourceAppSelection = ""
         isPopulatingRuleForm = false
     }
 
@@ -307,7 +309,7 @@ extension SettingsWindowController {
     }
 
     func selectedSourceAppBundleID() -> String? {
-        guard let value = selectedRepresentedObject(ruleSourceAppPopup), !value.isEmpty else {
+        guard let value = selectedRepresentedObject(ruleSourceAppPopup), !value.isEmpty, value != chooseOtherSourceAppToken else {
             return nil
         }
         return value

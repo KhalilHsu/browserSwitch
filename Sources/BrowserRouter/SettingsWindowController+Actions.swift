@@ -65,6 +65,7 @@ extension SettingsWindowController {
         configuration = ChromiumProfileScanner.mergeDetectedOptions(into: configuration)
         configuration = FirefoxProfileScanner.mergeDetectedOptions(into: configuration)
         reloadControls()
+        updateProfileAccessNote()
         _ = persistConfiguration(statusMessage: L("Profiles detected and saved"))
     }
 
@@ -72,7 +73,25 @@ extension SettingsWindowController {
         let result = BrowserInventory.refreshConfiguration(configuration)
         configuration = result.configuration
         reloadControls()
+        updateProfileAccessNote()
         _ = persistConfiguration(statusMessage: result.statusMessage)
+    }
+
+    /// Shows a small note when every profile was found but macOS hid some profile names.
+    func updateProfileAccessNote() {
+        let scan = ChromiumProfileScanner.scan(existingOptions: configuration.browserOptions)
+            + FirefoxProfileScanner.scan(existingOptions: configuration.browserOptions)
+        let apps = scan.appsMissingProfileNames
+        profileAccessNoteLabel.stringValue = apps.isEmpty
+            ? ""
+            : L("Some %@ profiles show their folder name because macOS protects browser data. Allow Full Disk Access for BrowserRouter to read profile names.", apps.joined(separator: ", "))
+        profileAccessNoteLabel.superview?.isHidden = apps.isEmpty
+    }
+
+    @objc func openFullDiskAccessSettings() {
+        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     func persistConfiguration(statusMessage: String = L("Saved automatically")) -> Bool {
@@ -177,6 +196,12 @@ extension SettingsWindowController {
     }
 
     @objc func ruleSourceAppChanged() {
+        if selectedRepresentedObject(ruleSourceAppPopup) == chooseOtherSourceAppToken {
+            chooseOtherSourceApp()
+            return
+        }
+
+        lastSourceAppSelection = selectedRepresentedObject(ruleSourceAppPopup) ?? ""
         updateRuleEditorSheetState()
     }
 
@@ -185,6 +210,7 @@ extension SettingsWindowController {
         updateRuleEditorSheetState()
     }
 
+    /// Fills the source app menu: Any App, apps already used by rules, running apps, then a picker for any other app.
     func populateSourceAppPopup() {
         let previousSelection = selectedRepresentedObject(ruleSourceAppPopup)
         ruleSourceAppPopup.removeAllItems()
@@ -193,37 +219,90 @@ extension SettingsWindowController {
         ruleSourceAppPopup.addItem(withTitle: L("Any App"))
         ruleSourceAppPopup.lastItem?.representedObject = "" as String
 
-        // Collect bundle IDs already used in rules (to always show them)
-        let usedSourceApps = Set(configuration.routingRules.compactMap(\.sourceAppBundleID).filter { !$0.isEmpty })
+        var seenBundleIDs: Set<String> = ["com.khalil.browserrouter"]
 
-        // Running GUI apps
-        var seenBundleIDs = Set<String>()
-        let runningApps = NSWorkspace.shared.runningApplications
+        let usedSourceApps = configuration.routingRules
+            .compactMap(\.sourceAppBundleID)
+            .filter { !$0.isEmpty }
+        let usedItems = usedSourceApps.compactMap { bundleID -> (String, String)? in
+            guard seenBundleIDs.insert(bundleID).inserted else { return nil }
+            return (sourceAppDisplayName(for: bundleID), bundleID)
+        }.sorted { $0.0.localizedStandardCompare($1.0) == .orderedAscending }
+        appendSourceAppSection(usedItems)
+
+        let runningItems = NSWorkspace.shared.runningApplications
             .filter { $0.activationPolicy == .regular }
-            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+            .compactMap { app -> (String, String)? in
+                guard let bundleID = app.bundleIdentifier, seenBundleIDs.insert(bundleID).inserted else { return nil }
+                return (app.localizedName ?? bundleID, bundleID)
+            }
+            .sorted { $0.0.localizedStandardCompare($1.0) == .orderedAscending }
+        appendSourceAppSection(runningItems)
 
-        for app in runningApps {
-            guard let bundleID = app.bundleIdentifier, !seenBundleIDs.contains(bundleID) else { continue }
-            // Skip BrowserRouter itself
-            if bundleID == "com.khalil.browserrouter" { continue }
-            seenBundleIDs.insert(bundleID)
-            let title = app.localizedName ?? bundleID
-            ruleSourceAppPopup.addItem(withTitle: title)
-            ruleSourceAppPopup.lastItem?.representedObject = bundleID as String
-        }
+        ruleSourceAppPopup.menu?.addItem(.separator())
+        ruleSourceAppPopup.addItem(withTitle: L("Choose Other App…"))
+        ruleSourceAppPopup.lastItem?.representedObject = chooseOtherSourceAppToken
 
-        // Add any rule-referenced apps that aren't currently running
-        for bundleID in usedSourceApps where !seenBundleIDs.contains(bundleID) {
-            seenBundleIDs.insert(bundleID)
-            ruleSourceAppPopup.addItem(withTitle: L("%@ (Not Running)", bundleID))
-            ruleSourceAppPopup.lastItem?.representedObject = bundleID as String
-        }
-
-        // Restore previous selection
-        if let previousSelection, !previousSelection.isEmpty {
+        if let previousSelection, !previousSelection.isEmpty, previousSelection != chooseOtherSourceAppToken {
             ruleSourceAppPopup.selectItem(withRepresentedObject: previousSelection)
         }
     }
+
+    private func appendSourceAppSection(_ items: [(title: String, bundleID: String)]) {
+        guard !items.isEmpty else { return }
+        ruleSourceAppPopup.menu?.addItem(.separator())
+        for item in items {
+            ruleSourceAppPopup.addItem(withTitle: item.title)
+            ruleSourceAppPopup.lastItem?.representedObject = item.bundleID
+        }
+    }
+
+    func sourceAppDisplayName(for bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            return L("%@ (Not Installed)", bundleID)
+        }
+        return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+    }
+
+    /// Lets the user pick any app bundle and uses its bundle ID as the rule's source app.
+    func chooseOtherSourceApp() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        panel.prompt = L("Choose")
+        panel.message = L("Choose the app that opens links for this rule.")
+
+        let handle: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+            guard let self else { return }
+            guard response == .OK,
+                  let url = panel.url,
+                  let bundleID = Bundle(url: url)?.bundleIdentifier
+            else {
+                self.ruleSourceAppPopup.selectItem(withRepresentedObject: self.lastSourceAppSelection)
+                return
+            }
+
+            if self.ruleSourceAppPopup.indexOfItem(withRepresentedObject: bundleID) < 0 {
+                let title = FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+                let index = self.ruleSourceAppPopup.indexOfItem(withRepresentedObject: self.chooseOtherSourceAppToken)
+                self.ruleSourceAppPopup.insertItem(withTitle: title, at: max(index - 1, 1))
+                self.ruleSourceAppPopup.item(at: max(index - 1, 1))?.representedObject = bundleID
+            }
+            self.ruleSourceAppPopup.selectItem(withRepresentedObject: bundleID)
+            self.lastSourceAppSelection = bundleID
+            self.updateRuleEditorSheetState()
+        }
+
+        if let sheet = ruleEditorSheet, sheet.isVisible {
+            panel.beginSheetModal(for: sheet, completionHandler: handle)
+        } else {
+            handle(panel.runModal())
+        }
+    }
+
+    var chooseOtherSourceAppToken: String { "__choose-other-app__" }
 
     func showMessage(_ title: String, _ message: String) {
         let alert = NSAlert()

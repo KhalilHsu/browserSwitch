@@ -211,6 +211,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let moveRuleDownButton = NSButton(title: "", target: nil, action: nil)
     let autosaveStatusLabel = NSTextField(labelWithString: L("Changes save automatically"))
     let browserSummaryLabel = NSTextField(labelWithString: "")
+    let profileAccessNoteLabel = NSTextField(wrappingLabelWithString: "")
+    let profileAccessSettingsButton = NSButton(title: L("Open Privacy Settings…"), target: nil, action: nil)
     let ruleSummaryLabel = NSTextField(labelWithString: "")
     let headerTitleLabel = NSTextField(labelWithString: L("BrowserRouter"))
     let headerSubtitleLabel = NSTextField(labelWithString: L("Route external links to the browser or profile that fits the moment."))
@@ -235,6 +237,8 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     var isPopulatingRuleForm = false
     var ruleEditorSheet: NSWindow?
     var editingRuleIndex: Int?
+    /// Source app selected before "Choose Other App…", restored if the picker is cancelled.
+    var lastSourceAppSelection = ""
     var isUpdatingRuleTester = false
     var selectedTab: SettingsTab = .basic
     var tabButtons: [SettingsTab: NSButton] = [:]
@@ -273,6 +277,7 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
         window.delegate = self
         buildUI()
         reloadControls()
+        updateProfileAccessNote()
     }
 
     required init?(coder: NSCoder) {

@@ -164,7 +164,24 @@ extension SettingsWindowController {
         restoreButtons.spacing = 8
         restoreButtons.translatesAutoresizingMaskIntoConstraints = false
 
-        let inventorySection = NSStackView(views: [inventoryTitle, browsersScrollView, inventoryButtons])
+        profileAccessNoteLabel.font = .systemFont(ofSize: 11)
+        profileAccessNoteLabel.textColor = .secondaryLabelColor
+        profileAccessNoteLabel.preferredMaxLayoutWidth = settingsTabContentWidth - 64
+        profileAccessNoteLabel.translatesAutoresizingMaskIntoConstraints = false
+        profileAccessSettingsButton.target = self
+        profileAccessSettingsButton.action = #selector(openFullDiskAccessSettings)
+        profileAccessSettingsButton.isBordered = false
+        profileAccessSettingsButton.contentTintColor = .linkColor
+        profileAccessSettingsButton.font = .systemFont(ofSize: 11)
+        profileAccessSettingsButton.translatesAutoresizingMaskIntoConstraints = false
+
+        let profileAccessNote = NSStackView(views: [profileAccessNoteLabel, profileAccessSettingsButton])
+        profileAccessNote.orientation = .vertical
+        profileAccessNote.alignment = .leading
+        profileAccessNote.spacing = 2
+        profileAccessNote.translatesAutoresizingMaskIntoConstraints = false
+
+        let inventorySection = NSStackView(views: [inventoryTitle, browsersScrollView, inventoryButtons, profileAccessNote])
         inventorySection.orientation = .vertical
         inventorySection.alignment = .leading
         inventorySection.spacing = 8

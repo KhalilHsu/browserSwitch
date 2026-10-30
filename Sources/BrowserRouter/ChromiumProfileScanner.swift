@@ -49,13 +49,24 @@ enum ChromiumProfileScanner {
         )
     ]
 
-    static func detectedOptions() -> [BrowserOption] {
-        specs.flatMap { spec -> [BrowserOption] in
+    static func detectedOptions(existingOptions: [BrowserOption] = []) -> [BrowserOption] {
+        scan(existingOptions: existingOptions).options
+    }
+
+    /// Finds every profile of each installed Chromium browser.
+    ///
+    /// `Local State` is the source of truth (it has the display names), but since macOS 27 the
+    /// browser's Application Support folder is protected and unreadable without Full Disk Access.
+    /// The profile folders under ~/Library/Caches are not protected, so they are used to still find
+    /// every profile; names then come from earlier scans, falling back to the folder name.
+    static func scan(existingOptions: [BrowserOption] = []) -> ProfileScanResult {
+        specs.reduce(into: ProfileScanResult()) { result, spec in
             guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: spec.bundleIdentifier) != nil else {
-                return []
+                return
             }
 
-            return profileDirectories(for: spec).map { profile in
+            let profiles = profiles(for: spec, existingOptions: existingOptions)
+            result.options += profiles.entries.map { profile in
                 BrowserOption(
                     id: "\(spec.idPrefix)-\(BrowserSlug.makeProfileIDComponent(profile.directory))",
                     name: "\(spec.optionNamePrefix) - \(profile.displayName)",
@@ -65,68 +76,65 @@ enum ChromiumProfileScanner {
                     extraArguments: nil
                 )
             }
+            if profiles.hasMissingNames {
+                result.appsMissingProfileNames.append(spec.appName)
+            }
         }
     }
 
     static func mergeDetectedOptions(into configuration: RouterConfiguration) -> RouterConfiguration {
-        let detected = detectedOptions()
-        guard !detected.isEmpty else {
-            return configuration
+        ProfileScanSupport.merge(detectedOptions(existingOptions: configuration.browserOptions), into: configuration)
+    }
+
+    private static func profiles(
+        for spec: ChromiumAppSpec,
+        existingOptions: [BrowserOption]
+    ) -> (entries: [(directory: String, displayName: String)], hasMissingNames: Bool) {
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let root = home.appendingPathComponent(spec.supportSubpath)
+
+        let localState = ProfileScanSupport.read(root.appendingPathComponent("Local State"), parse: profileNames(fromLocalState:))
+        if case .value(let names) = localState, !names.isEmpty {
+            return (sortedEntries(names), false)
         }
 
-        var byID = Dictionary(uniqueKeysWithValues: configuration.browserOptions.map { ($0.id, $0) })
-        for option in detected {
-            byID[option.id] = option
+        // Union of profile folders from the user data dir (readable before macOS 27) and the cache dir.
+        var directories = Set<String>()
+        if case .value(let names) = ProfileScanSupport.subdirectoryNames(of: root) {
+            directories.formUnion(names.filter(isProfileDirectoryName))
+        }
+        if case .value(let names) = ProfileScanSupport.subdirectoryNames(of: home.appendingPathComponent(cacheSubpath(for: spec))) {
+            directories.formUnion(names.filter(isProfileDirectoryName))
         }
 
-        let originalIDs = configuration.browserOptions.map(\.id)
-        let detectedIDs = detected.map(\.id).filter { !originalIDs.contains($0) }
-        let orderedIDs = originalIDs + detectedIDs
-        let mergedOptions = orderedIDs.compactMap { byID[$0] }
-
-        return RouterConfiguration(
-            defaultOptionID: configuration.defaultOptionID,
-            chooserModifier: configuration.chooserModifier,
-            showsDockIcon: configuration.showsDockIcon,
-            showsStatusItem: configuration.showsStatusItem,
-            hasCompletedOnboarding: configuration.hasCompletedOnboarding,
-            previousDefaultBrowser: configuration.previousDefaultBrowser,
-            browserOptions: mergedOptions,
-            routingRules: configuration.routingRules
+        let knownNames = Dictionary(
+            existingOptions.compactMap { option -> (String, String)? in
+                guard option.bundleIdentifier == spec.bundleIdentifier, let directory = option.profileDirectory else {
+                    return nil
+                }
+                return (directory, profileName(fromOptionName: option.name, spec: spec))
+            },
+            uniquingKeysWith: { first, _ in first }
         )
-    }
 
-    private static func profileDirectories(for spec: ChromiumAppSpec) -> [(directory: String, displayName: String)] {
-        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(spec.supportSubpath)
-        let localStateURL = root.appendingPathComponent("Local State")
-
-        if let profiles = profilesFromLocalState(localStateURL) {
-            return profiles
+        var names: [String: String] = [:]
+        var hasMissingNames = false
+        for directory in directories {
+            if let known = knownNames[directory], known != directory {
+                names[directory] = known
+            } else {
+                names[directory] = directory
+                if case .permissionDenied = localState {
+                    hasMissingNames = true
+                }
+            }
         }
-
-        let discovered = (try? FileManager.default.contentsOfDirectory(
-            at: root,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        )) ?? []
-
-        return discovered.compactMap { url in
-            guard (try? url.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) == true else {
-                return nil
-            }
-
-            let directory = url.lastPathComponent
-            guard directory == "Default" || directory.hasPrefix("Profile ") else {
-                return nil
-            }
-
-            return (directory: directory, displayName: directory)
-        }.sorted { $0.directory.localizedStandardCompare($1.directory) == .orderedAscending }
+        return (sortedEntries(names), hasMissingNames)
     }
 
-    private static func profilesFromLocalState(_ url: URL) -> [(directory: String, displayName: String)]? {
+    /// Maps profile folder names to display names from `Local State` → `profile.info_cache`.
+    private static func profileNames(fromLocalState data: Data) -> [String: String]? {
         guard
-            let data = try? Data(contentsOf: url),
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
             let profile = json["profile"] as? [String: Any],
             let infoCache = profile["info_cache"] as? [String: Any]
@@ -134,20 +142,31 @@ enum ChromiumProfileScanner {
             return nil
         }
 
-        let profiles = infoCache.compactMap { directory, value -> (directory: String, displayName: String)? in
-            guard let info = value as? [String: Any] else {
-                return nil
-            }
-
-            let name = info["name"] as? String
-            let displayName = if let name, !name.isEmpty {
-                name
-            } else {
-                directory
-            }
-            return (directory: directory, displayName: displayName)
+        var names: [String: String] = [:]
+        for (directory, value) in infoCache {
+            let name = (value as? [String: Any])?["name"] as? String
+            names[directory] = name.flatMap { $0.isEmpty ? nil : $0 } ?? directory
         }
+        return names
+    }
 
-        return profiles.sorted { $0.directory.localizedStandardCompare($1.directory) == .orderedAscending }
+    private static func cacheSubpath(for spec: ChromiumAppSpec) -> String {
+        spec.supportSubpath.replacingOccurrences(of: "Library/Application Support/", with: "Library/Caches/")
+    }
+
+    /// Real profiles are `Default` and `Profile N`; `System Profile` and `Guest Profile` are internal.
+    private static func isProfileDirectoryName(_ name: String) -> Bool {
+        name == "Default" || (name.hasPrefix("Profile ") && Int(name.dropFirst("Profile ".count)) != nil)
+    }
+
+    private static func profileName(fromOptionName name: String, spec: ChromiumAppSpec) -> String {
+        let prefix = "\(spec.optionNamePrefix) - "
+        return name.hasPrefix(prefix) ? String(name.dropFirst(prefix.count)) : name
+    }
+
+    private static func sortedEntries(_ names: [String: String]) -> [(directory: String, displayName: String)] {
+        names
+            .map { (directory: $0.key, displayName: $0.value) }
+            .sorted { $0.directory.localizedStandardCompare($1.directory) == .orderedAscending }
     }
 }

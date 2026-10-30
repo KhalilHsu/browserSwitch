@@ -12,58 +12,69 @@ enum FirefoxProfileScanner {
     private static let appName = "Firefox"
     private static let supportSubpath = "Library/Application Support/Firefox"
 
-    static func detectedOptions() -> [BrowserOption] {
+    static func detectedOptions(existingOptions: [BrowserOption] = []) -> [BrowserOption] {
+        scan(existingOptions: existingOptions).options
+    }
+
+    /// Reads `profiles.ini`. Since macOS 27 the Firefox support folder needs Full Disk Access, so when
+    /// it is blocked the profile folders under ~/Library/Caches/Firefox/Profiles are used instead and
+    /// launched by path, since their `-P` names are unknown.
+    static func scan(existingOptions: [BrowserOption] = []) -> ProfileScanResult {
         guard NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier) != nil else {
-            return []
+            return ProfileScanResult()
         }
 
-        let root = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(supportSubpath)
-        let profilesURL = root.appendingPathComponent("profiles.ini")
-        return profiles(from: profilesURL).map { profile in
-            BrowserOption(
-                id: "firefox-\(BrowserSlug.makeProfileIDComponent(profile.path))",
-                name: "Firefox - \(profile.name)",
-                bundleIdentifier: bundleIdentifier,
-                appName: appName,
-                profileDirectory: profile.path,
-                extraArguments: ["-P", profile.name]
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let root = home.appendingPathComponent(supportSubpath)
+        let profilesINI = ProfileScanSupport.read(root.appendingPathComponent("profiles.ini")) { data in
+            String(data: data, encoding: .utf8).map(profiles(fromINI:))
+        }
+
+        if case .value(let profiles) = profilesINI, !profiles.isEmpty {
+            return ProfileScanResult(options: profiles.map { profile in
+                option(id: profile.path, name: profile.name, arguments: ["-P", profile.name])
+            })
+        }
+
+        guard case .permissionDenied = profilesINI,
+              case .value(let folders) = ProfileScanSupport.subdirectoryNames(of: home.appendingPathComponent("Library/Caches/Firefox/Profiles"))
+        else {
+            return ProfileScanResult()
+        }
+
+        var hasMissingNames = false
+        let options = folders.sorted().map { folder -> BrowserOption in
+            let path = "Profiles/\(folder)"
+            let id = "firefox-\(BrowserSlug.makeProfileIDComponent(path))"
+            let name = existingOptions.first { $0.id == id }?.name.replacingOccurrences(of: "Firefox - ", with: "")
+            if name == nil {
+                hasMissingNames = true
+            }
+            return option(
+                id: path,
+                name: name ?? folder,
+                arguments: ["-profile", root.appendingPathComponent(path).path]
             )
         }
+        return ProfileScanResult(options: options, appsMissingProfileNames: hasMissingNames ? [appName] : [])
     }
 
     static func mergeDetectedOptions(into configuration: RouterConfiguration) -> RouterConfiguration {
-        let detected = detectedOptions()
-        guard !detected.isEmpty else {
-            return configuration
-        }
+        ProfileScanSupport.merge(detectedOptions(existingOptions: configuration.browserOptions), into: configuration)
+    }
 
-        var byID = Dictionary(uniqueKeysWithValues: configuration.browserOptions.map { ($0.id, $0) })
-        for option in detected {
-            byID[option.id] = option
-        }
-
-        let originalIDs = configuration.browserOptions.map(\.id)
-        let detectedIDs = detected.map(\.id).filter { !originalIDs.contains($0) }
-        let orderedIDs = originalIDs + detectedIDs
-        let mergedOptions = orderedIDs.compactMap { byID[$0] }
-
-        return RouterConfiguration(
-            defaultOptionID: configuration.defaultOptionID,
-            chooserModifier: configuration.chooserModifier,
-            showsDockIcon: configuration.showsDockIcon,
-            showsStatusItem: configuration.showsStatusItem,
-            hasCompletedOnboarding: configuration.hasCompletedOnboarding,
-            previousDefaultBrowser: configuration.previousDefaultBrowser,
-            browserOptions: mergedOptions,
-            routingRules: configuration.routingRules
+    private static func option(id path: String, name: String, arguments: [String]) -> BrowserOption {
+        BrowserOption(
+            id: "firefox-\(BrowserSlug.makeProfileIDComponent(path))",
+            name: "Firefox - \(name)",
+            bundleIdentifier: bundleIdentifier,
+            appName: appName,
+            profileDirectory: path,
+            extraArguments: arguments
         )
     }
 
-    private static func profiles(from url: URL) -> [FirefoxProfile] {
-        guard let contents = try? String(contentsOf: url, encoding: .utf8) else {
-            return []
-        }
-
+    private static func profiles(fromINI contents: String) -> [FirefoxProfile] {
         var sections: [[String: String]] = []
         var current: [String: String] = [:]
 

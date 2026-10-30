@@ -227,3 +227,9 @@
 "Path Starts With needs a leading slash, like /docs. To match a domain, choose Domain Suffix." = "“路径开头”需要以 / 开头，例如 /docs。要匹配域名，请选择“域名后缀”。";
 "Remove rule \"%@\"?" = "删除规则“%@”？";
 "This can't be undone." = "此操作无法撤销。";
+"Open Privacy Settings…" = "打开隐私设置…";
+"Some %@ profiles show their folder name because macOS protects browser data. Allow Full Disk Access for BrowserRouter to read profile names." = "macOS 会保护浏览器数据，部分 %@ Profile 只能显示文件夹名。给 BrowserRouter 开启「完全磁盘访问权限」后可读取真实名称。";
+"Choose Other App…" = "选择其他 App…";
+"%@ (Not Installed)" = "%@（未安装）";
+"Choose" = "选择";
+"Choose the app that opens links for this rule." = "选择会打开这类链接的 App。";
