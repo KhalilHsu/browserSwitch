@@ -213,3 +213,23 @@ Object.assign(translations.cn, {
   "v130-f3": "<b>规则编辑器:</b> 明确的新建 / 添加 / 保存操作，支持上移、下移调整优先级，测试器可在保存前预览当前草稿。",
   "v130-f4": "<b>签名安装包:</b> 首个 Developer ID 签名并经 Apple 公证的 Universal DMG；修复自动接管后无法正确恢复原默认浏览器的问题。"
 });
+
+Object.assign(translations.en, {
+  "v140-title": "Cleaner Settings, Every Profile",
+  "v140-f1": "<b>Rule editor sheet:</b> Add and edit rules in a focused sheet with Cancel / Save; the rule list gets more room and the tester stays below it.",
+  "v140-f2": "<b>All Chrome profiles:</b> Finds every Chromium and Firefox profile even under macOS 27 browser data protection; names show once Full Disk Access is allowed.",
+  "v140-f3": "<b>Any source app:</b> Pick any installed app as a rule's source with \"Choose Other App…\", not just running ones.",
+  "v140-f4": "<b>Language &amp; polish:</b> Switch between English and Simplified Chinese in Settings, clearer labels, a consistent type scale, and fixes for settings being reset by a browser rescan.",
+  "v131-title": "New Bundle Identifier",
+  "v131-f1": "Bundle identifier is now <code>com.khalil.browserrouter</code>; set BrowserRouter as the default browser again after updating."
+});
+
+Object.assign(translations.cn, {
+  "v140-title": "更清爽的设置，找全所有 Profile",
+  "v140-f1": "<b>规则编辑弹窗:</b> 新建和编辑规则改在独立弹窗中完成，可取消或保存；规则列表更高，测试链接保留在下方。",
+  "v140-f2": "<b>找全 Chrome Profile:</b> 即使在 macOS 27 的浏览器数据保护下，也能找到所有 Chromium 和 Firefox Profile；开启完全磁盘访问权限后显示真实名称。",
+  "v140-f3": "<b>任意来源 App:</b> 通过「选择其他 App…」把任何已安装的 App 设为规则来源，不再限于正在运行的 App。",
+  "v140-f4": "<b>语言与细节:</b> 设置中可切换英文和简体中文，文案更清楚，字号统一，并修复重新扫描浏览器时会重置部分设置的问题。",
+  "v131-title": "新的 Bundle ID",
+  "v131-f1": "Bundle ID 改为 <code>com.khalil.browserrouter</code>，更新后需要重新把 BrowserRouter 设为默认浏览器。"
+});
