@@ -153,7 +153,6 @@ let settingsPageTopPadding = settingsToolbarHeight + settingsPageVerticalPadding
 final class SettingsWindowController: NSWindowController, NSTableViewDataSource, NSTableViewDelegate, NSTextFieldDelegate, NSWindowDelegate {
     enum SettingsTab: String, CaseIterable {
         case basic
-        case appearance
         case rules
         case advanced
         case about
@@ -162,8 +161,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             switch self {
             case .basic:
                 return L("Basic")
-            case .appearance:
-                return L("Appearance")
             case .rules:
                 return L("Rules")
             case .advanced:
@@ -177,8 +174,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
             switch self {
             case .basic:
                 return "gearshape"
-            case .appearance:
-                return "paintbrush"
             case .rules:
                 return "list.bullet.rectangle"
             case .advanced:
@@ -206,12 +201,14 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let ruleSourceAppPopup = NSPopUpButton()
     let ruleTesterURLField = NSTextField()
     let ruleTesterResultLabel = NSTextField(labelWithString: "")
-    let ruleEditorModeLabel = NSTextField(labelWithString: "")
+    let ruleEditorTitleLabel = NSTextField(labelWithString: "")
+    let ruleEditorHintLabel = NSTextField(wrappingLabelWithString: "")
+    let ruleEditorConfirmButton = NSButton(title: L("Add Rule"), target: nil, action: nil)
     let newRuleButton = NSButton(title: L("New Rule"), target: nil, action: nil)
-    let saveRuleButton = NSButton(title: L("Add Rule"), target: nil, action: nil)
-    let removeRuleButton = NSButton(title: L("Remove Rule"), target: nil, action: nil)
-    let moveRuleUpButton = NSButton(title: L("Move Up"), target: nil, action: nil)
-    let moveRuleDownButton = NSButton(title: L("Move Down"), target: nil, action: nil)
+    let editRuleButton = NSButton(title: L("Edit…"), target: nil, action: nil)
+    let removeRuleButton = NSButton(title: L("Remove"), target: nil, action: nil)
+    let moveRuleUpButton = NSButton(title: "", target: nil, action: nil)
+    let moveRuleDownButton = NSButton(title: "", target: nil, action: nil)
     let autosaveStatusLabel = NSTextField(labelWithString: L("Changes save automatically"))
     let browserSummaryLabel = NSTextField(labelWithString: "")
     let ruleSummaryLabel = NSTextField(labelWithString: "")
@@ -224,7 +221,6 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     let footerSeparatorView = NSBox()
     let footerStackView = NSStackView()
     let basicPageView = NSView()
-    let appearancePageView = NSView()
     let rulesPageView = NSView()
     let advancedPageView = NSView()
     let aboutPageView = NSView()
@@ -237,13 +233,14 @@ final class SettingsWindowController: NSWindowController, NSTableViewDataSource,
     var configuration: RouterConfiguration
     var visibleBrowserOptions: [BrowserOption] = []
     var isPopulatingRuleForm = false
+    var ruleEditorSheet: NSWindow?
+    var editingRuleIndex: Int?
     var isUpdatingRuleTester = false
     var selectedTab: SettingsTab = .basic
     var tabButtons: [SettingsTab: NSButton] = [:]
     var pageContainerHeightConstraint: NSLayoutConstraint?
     var rulesScrollViewHeightConstraint: NSLayoutConstraint?
     var basicPageContentStack: NSStackView?
-    var appearancePageContentStack: NSStackView?
     var rulesPageContentStack: NSStackView?
     var advancedPageContentStack: NSStackView?
     var aboutPageContentStack: NSStackView?

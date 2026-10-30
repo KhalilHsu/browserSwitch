@@ -114,6 +114,7 @@ extension SettingsWindowController {
         rulesTableView.rowHeight = rulesTableRowHeight
         rulesTableView.intercellSpacing = rulesTableIntercellSpacing
         rulesTableView.action = #selector(selectRule)
+        rulesTableView.doubleAction = #selector(editClickedRule)
         rulesTableView.target = self
 
         browsersTableView.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("visible")))
@@ -161,9 +162,11 @@ extension SettingsWindowController {
         ruleTesterResultLabel.maximumNumberOfLines = 3
         ruleTesterResultLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        ruleEditorModeLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
-        ruleEditorModeLabel.textColor = .secondaryLabelColor
-        ruleEditorModeLabel.translatesAutoresizingMaskIntoConstraints = false
+        ruleEditorTitleLabel.font = .systemFont(ofSize: 15, weight: .semibold)
+        ruleEditorTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        ruleEditorHintLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        ruleEditorHintLabel.textColor = .secondaryLabelColor
+        ruleEditorHintLabel.translatesAutoresizingMaskIntoConstraints = false
 
         aboutLogoLabel.font = .systemFont(ofSize: aboutLogoFontSize, weight: .light)
         aboutLogoLabel.alignment = .left
@@ -193,10 +196,9 @@ extension SettingsWindowController {
         aboutWebsiteButton.translatesAutoresizingMaskIntoConstraints = false
 
         buildBasicPage()
-        buildAppearancePage()
         buildRulesPage(
             rulesScrollView: makeRulesScrollView(),
-            ruleButtonStack: makeRuleButtonStack()
+            ruleActionBar: makeRuleActionBar()
         )
         buildAdvancedPage(
             browsersScrollView: makeBrowsersScrollView(),
@@ -217,12 +219,6 @@ extension SettingsWindowController {
             symbolName: "gearshape",
             view: basicPageView,
             size: preferredContentSize(for: .basic)
-        )
-        addTab(
-            title: L("Appearance"),
-            symbolName: "paintbrush",
-            view: appearancePageView,
-            size: preferredContentSize(for: .appearance)
         )
         addTab(
             title: L("Rules"),
@@ -254,7 +250,6 @@ extension SettingsWindowController {
         let view: NSView
         switch tab {
         case .basic: view = basicPageView
-        case .appearance: view = appearancePageView
         case .rules: view = rulesPageView
         case .advanced: view = advancedPageView
         case .about: view = aboutPageView
@@ -294,18 +289,33 @@ extension SettingsWindowController {
         return scrollView
     }
 
-    func makeRuleButtonStack() -> NSStackView {
-        configureButton(newRuleButton, title: L("New Rule"), action: #selector(startNewRule))
-        configureButton(saveRuleButton, title: L("Add Rule"), action: #selector(saveRuleForm))
-        configureButton(removeRuleButton, title: L("Remove Rule"), action: #selector(removeSelectedRule))
-        configureButton(moveRuleUpButton, title: L("Move Up"), action: #selector(moveSelectedRuleUp))
-        configureButton(moveRuleDownButton, title: L("Move Down"), action: #selector(moveSelectedRuleDown))
-        saveRuleButton.keyEquivalent = "\r"
-        let ruleButtonStack = NSStackView(views: [newRuleButton, saveRuleButton, removeRuleButton, moveRuleUpButton, moveRuleDownButton])
-        ruleButtonStack.orientation = .horizontal
-        ruleButtonStack.spacing = ruleButtonStackSpacing
-        ruleButtonStack.translatesAutoresizingMaskIntoConstraints = false
-        return ruleButtonStack
+    /// Buttons under the rules table: edit/remove act on the selected rule, arrows change priority.
+    func makeRuleActionBar() -> NSStackView {
+        configureButton(editRuleButton, title: L("Edit…"), action: #selector(editSelectedRule))
+        configureButton(removeRuleButton, title: L("Remove"), action: #selector(removeSelectedRule))
+        configureButton(moveRuleUpButton, title: "", action: #selector(moveSelectedRuleUp))
+        configureButton(moveRuleDownButton, title: "", action: #selector(moveSelectedRuleDown))
+        moveRuleUpButton.image = NSImage(systemSymbolName: "arrow.up", accessibilityDescription: L("Move Up"))
+        moveRuleUpButton.toolTip = L("Move Up")
+        moveRuleDownButton.image = NSImage(systemSymbolName: "arrow.down", accessibilityDescription: L("Move Down"))
+        moveRuleDownButton.toolTip = L("Move Down")
+
+        let hintLabel = NSTextField(labelWithString: L("Double-click a rule to edit it."))
+        hintLabel.font = .systemFont(ofSize: settingsSummaryFontSize)
+        hintLabel.textColor = .tertiaryLabelColor
+        hintLabel.translatesAutoresizingMaskIntoConstraints = false
+
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        spacer.setContentHuggingPriority(.init(1), for: .horizontal)
+
+        let bar = NSStackView(views: [editRuleButton, removeRuleButton, hintLabel, spacer, moveRuleUpButton, moveRuleDownButton])
+        bar.orientation = .horizontal
+        bar.alignment = .centerY
+        bar.spacing = ruleButtonStackSpacing
+        bar.setCustomSpacing(12, after: removeRuleButton)
+        bar.translatesAutoresizingMaskIntoConstraints = false
+        return bar
     }
 
     func configureButton(_ button: NSButton, title: String, action: Selector) {

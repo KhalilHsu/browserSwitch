@@ -217,3 +217,13 @@
 "added %d" = "新增 %d 个";
 "removed %d" = "移除 %d 个";
 "%d rule(s) still need attention" = "%d 条规则仍需处理";
+"Edit…" = "编辑…";
+"Remove" = "删除";
+"Double-click a rule to edit it." = "双击规则即可编辑。";
+"Icons" = "图标";
+"Edit Rule" = "编辑规则";
+"Open with" = "打开方式";
+"Optional. Defaults to the match value." = "可选，默认使用匹配内容";
+"Path Starts With needs a leading slash, like /docs. To match a domain, choose Domain Suffix." = "“路径开头”需要以 / 开头，例如 /docs。要匹配域名，请选择“域名后缀”。";
+"Remove rule \"%@\"?" = "删除规则“%@”？";
+"This can't be undone." = "此操作无法撤销。";

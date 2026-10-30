@@ -58,12 +58,6 @@ extension SettingsWindowController {
         populateSourceAppPopup()
         updateSummaryLabels()
         updateRuleTesterResult()
-        if !configuration.routingRules.isEmpty {
-            rulesTableView.selectRowIndexes(IndexSet(integer: 0), byExtendingSelection: false)
-            populateRuleForm(from: configuration.routingRules[0])
-        } else {
-            clearRuleForm()
-        }
         updateRuleEditorState()
     }
 
@@ -179,18 +173,16 @@ extension SettingsWindowController {
     }
 
     @objc func ruleBrowserChanged() {
-        updateRuleEditorState()
-        updateRuleTesterResult()
+        updateRuleEditorSheetState()
     }
 
     @objc func ruleSourceAppChanged() {
-        updateRuleEditorState()
-        updateRuleTesterResult()
+        updateRuleEditorSheetState()
     }
 
     @objc func ruleMatchTypeChanged() {
         updateRuleMatchPlaceholder()
-        updateRuleEditorState()
+        updateRuleEditorSheetState()
     }
 
     func populateSourceAppPopup() {

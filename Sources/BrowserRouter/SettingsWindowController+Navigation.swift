@@ -32,7 +32,6 @@ extension SettingsWindowController {
     func updateVisiblePage(animated: Bool = true, forceResize: Bool = false) {
         let pages: [(SettingsTab, NSView)] = [
             (.basic, basicPageView),
-            (.appearance, appearancePageView),
             (.rules, rulesPageView),
             (.advanced, advancedPageView),
             (.about, aboutPageView)
@@ -85,8 +84,6 @@ extension SettingsWindowController {
         switch tab {
         case .basic:
             return 250
-        case .appearance:
-            return 220
         case .rules:
             return 500
         case .advanced:

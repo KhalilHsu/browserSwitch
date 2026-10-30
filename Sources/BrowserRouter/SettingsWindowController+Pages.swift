@@ -25,10 +25,18 @@ extension SettingsWindowController {
         chooserModifierLabel.translatesAutoresizingMaskIntoConstraints = false
         chooserModifierLabel.widthAnchor.constraint(equalToConstant: 160).isActive = true
 
+        let iconTogglesStack = NSStackView(views: [showDockIconCheckBox, showStatusItemCheckBox])
+        iconTogglesStack.orientation = .horizontal
+        iconTogglesStack.alignment = .centerY
+        iconTogglesStack.spacing = 24
+        iconTogglesStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let iconsLabel = NSTextField(labelWithString: L("Icons"))
         let emptyLabel = NSTextField(labelWithString: "")
         stack.addArrangedSubview(formRow(label: defaultBrowserLabel, control: defaultBrowserPopup))
         stack.addArrangedSubview(formRow(label: emptyLabel, control: autoRestoreCheckBox))
         stack.addArrangedSubview(chooserRow)
+        stack.addArrangedSubview(formRow(label: iconsLabel, control: iconTogglesStack))
         stack.addArrangedSubview(browserSummaryLabel)
 
         basicPageView.addSubview(stack)
@@ -43,133 +51,52 @@ extension SettingsWindowController {
         ])
     }
 
-    func buildAppearancePage() {
-        let introLabel = NSTextField(labelWithString: L("Keep BrowserRouter light or show it in more places."))
-        introLabel.font = .systemFont(ofSize: 13)
-        introLabel.textColor = .secondaryLabelColor
-        introLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let togglesStack = NSStackView(views: [showDockIconCheckBox, showStatusItemCheckBox])
-        togglesStack.orientation = .horizontal
-        togglesStack.alignment = .centerY
-        togglesStack.spacing = 24
-        togglesStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let noteLabel = NSTextField(labelWithString: L("Skin options can grow here later without touching routing or rules."))
-        noteLabel.font = .systemFont(ofSize: 12)
-        noteLabel.textColor = .secondaryLabelColor
-        noteLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let stack = NSStackView(views: [introLabel, togglesStack, noteLabel])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 14
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        appearancePageContentStack = stack
-
-        appearancePageView.addSubview(stack)
-        NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: appearancePageView.topAnchor, constant: settingsPageTopPadding),
-            stack.leadingAnchor.constraint(equalTo: appearancePageView.leadingAnchor, constant: 32),
-            stack.trailingAnchor.constraint(lessThanOrEqualTo: appearancePageView.trailingAnchor, constant: -32),
-            stack.bottomAnchor.constraint(equalTo: appearancePageView.bottomAnchor, constant: -settingsPageVerticalPadding)
-        ])
-    }
-
-    func buildRulesPage(rulesScrollView: NSScrollView, ruleButtonStack: NSStackView) {
+    func buildRulesPage(rulesScrollView: NSScrollView, ruleActionBar: NSStackView) {
         let headerLabel = NSTextField(labelWithString: L("Rules decide where a link goes before it opens."))
         headerLabel.font = .systemFont(ofSize: 13)
         headerLabel.textColor = .secondaryLabelColor
         headerLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        let rulesHeaderStack = NSStackView(views: [headerLabel, ruleSummaryLabel])
+        configureButton(newRuleButton, title: L("New Rule"), action: #selector(startNewRule))
+        newRuleButton.image = NSImage(systemSymbolName: "plus", accessibilityDescription: nil)
+        newRuleButton.imagePosition = .imageLeading
+
+        let headerSpacer = NSView()
+        headerSpacer.translatesAutoresizingMaskIntoConstraints = false
+        headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
+
+        let headerTextStack = NSStackView(views: [headerLabel, ruleSummaryLabel])
+        headerTextStack.orientation = .vertical
+        headerTextStack.alignment = .leading
+        headerTextStack.spacing = 2
+        headerTextStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let rulesHeaderStack = NSStackView(views: [headerTextStack, headerSpacer, newRuleButton])
         rulesHeaderStack.orientation = .horizontal
         rulesHeaderStack.alignment = .centerY
         rulesHeaderStack.spacing = 12
         rulesHeaderStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let ruleNameLabel = NSTextField(labelWithString: L("Rule name"))
-        ruleNameLabel.font = .systemFont(ofSize: 12)
-        ruleNameLabel.textColor = .secondaryLabelColor
-        ruleNameLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let matchLabel = NSTextField(labelWithString: L("Match"))
-        matchLabel.font = .systemFont(ofSize: 12)
-        matchLabel.textColor = .secondaryLabelColor
-        matchLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let browserLabel = NSTextField(labelWithString: L("Browser/Profile"))
-        browserLabel.font = .systemFont(ofSize: 12)
-        browserLabel.textColor = .secondaryLabelColor
-        browserLabel.translatesAutoresizingMaskIntoConstraints = false
-
         let testerTitle = NSTextField(labelWithString: L("Rule tester"))
         testerTitle.font = .systemFont(ofSize: 13, weight: .medium)
         testerTitle.translatesAutoresizingMaskIntoConstraints = false
 
-        let compactRuleNameRow = NSStackView(views: [ruleNameLabel, ruleNameField])
-        compactRuleNameRow.orientation = .horizontal
-        compactRuleNameRow.alignment = .centerY
-        compactRuleNameRow.spacing = 12
-        compactRuleNameRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactMatchRow = NSStackView(views: [matchLabel, ruleMatchTypePopup, ruleMatchValueField])
-        compactMatchRow.orientation = .horizontal
-        compactMatchRow.alignment = .centerY
-        compactMatchRow.spacing = 12
-        compactMatchRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactBrowserRow = NSStackView(views: [browserLabel, ruleBrowserPopup])
-        compactBrowserRow.orientation = .horizontal
-        compactBrowserRow.alignment = .centerY
-        compactBrowserRow.spacing = 12
-        compactBrowserRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let sourceAppLabel = NSTextField(labelWithString: L("Source App"))
-        sourceAppLabel.font = .systemFont(ofSize: 12)
-        sourceAppLabel.textColor = .secondaryLabelColor
-        sourceAppLabel.translatesAutoresizingMaskIntoConstraints = false
-
-        let compactSourceAppRow = NSStackView(views: [sourceAppLabel, ruleSourceAppPopup])
-        compactSourceAppRow.orientation = .horizontal
-        compactSourceAppRow.alignment = .centerY
-        compactSourceAppRow.spacing = 12
-        compactSourceAppRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let editorStack = NSStackView(views: [ruleEditorModeLabel, compactRuleNameRow, compactMatchRow, compactBrowserRow, compactSourceAppRow, ruleButtonStack])
-        editorStack.orientation = .vertical
-        editorStack.alignment = .leading
-        editorStack.spacing = 10
-        editorStack.translatesAutoresizingMaskIntoConstraints = false
-
-        let testerRow = NSStackView(views: [ruleTesterURLField])
-        testerRow.orientation = .horizontal
-        testerRow.alignment = .centerY
-        testerRow.spacing = 8
-        testerRow.translatesAutoresizingMaskIntoConstraints = false
-
-        let testerStack = NSStackView(views: [testerTitle, testerRow, ruleTesterResultLabel])
+        let testerStack = NSStackView(views: [testerTitle, ruleTesterURLField, ruleTesterResultLabel])
         testerStack.orientation = .vertical
         testerStack.alignment = .leading
         testerStack.spacing = 7
         testerStack.translatesAutoresizingMaskIntoConstraints = false
 
-        ruleNameLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        matchLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        browserLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        sourceAppLabel.widthAnchor.constraint(equalToConstant: 100).isActive = true
-        ruleMatchTypePopup.widthAnchor.constraint(equalToConstant: 128).isActive = true
-        ruleMatchValueField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        ruleMatchValueField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        ruleBrowserPopup.setContentHuggingPriority(.required, for: .horizontal)
-        ruleBrowserPopup.setContentCompressionResistancePriority(.required, for: .horizontal)
         ruleTesterURLField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         ruleTesterURLField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let pageStack = NSStackView(views: [rulesHeaderStack, rulesScrollView, editorStack, testerStack])
+        let pageStack = NSStackView(views: [rulesHeaderStack, rulesScrollView, ruleActionBar, testerStack])
         pageStack.orientation = .vertical
         pageStack.alignment = .leading
         pageStack.spacing = 0
+        pageStack.setCustomSpacing(12, after: rulesHeaderStack)
+        pageStack.setCustomSpacing(8, after: rulesScrollView)
+        pageStack.setCustomSpacing(24, after: ruleActionBar)
         pageStack.translatesAutoresizingMaskIntoConstraints = false
         rulesPageContentStack = pageStack
 
@@ -181,22 +108,13 @@ extension SettingsWindowController {
             pageStack.trailingAnchor.constraint(equalTo: rulesPageView.trailingAnchor, constant: -32),
             pageStack.bottomAnchor.constraint(equalTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
 
-            rulesScrollView.topAnchor.constraint(equalTo: rulesHeaderStack.bottomAnchor, constant: 16),
-            editorStack.topAnchor.constraint(equalTo: rulesScrollView.bottomAnchor, constant: 18),
-            testerStack.topAnchor.constraint(equalTo: editorStack.bottomAnchor, constant: 18),
-            testerStack.bottomAnchor.constraint(lessThanOrEqualTo: rulesPageView.bottomAnchor, constant: -settingsPageVerticalPadding),
-
-            ruleNameField.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            ruleMatchValueField.widthAnchor.constraint(greaterThanOrEqualToConstant: 160),
-            ruleBrowserPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            ruleSourceAppPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 180),
-            testerRow.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
+            rulesHeaderStack.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
+            rulesScrollView.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
+            rulesScrollView.heightAnchor.constraint(equalToConstant: 260),
+            ruleActionBar.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
+            ruleTesterURLField.widthAnchor.constraint(equalTo: pageStack.widthAnchor),
             ruleTesterResultLabel.widthAnchor.constraint(equalTo: pageStack.widthAnchor)
         ])
-
-        rulesScrollViewHeightConstraint = rulesScrollView.heightAnchor.constraint(equalToConstant: preferredRulesListHeight())
-        rulesScrollViewHeightConstraint?.priority = .defaultHigh
-        rulesScrollViewHeightConstraint?.isActive = true
     }
 
     func buildAdvancedPage(
